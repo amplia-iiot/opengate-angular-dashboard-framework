@@ -1,0 +1,26 @@
+<div class="row " style="padding:0px;">
+    <div class="col-xs-12" ng-class="hideButtons?'col-md-12':'col-md-5'">
+        <span ng-if="model.icon" id="idDashboardIdcon" class="fa fa-2x {{model.icon}}"></span>
+        <span id="idDashboardTitle" class="fa-2x text-primary">{{model.title}}</span>
+        <span ng-if="model.description" id="idDashboardDescription">{{model.description}}</span>
+    </div>
+    <div class="col-xs-12 col-md-7 text-right" ng-if="!hideButtons">
+        <a href="" ng-if="editMode" title="{{ translate('ADF_DASHBOARD_TITLE_TOOLTIP_ADD') }}" ng-click="addWidgetDialog()" class="btn btn-sm pointer no-transition">
+            <i class="fa fa-plus" aria-hidden="true"></i> Add widget
+        </a>
+        <a href="" ng-if="editMode" title="{{ translate('ADF_COMMON_EDIT_DASHBOARD') }}" ng-click="editDashboardDialog()" class="btn btn-sm pointer no-transition">
+            <i class="fa fa-cog"></i> Configuration
+        </a>
+
+        <a href="" ng-if="editMode" title="{{ translate('ADF_DASHBOARD_TITLE_TOOLTIP_UNDO') }}" ng-click="cancelEditMode()" class="btn btn-warning btn-sm pointer no-transition">
+            <i class="fa fa-close"></i> Cancel
+        </a>
+        <a href="" ng-if="options.editable && !editMode && !model.temporal" title="{{translate('ADF_DASHBOARD_TITLE_TOOLTIP_EDIT_MODE') }}" ng-click="toggleEditMode()" class="btn btn-sm pointer no-transition">
+            <i class="fa fa-pencil-square-o"></i> Edit
+        </a>
+        <a href="" ng-if="options.editable && editMode" title="{{translate('ADF_DASHBOARD_TITLE_TOOLTIP_SAVE')}}" ng-click="toggleEditMode()" class="btn btn-success btn-sm pointer no-transition">
+            <i class="fa fa-save"></i> Save/Update
+        </a>
+    </div>
+
+</div>

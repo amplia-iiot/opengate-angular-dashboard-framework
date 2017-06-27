@@ -1,0 +1,582 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2015, Sebastian Sdorra
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+'use strict';
+
+angular.module('adf')
+    .directive('adfWidget', function($injector, $q, $log, $uibModal, $rootScope, $timeout, dashboard, adfTemplatePath, Filter) {
+
+        function preLink($scope) {
+            var definition = $scope.definition;
+
+            //passs translate function from dashboard so we can translate labels inside html templates
+            $scope.translate = dashboard.translate;
+
+            if (definition) {
+                var w = dashboard.widgets[definition.type];
+                if (w) {
+                    // pass title
+                    if (!definition.title) {
+                        definition.title = w.title;
+                    }
+
+                    if (!definition.titleTemplateUrl) {
+                        definition.titleTemplateUrl = adfTemplatePath + 'widget-title.html';
+                        if (w.titleTemplateUrl) {
+                            definition.titleTemplateUrl = w.titleTemplateUrl;
+                        }
+                    }
+
+                    if (!definition.editTemplateUrl) {
+                        definition.editTemplateUrl = adfTemplatePath + 'widget-edit.html';
+                        if (w.editTemplateUrl) {
+                            definition.editTemplateUrl = w.editTemplateUrl;
+                        }
+                    }
+
+                    if (!definition.titleTemplateUrl) {
+                        definition.frameless = w.frameless;
+                    }
+
+                    if (!definition.styleClass) {
+                        definition.styleClass = w.styleClass;
+                    }
+
+                    // set id for sortable
+                    if (!definition.wid) {
+                        definition.wid = dashboard.id();
+                    }
+
+                    // pass copy of widget to scope
+                    $scope.widget = angular.copy(w);
+
+                    // create config object
+                    var config = definition.config;
+                    if (config) {
+                        if (angular.isString(config)) {
+                            config = angular.fromJson(config);
+                        }
+                    } else {
+                        config = {};
+                    }
+
+                    if (!config.reloadPeriod) {
+                        config.reloadPeriod = "0";
+                    }
+
+                    // pass config to scope
+                    $scope.config = config;
+
+                    // collapse exposed $scope.widgetState property
+                    if (!$scope.widgetState) {
+                        $scope.widgetState = {};
+                        $scope.widgetState.isCollapsed = (w.collapsed === true) ? w.collapsed : false;
+                    }
+
+                } else {
+                    $log.warn('could not find widget ' + definition.type);
+                }
+            } else {
+                $log.debug('definition not specified, widget was probably removed');
+            }
+        }
+
+        function postLink($scope, $element) {
+            var definition = $scope.definition;
+            if (definition) {
+                if (!$scope.config.reloadPeriod) {
+                    $scope.config.reloadPeriod = "0";
+                }
+
+                // bind close function
+                var deleteWidget = function() {
+                    var column = $scope.col;
+                    if (column) {
+                        var index = column.widgets.indexOf(definition);
+                        if (index >= 0) {
+                            column.widgets.splice(index, 1);
+                        }
+                    }
+                    $element.remove();
+                    $rootScope.$broadcast('adfWidgetRemovedFromColumn');
+                };
+
+                $scope.remove = function() {
+                    if ($scope.options.enableConfirmDelete) {
+                        var deleteScope = $scope.$new();
+                        deleteScope.translate = dashboard.translate;
+
+                        var deleteTemplateUrl = adfTemplatePath + 'widget-delete.html';
+                        if (definition.deleteTemplateUrl) {
+                            deleteTemplateUrl = definition.deleteTemplateUrl;
+                        }
+                        var opts = {
+                            scope: deleteScope,
+                            templateUrl: deleteTemplateUrl,
+                            backdrop: 'static'
+                        };
+                        var instance = $uibModal.open(opts);
+
+                        deleteScope.closeDialog = function() {
+                            instance.close();
+                            deleteScope.$destroy();
+                        };
+                        deleteScope.deleteDialog = function() {
+                            deleteWidget();
+                            deleteScope.closeDialog();
+                        };
+                    } else {
+                        deleteWidget();
+                    }
+                };
+
+                var widgetTimeout = undefined;
+
+                $scope.print = function() {
+                    if (!$scope.editMode) {
+                        $scope.$broadcast('widgetPrint');
+                    }
+                }
+
+                $scope.isExecuteOperationEnabled = function() {
+                    if ($scope.config.entityKey)
+                        return true;
+                    if (typeof $scope.config.filter === "string") {
+                        return $scope.config.filter.length > 0;
+                    }
+                    if (typeof $scope.config.filter === "object") {
+                        return $scope.config.filter.value.length > 2 && $scope.config.filter.oql;
+                    }
+                    return false;
+                }
+
+                $scope.executeOperation = function() {
+                    if (!$scope.editMode) {
+                        $scope.$parent.$broadcast('widgetExecuteOperation');
+                    }
+                };
+
+                // bind reload function
+                $scope.reload = function() {
+                    $scope.$broadcast('widgetReload');
+                    if ($scope.config && $scope.config && $scope.config.reloadPeriod && $scope.config.reloadPeriod !== "0") {
+                        if (widgetTimeout) clearTimeout(widgetTimeout);
+                        widgetTimeout = $timeout($scope.reload, ($scope.config.reloadPeriod * 1000));
+                    }
+                };
+
+                // verificacion de periodo de refresco
+                if ($scope.config && $scope.config && $scope.config.reloadPeriod && $scope.config.reloadPeriod !== "0") {
+                    widgetTimeout = $timeout($scope.reload, ($scope.config.reloadPeriod * 1000));
+                }
+
+                $scope.filter = {
+                    value: ""
+                };
+                $scope.sort = {
+                    value: "",
+                    direction: ""
+                };
+
+                $scope.toogleAdvanced = false;
+                if (typeof $scope.config.filter === "object" && $scope.config.filter.oql.length > 2) {
+                    $scope.search = {
+                        oql: $scope.config.filter.oql,
+                        json: $scope.config.filter.value
+                    };
+                    $scope.toogleAdvanced = true;
+                } else if (typeof $scope.config.filter === "string") {
+                    $scope.search = {
+                        quick: $scope.config.filter
+                    };
+                } else {
+                    $scope.search = {
+                        quick: $scope.config.filter = ""
+                    };
+                }
+
+                $scope.toogleFilter = function() {
+                    $scope.toogleAdvanced = !$scope.toogleAdvanced;
+                };
+                $scope.filterAvailable = false;
+                $scope.showFilter = function() {
+                    $scope.filterAvailable = $scope.filterAvailable === true ? false : true;
+                };
+
+                $scope.showFinalFilter = false;
+
+                $scope.launchSearching = function() {
+                    var widget = {
+                        definition: definition,
+                        element: $element
+                    };
+
+                    $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, $scope.config.filter);
+                    $scope.reload();
+                }
+
+                $scope.launchSearchingAdv = function() {
+                    $scope.search.quick = '';
+                    $scope.config.filter = {
+                        oql: $scope.search.oql,
+                        value: $scope.search.json
+                    };
+                    if ($scope.search.json === '')
+                        $scope.config.filter = {
+                            oql: '',
+                            value: ''
+                        };
+                    $scope.launchSearching();
+
+                }
+
+                $scope.applyFilter = function(event) {
+                    $scope.launchSearching();
+                }
+
+                $scope.launchSearchingQuick = function() {
+                    $scope.search.oql = $scope.search.json = '';
+                    $scope.config.filter = $scope.search.quick;
+                    $scope.launchSearching();
+                }
+
+                var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
+                    $scope.config.windowFilter = timeObj ? timeObj : ($scope.config.windowFilter ? {} : timeObj);
+                    var widget = {
+                        definition: definition,
+                        element: $element
+                    }
+                    $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
+                    $scope.reload();
+                });
+
+                function _getWindowTime(type) {
+                    if (type === "custom") {
+                        return {
+                            from: $scope.config.windowFilter.from,
+                            to: $scope.config.windowFilter.to
+                        }
+                    }
+                    var from = window.moment().subtract(1, type);
+                    return {
+                        from: from._d
+                    };
+                }
+
+                $scope.config.getWindowTime = function() {
+                    var windowFilter = $scope.config.windowFilter;
+                    if (windowFilter && windowFilter.type) {
+                        var winTime = _getWindowTime(windowFilter.type);
+                        /* jshint ignore:start */
+                        if (!window.eval($scope.config.windowFilter.rawdate)) {
+                            for (var key in winTime) {
+                                winTime[key] = window.moment(winTime[key]).format();
+                            }
+                            winTime['rawdate'] = true;
+                        }
+                        /* jshint ignore:end */
+                        return winTime;
+                    }
+                }
+
+                $scope.enter = function(event) {
+                    var keycode = (event.keyCode ? event.keyCode : event.which);
+                    if (keycode === 13) {
+                        if ($scope.toogleAdvanced)
+                            $scope.launchSearchingAdv();
+                        else
+                            $scope.launchSearchingQuick();
+                    }
+                    if (keycode === 19) {
+                        $scope.showFinalFilter = $scope.showFinalFilter === false ? true : false;
+                    }
+                }
+
+
+                $scope.customSelectors = [];
+                $scope.getCustomSelectors = function() {
+                    $scope.config.widgetSelectors().findFields("").then(function(fields) {
+                        $scope.customSelectors = fields;
+                        $scope.$apply();
+                    }).catch(function(err) {
+                        $log.error(err);
+                    });
+
+                }
+
+                $scope.changeDirection = function() {
+                    if ($scope.config.sort.direction === 'DESCENDING') {
+                        $scope.config.sort.direction = 'ASCENDING'
+                    } else if ($scope.config.sort.direction === 'ASCENDING') {
+                        $scope.config.sort.direction = 'DESCENDING'
+                    }
+                    $scope.reload();
+                }
+
+
+                $scope.debugQuery = function() {
+
+
+                    Filter.parseQuery($scope.search.oql || '')
+                        .then(function(data) {
+                            //$scope.elementos = data;
+                            $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                            $scope.unknownWords = '';
+                            $scope.filter.error = null;
+                        })
+                        .catch(function(err) {
+                            $scope.filter.error = err;
+                            // Tratar el error
+                        });
+
+                }
+
+                $scope.autocomplete_options = function() {
+                    var autocomplete_options = {
+                        suggest: Filter.suggest_field_delimited,
+                        customSelectors: $scope.config.widgetSelectors()
+                    };
+
+                    return autocomplete_options;
+
+                };
+
+                // bind edit function
+                $scope.edit = function() {
+                    var editScope = $scope.$new();
+                    editScope.translate = dashboard.translate;
+                    editScope.definition = angular.copy(definition);
+
+                    var adfEditTemplatePath = adfTemplatePath + 'widget-edit.html';
+                    if (definition.editTemplateUrl) {
+                        adfEditTemplatePath = definition.editTemplateUrl;
+                    }
+
+                    var opts = {
+                        scope: editScope,
+                        templateUrl: adfEditTemplatePath,
+                        backdrop: 'static',
+                        size: 'lg'
+                    };
+
+                    var instance = $uibModal.open(opts);
+
+                    editScope.closeDialog = function() {
+                        instance.close();
+                        editScope.$destroy();
+                    };
+
+                    // TODO create util method
+                    function createApplyPromise(result) {
+                        var promise;
+                        if (typeof result === 'boolean') {
+                            var deferred = $q.defer();
+                            if (result) {
+                                deferred.resolve();
+                            } else {
+                                deferred.reject();
+                            }
+                            promise = deferred.promise;
+                        } else {
+                            promise = $q.when(result);
+                        }
+                        return promise;
+                    }
+
+                    editScope.saveDialog = function() {
+                        // clear validation error
+                        editScope.validationError = null;
+
+                        // build injection locals
+                        var widget = $scope.widget;
+
+                        // create a default apply method for widgets
+                        // without edit mode
+                        // see issue https://goo.gl/KHPQLZ
+                        var applyFn;
+                        if (widget.edit) {
+                            applyFn = widget.edit.apply;
+                        } else {
+                            applyFn = function() {
+                                return true;
+                            };
+                        }
+
+                        // injection locals
+                        var locals = {
+                            widget: widget,
+                            definition: editScope.definition,
+                            config: editScope.definition.config
+                        };
+
+                        // invoke apply function and apply if success
+                        var result = $injector.invoke(applyFn, applyFn, locals);
+                        createApplyPromise(result).then(function() {
+                            definition.title = editScope.definition.title;
+                            angular.extend(definition.config, editScope.definition.config);
+                            if (widget.edit && widget.edit.reload) {
+                                // reload content after edit dialog is closed
+                                $scope.$broadcast('widgetConfigChanged');
+                            }
+                            editScope.closeDialog();
+                        }, function(err) {
+                            if (err) {
+                                editScope.validationError = err;
+                            } else {
+                                editScope.validationError = 'Validation durring apply failed';
+                            }
+                        });
+                    };
+
+                };
+
+            } else {
+                $log.debug('widget not found');
+            }
+        }
+
+        return {
+            replace: true,
+            restrict: 'EA',
+            transclude: false,
+            templateUrl: dashboard.customWidgetTemplatePath ? dashboard.customWidgetTemplatePath : adfTemplatePath + 'widget.html',
+            scope: {
+                definition: '=',
+                col: '=column',
+                editMode: '=',
+                options: '=',
+                widgetState: '='
+            },
+            controller: function($scope) {
+
+                var adfDashboardCollapseExpand = $scope.$on('adfDashboardCollapseExpand', function(event, args) {
+                    $scope.widgetState.isCollapsed = args.collapseExpandStatus;
+                });
+
+                var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function(event, widget) {
+                    if (dashboard.idEquals($scope.definition.wid, widget.wid)) {
+                        $scope.edit();
+                    }
+                });
+
+                var adfIsEditMode = $scope.$on('adfIsEditMode', function(event, widget) {
+                    $scope.editing = true;
+                });
+
+                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function(event, widget) {
+                    $scope.editing = false;
+                });
+
+                var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function(event, widget) {
+                    $scope.editing = false;
+                });
+
+                $scope.$on('$destroy', function() {
+                    adfDashboardCollapseExpand();
+                    adfWidgetEnterEditMode();
+                    adfIsEditMode();
+                    adfDashboardChanged();
+                    adfDashboardEditsCancelled();
+                });
+
+                $scope.widgetClasses = function(w, definition) {
+                    var classes = definition.styleClass || '';
+                    // w is undefined, if the type of the widget is unknown
+                    // see issue #216
+                    if (!w || !w.frameless || $scope.editMode) {
+                        classes += ' panel panel-default';
+                    }
+                    return classes;
+                };
+
+                $scope.openFullScreen = function() {
+                    var definition = $scope.definition;
+                    var fullScreenScope = $scope.$new();
+                    var opts = {
+                        scope: fullScreenScope,
+                        templateUrl: adfTemplatePath + 'widget-fullscreen.html',
+                        size: definition.modalSize || 'lg', // 'sm', 'lg'
+                        backdrop: 'static',
+                        windowClass: (definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
+                    };
+
+                    var instance = $uibModal.open(opts);
+                    fullScreenScope.closeDialog = function() {
+                        instance.close();
+                        fullScreenScope.$destroy();
+                    };
+                };
+
+                $scope.openFilter = function() {
+
+                }
+
+                $scope.openAboutScreen = function(size) {
+                    size = 'md';
+                    var modalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'widgetAboutModal.html',
+                        controller: function($scope, $uibModalInstance, information) {
+                            $scope.about = {};
+                            $scope.about.info = information;
+                            $scope.ok = function() {
+                                $uibModalInstance.close();
+                            };
+                        },
+                        'size': size,
+                        resolve: {
+                            information: function() {
+                                return $scope.config.about;
+                            }
+                        }
+                    });
+
+                    modalInstance.result.then(function(selectedItem) {
+                        $scope.selected = selectedItem;
+                    }, function() {
+                        $log.info('Modal dismissed at: ' + new Date());
+                    });
+                };
+
+                $scope.saveWidgetScreen = function(wId) {
+                    $scope.$emit('generateSnapshot', {
+                        'objectSelector': '.widget_' + wId,
+                        'fileName': 'capture_' + new Date().getTime()
+                    });
+                };
+            },
+            compile: function() {
+
+                /**
+                 * use pre link, because link of widget-content
+                 * is executed before post link widget
+                 */
+                return {
+                    pre: preLink,
+                    post: postLink
+                };
+            }
+        };
+
+    });

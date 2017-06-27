@@ -1,0 +1,53 @@
+<form name="widgetEditForm" novalidate role="form" ng-submit="saveDialog()">
+    <div class="modal-header">
+        <button type="button" class="close" ng-click="closeDialog()" aria-hidden="true">&times;</button>
+        <h3 class="modal-title">{{widget.title}}</h3>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="alert alert-danger" role="alert" ng-show="validationError">
+                    <strong>Apply error:</strong> {{validationError}}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-md-6">
+                <div class="form-group">
+                    <label for="widgetTitle" ng-bind="translate('ADF_COMMON_TITLE')">Title</label>
+                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-model="definition.title" placeholder="Enter title">
+                </div>
+            </div>
+            <div class="col-xs-12 col-md-6">
+                <div class="form-group">
+                    <label for="widgetReloadPeriod" ng-bind="translate('ADF_WIDGET_TOOLTIP_REFRESH')">Refresh</label>
+                    <select class="form-control" id="widgetReloadPeriod" aria-label="ngSelected demo" ng-model="definition.config.reloadPeriod" required="">
+                        <option ng-selected="selected" value="0">MANUAL</option>
+                        <option value="20">20 SECONDS</option>
+                        <option value="40">40 SECONDS</option>
+                        <option value="60">EVERY MINUTE</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div ng-if="widget.edit" class="row">
+            <div class="col-xs-12">
+                <adf-widget-content model="definition" content="widget.edit" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="form-group">
+                    <label for="widgetAbout">About</label>
+                    <textarea class="form-control text-primary" id="widgetAbout" ng-model="definition.config.about" placeholder="Enter widget description"></textarea>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" ng-click="closeDialog()" ng-bind="translate('ADF_COMMON_CANCEL')">Cancel</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="widgetEditForm.$invalid" ng-value="translate('ADF_COMMON_APPLY')">Apply</button>
+    </div>
+</form>
