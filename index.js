@@ -1,2 +1,2 @@
-require('./dist/angular-dashboard-framework');
+require('./dist/opengate-angular-dashboard-framework');
 module.exports = 'adf';

@@ -29,6 +29,8 @@ var modRewrite = require('connect-modrewrite');
 var $ = require('gulp-load-plugins')();
 var del = require('del');
 var pkg = require('./package.json');
+
+console.log(pkg.name);
 var karmaServer = require('karma').Server;
 var name = pkg.name;
 
@@ -39,7 +41,7 @@ var templateOptions = {
 
 var annotateOptions = {
     enable: [
-        'opengate-angular-dashboard-framework'
+        'angular-dashboard-framework'
     ]
 };
 
