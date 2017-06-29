@@ -40,7 +40,7 @@
         "angular-bootstrap": "^1.3.0",
         "bootstrap": "^3.3.6",
         "Sortable": "^1.4.2",
-        "opengate-angular-js": "https://github.com/amplia-iiot/opengate-angular-js.git#develop"
+        "opengate-angular-js": "0.1.x"
     },
     "devDependencies": {
         "angular-mocks": ">=1.2",
