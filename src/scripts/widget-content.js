@@ -44,20 +44,24 @@ angular.module('adf')
             } else if (!content) {
                 var msg = 'widget content is undefined, please have a look at your browser log';
                 renderError($element, msg);
-            } else if (newScope && newScope.reloadData && !configChanged) {
-                if (newScope.itemsPerPage !== undefined && isNaN(newScope.itemsPerPage)) {
-                    newScope = renderWidget($scope, $element, currentScope, model, content);
-                }
-                if (newScope.menu !== undefined) { //adf-widget-browser
+            } else {
+                if (newScope && newScope.menu !== undefined) { //adf-widget-browser
                     newScope = renderWidget($scope, $element, currentScope, model, content);
                 } else {
-                    newScope.reloadData();
+                    if (newScope && newScope.reloadData && !configChanged) {
+                        if (newScope.itemsPerPage !== undefined && isNaN(newScope.itemsPerPage)) {
+                            newScope = renderWidget($scope, $element, currentScope, model, content);
+                        } else {
+                            newScope.reloadData();
+                        }
+                    } else if (newScope && newScope.reloadData && newScope.needConfiguration !== undefined && !newScope.needConfiguration) {
+                        newScope.reloadData();
+                    } else {
+                        newScope = renderWidget($scope, $element, currentScope, model, content, editing);
+                    }
                 }
-            } else if (newScope && newScope.reloadData && newScope.needConfiguration !== undefined && !newScope.needConfiguration) {
-                newScope.reloadData();
-            } else {
-                newScope = renderWidget($scope, $element, currentScope, model, content, editing);
             }
+
             newScope.editing = editing ? editing : false;
             return newScope;
         }
