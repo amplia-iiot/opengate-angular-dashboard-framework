@@ -927,6 +927,7 @@ angular.module('adf.locale')
                 ADF_WIDGET_TOOLTIP_REFRESH: 'Reload widget Content',
                 ADF_WIDGET_TOOLTIP_PRINT: 'Print widget Content',
                 ADF_WIDGET_TOOLTIP_FILTER: 'Show widget Filter',
+                ADF_WIDGET_TOOLTIP_SORT: 'Show widget Sort',
                 ADF_WIDGET_TOOLTIP_MOVE: 'Change widget location',
                 ADF_WIDGET_TOOLTIP_COLLAPSE: 'Collapse widget',
                 ADF_WIDGET_TOOLTIP_EXPAND: 'Expand widget',
@@ -952,6 +953,7 @@ angular.module('adf.locale')
                 ADF_WIDGET_DELETE_CONFIRM_MESSAGE: 'Är du säker på att du vill ta bort denna widget ?',
                 ADF_WIDGET_TOOLTIP_REFRESH: 'Ladda om widget',
                 ADF_WIDGET_TOOLTIP_FILTER: 'Show widget Filter',
+                ADF_WIDGET_TOOLTIP_SORT: 'Show widget Sort',
                 ADF_WIDGET_TOOLTIP_MOVE: 'Ändra widgets position',
                 ADF_WIDGET_TOOLTIP_COLLAPSE: 'Stäng widget',
                 ADF_WIDGET_TOOLTIP_EXPAND: 'Öppna widget',
@@ -1917,13 +1919,13 @@ angular.module('adf')
                     direction: ""
                 };
 
-                $scope.toogleAdvanced = false;
+                $scope.toggleAdvanced = false;
                 if (typeof $scope.config.filter === "object" && $scope.config.filter.oql.length > 2) {
                     $scope.search = {
                         oql: $scope.config.filter.oql,
                         json: $scope.config.filter.value
                     };
-                    $scope.toogleAdvanced = true;
+                    $scope.toggleAdvanced = true;
                 } else if (typeof $scope.config.filter === "string") {
                     $scope.search = {
                         quick: $scope.config.filter
@@ -1934,8 +1936,8 @@ angular.module('adf')
                     };
                 }
 
-                $scope.toogleFilter = function() {
-                    $scope.toogleAdvanced = !$scope.toogleAdvanced;
+                $scope.toggleFilter = function() {
+                    $scope.toggleAdvanced = !$scope.toggleAdvanced;
                 };
                 $scope.filterAvailable = false;
                 $scope.showFilter = function() {
@@ -1943,7 +1945,6 @@ angular.module('adf')
                 };
 
                 $scope.showFinalFilter = false;
-
                 $scope.launchSearching = function() {
                     var widget = {
                         definition: definition,
@@ -1966,7 +1967,6 @@ angular.module('adf')
                             value: ''
                         };
                     $scope.launchSearching();
-
                 }
 
                 $scope.applyFilter = function(event) {
@@ -2021,7 +2021,7 @@ angular.module('adf')
                 $scope.enter = function(event) {
                     var keycode = (event.keyCode ? event.keyCode : event.which);
                     if (keycode === 13) {
-                        if ($scope.toogleAdvanced)
+                        if ($scope.toggleAdvanced)
                             $scope.launchSearchingAdv();
                         else
                             $scope.launchSearchingQuick();
@@ -2030,7 +2030,6 @@ angular.module('adf')
                         $scope.showFinalFilter = $scope.showFinalFilter === false ? true : false;
                     }
                 }
-
 
                 $scope.customSelectors = [];
                 $scope.getCustomSelectors = function() {
@@ -2041,7 +2040,7 @@ angular.module('adf')
                         $log.error(err);
                     });
 
-                }
+                };
 
                 $scope.changeDirection = function() {
                     if ($scope.config.sort.direction === 'DESCENDING') {
@@ -2050,12 +2049,9 @@ angular.module('adf')
                         $scope.config.sort.direction = 'DESCENDING'
                     }
                     $scope.reload();
-                }
-
+                };
 
                 $scope.debugQuery = function() {
-
-
                     Filter.parseQuery($scope.search.oql || '')
                         .then(function(data) {
                             //$scope.elementos = data;
