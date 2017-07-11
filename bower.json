@@ -40,7 +40,7 @@
         "angular-bootstrap": "^1.3.0",
         "bootstrap": "^3.3.6",
         "Sortable": "^1.4.2",
-        "opengate-angular-js": "0.1.x"
+        "opengate-angular-js": "develop"
     },
     "devDependencies": {
         "angular-mocks": ">=1.2",
