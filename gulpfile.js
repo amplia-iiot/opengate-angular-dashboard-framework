@@ -85,7 +85,7 @@ gulp.task('clean', function(cb) {
 /** build **/
 
 gulp.task('styles', function() {
-    gulp.src(['src/styles/**/*.scss'])
+    return gulp.src(['src/styles/**/*.scss'])
         .pipe($.sass({
             precision: 10,
             outputStyle: 'expanded'
@@ -99,7 +99,7 @@ gulp.task('styles', function() {
 });
 
 function processScripts(sources, filename) {
-    sources.pipe($.sourcemaps.init())
+    return sources.pipe($.sourcemaps.init())
         .pipe($.if('*.js', $.replace('<<adfVersion>>', pkg.version)))
         .pipe($.if('*.js', $.replace(/'use strict';/g, '')))
         .pipe($.concat(filename + '.js'))
@@ -114,14 +114,14 @@ function processScripts(sources, filename) {
 
 gulp.task('js', function() {
     var sources = gulp.src(['src/scripts/*.js']);
-    processScripts(sources, name);
+    return processScripts(sources, name);
 });
 
 gulp.task('js-with-tpls', function() {
     var sources = gulp.src(['src/scripts/*.js', 'src/templates/*.html'])
         .pipe($.if('*.html', $.minifyHtml(minifyHtmlOptions)))
         .pipe($.if('*.html', $.angularTemplatecache(name + '.tpl.js', templateOptions)))
-    processScripts(sources, name + '-tpls');
+    return processScripts(sources, name + '-tpls');
 });
 
 gulp.task('build', ['styles', 'js', 'js-with-tpls']);
@@ -174,14 +174,14 @@ gulp.task('dashboard-templates', function() {
 });
 
 gulp.task('copy-font', function() {
-    gulp.src('sample/components/bootstrap/dist/fonts/*')
+    return gulp.src('sample/components/bootstrap/dist/fonts/*')
         .pipe(gulp.dest('dist/sample/fonts'));
 });
 
 gulp.task('sample', ['widget-templates', 'sample-templates', 'dashboard-templates', 'copy-font'], function() {
     var templates = gulp.src('.tmp/*.js', { read: false });
     var assets = $.useref.assets();
-    gulp.src('sample/index.html')
+    return gulp.src('sample/index.html')
         // inject templates
         .pipe($.inject(templates, { relative: true }))
         .pipe(assets)
@@ -199,12 +199,12 @@ gulp.task('sample', ['widget-templates', 'sample-templates', 'dashboard-template
 /** livereload **/
 
 gulp.task('reload', function() {
-    gulp.src('sample/*.html')
+    return gulp.src('sample/*.html')
         .pipe(connect.reload());
 })
 
 gulp.task('watch-styles', function() {
-    gulp.watch('src/styles/*.scss', ['styles', 'reload']);
+    return gulp.watch('src/styles/*.scss', ['styles', 'reload']);
 })
 
 gulp.task('watch', ['watch-styles'], function() {
@@ -222,11 +222,11 @@ gulp.task('watch', ['watch-styles'], function() {
         'sample/widgets/*/src/*.css',
         'sample/widgets/*/src/*.html'
     ];
-    gulp.watch(paths, ['reload']);
+    return gulp.watch(paths, ['reload']);
 });
 
 gulp.task('webserver', ['install-widgets'], function() {
-    connect.server({
+    return connect.server({
         port: 9002,
         livereload: true,
         // redirect / to /sample
