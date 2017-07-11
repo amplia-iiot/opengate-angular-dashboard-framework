@@ -1936,8 +1936,8 @@ angular.module('adf')
                     };
                 }
 
-                $scope.toggleFilter = function() {
-                    $scope.toggleAdvanced = !$scope.toggleAdvanced;
+                $scope.toggleFilter = function(advanced) {
+                    $scope.toggleAdvanced = advanced;
                 };
                 $scope.filterAvailable = false;
                 $scope.showFilter = function() {
@@ -1945,6 +1945,7 @@ angular.module('adf')
                 };
 
                 $scope.showFinalFilter = false;
+
                 $scope.launchSearching = function() {
                     var widget = {
                         definition: definition,
@@ -1967,6 +1968,7 @@ angular.module('adf')
                             value: ''
                         };
                     $scope.launchSearching();
+
                 }
 
                 $scope.applyFilter = function(event) {
@@ -2031,6 +2033,7 @@ angular.module('adf')
                     }
                 }
 
+
                 $scope.customSelectors = [];
                 $scope.getCustomSelectors = function() {
                     $scope.config.widgetSelectors().findFields("").then(function(fields) {
@@ -2040,7 +2043,7 @@ angular.module('adf')
                         $log.error(err);
                     });
 
-                };
+                }
 
                 $scope.changeDirection = function() {
                     if ($scope.config.sort.direction === 'DESCENDING') {
@@ -2049,9 +2052,12 @@ angular.module('adf')
                         $scope.config.sort.direction = 'DESCENDING'
                     }
                     $scope.reload();
-                };
+                }
+
 
                 $scope.debugQuery = function() {
+
+
                     Filter.parseQuery($scope.search.oql || '')
                         .then(function(data) {
                             //$scope.elementos = data;

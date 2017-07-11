@@ -4,16 +4,7 @@
         <div ng-include src="definition.titleTemplateUrl"></div>
     </div>
     <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable" class="row form-group" style="margin-top: 5px !important;">
-        <div class="col-xs-1" uib-dropdown>
-            <button class="btn btn-sm" uib-dropdown-toggle class="pointer" title="Toggle Advanced/Basic filter">
-                <i class="advanced-filter glyphicon" ng-class="{'glyphicon-font' : toggleAdvanced, 'glyphicon-bold' : !toggleAdvanced }"></i> <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu panel" style="border: 1px groove;" uib-dropdown-menu aria-labelledby="simple-dropdown">
-                <li ng-click="toggleFilter(true)"><a href=""><i class="advanced-filter glyphicon glyphicon-font txt-primary"></i> Advanced filter</a></li>
-                <li ng-click="toggleFilter(false)"><a href=""><i class="basic-filter glyphicon glyphicon-bold  txt-primary"></i> Basic filter</a></li>
-            </ul>
-        </div>
-        <div ng-if="toggleAdvanced" class="col-xs-11">
+        <div ng-if="toggleAdvanced" class="col-xs-12 col-md-8">
             <div class="filter" mass-autocomplete>
                 <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keypress="enter($event)" ng-model="search.oql" placeholder="Enter your advanced filter" mass-autocomplete-item="autocomplete_options()" ng-change="debugQuery() "></input>
                 <label ng-click='launchSearchingAdv()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon glyphicon-search"></label>
@@ -27,26 +18,35 @@
                 <pre>{{ search.json }}</pre>
             </div>
         </div>
-        <div ng-if="!toggleAdvanced" class="col-xs-11">
+        <div ng-if="!toggleAdvanced" class="col-xs-12 col-md-8">
             <div class="filter">
                 <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keypress="enter($event)" ng-model="search.quick" placeholder="Enter your basic filter here">
                 <label ng-click='launchSearchingQuick()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon glyphicon-search"></label>
             </div>
         </div>
+        <div class="col-xs-12 col-md-4" uib-dropdown>
+            <button class="btn btn-sm" uib-dropdown-toggle class="pointer" title="Toggle Advanced/Basic filter">
+                <i class="advanced-filter glyphicon" ng-class="{'glyphicon-font' : toggleAdvanced, 'glyphicon-bold' : !toggleAdvanced }"></i> <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu panel" style="border: 1px groove;" uib-dropdown-menu aria-labelledby="simple-dropdown">
+                <li ng-click="toggleFilter(true)"><a href=""><i class="advanced-filter glyphicon glyphicon-font txt-primary"></i> Advanced filter</a></li>
+                <li ng-click="toggleFilter(false)"><a href=""><i class="basic-filter glyphicon glyphicon-bold  txt-primary"></i> Basic filter</a></li>
+            </ul>
+        </div>
     </div>
     <div ng-if="customSelectors && config.sort && filterAvailable" class="row form-group" style="margin-top: 5px !important;">
-        <div class="sortDirection col-xs-1">
-            <button class="btn btn-sm pointer" ng-click="changeDirection()" ng-disabled="config.sort.value === ''" title="Toggle sorting direction">
-                <i class="glyphicon" style="font-size:1.3em;" ng-class="config.sort.direction==='ASCENDING' ? 'glyphicon-sort-by-attributes': 'glyphicon-sort-by-attributes-alt'"></i>
-            </button>
-        </div>
-        <div class="sort col-xs-11">
+        <div class="sort col-xs-12 col-md-8">
             <ui-select ng-model="config.sort.value" theme="bootstrap" title="Choose a filter" allow-clear="true" append-to-body="true" ng-change="launchSearching()" ng-click="getCustomSelectors()">
                 <ui-select-match placeholder="Sorted by ..." allow-clear="true">Sort by: {{$select.selected}}</ui-select-match>
                 <ui-select-choices repeat="selector in customSelectors | filter: $select.search">
                     <small ng-bind-html="selector | highlight: $select.search"></small>
                 </ui-select-choices>
             </ui-select>
+        </div>
+        <div class="sortDirection col-xs-4 col-md-4">
+            <button class="btn btn-sm pointer" ng-click="changeDirection()" ng-disabled="config.sort.value === ''" title="Toggle sorting direction">
+                <i class="glyphicon" style="font-size:1.3em;" ng-class="config.sort.direction==='ASCENDING' ? 'glyphicon-sort-by-attributes': 'glyphicon-sort-by-attributes-alt'"></i>
+            </button>
         </div>
     </div>
     <div ng-class="{'panel-body':!widget.frameless || editMode}" uib-collapse="widgetState.isCollapsed" style="overflow:hidden;">
