@@ -29,7 +29,7 @@ angular.module('adf', ['adf.provider', 'adf.locale', 'ui.bootstrap', 'opengate-a
     .value('adfTemplatePath', '../src/templates/')
     .value('rowTemplate', '<adf-dashboard-row row="row" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="row in column.rows" />')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '2.3.0');
+    .value('adfVersion', '2.4.0');
 /*
  * The MIT License
  *
@@ -301,7 +301,7 @@ angular.module('adf')
  */
 
 angular.module('adf')
-    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath) {
+    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", "$faIcons", function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons) {
         
 
         function stringToBoolean(string) {
@@ -693,9 +693,15 @@ angular.module('adf')
                     // "dashboard" if the field is empty
                     editDashboardScope.copy = {
                         title: (model.title !== 'Empty Dashboard' ? model.title : ''),
-                        description: model.description
+                        description: model.description,
+                        icon: 'fa-tachometer'
                     };
 
+                    // pass icon list
+                    editDashboardScope.availableIcons = $faIcons.list();
+                    editDashboardScope.tempIcon = {
+                        selected: editDashboardScope.copy.icon
+                    };
                     // pass dashboard structure to scope
                     editDashboardScope.structures = dashboard.structures;
 
@@ -713,6 +719,15 @@ angular.module('adf')
                         keyboard: false,
                         size: 'lg'
                     });
+
+                    editDashboardScope.selectIcon = function(icon) {
+                        if (icon) {
+                            editDashboardScope.copy.icon = icon;
+                        } else {
+                            editDashboardScope.copy.icon = undefined;
+                        }
+                    };
+
                     editDashboardScope.changeStructure = function(name, structure) {
                         $log.info('change structure to ' + name);
                         changeStructure(model, structure);
@@ -724,6 +739,8 @@ angular.module('adf')
                         // copy the new title back to the model
                         model.title = editDashboardScope.copy.title;
                         model.description = editDashboardScope.copy.description;
+                        model.icon = editDashboardScope.copy.icon;
+
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
