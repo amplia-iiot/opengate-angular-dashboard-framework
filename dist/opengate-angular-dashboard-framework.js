@@ -694,14 +694,12 @@ angular.module('adf')
                     editDashboardScope.copy = {
                         title: (model.title !== 'Empty Dashboard' ? model.title : ''),
                         description: model.description,
-                        icon: 'fa-tachometer'
+                        icon: model.icon
                     };
 
                     // pass icon list
                     editDashboardScope.availableIcons = $faIcons.list();
-                    editDashboardScope.tempIcon = {
-                        selected: editDashboardScope.copy.icon
-                    };
+
                     // pass dashboard structure to scope
                     editDashboardScope.structures = dashboard.structures;
 
@@ -720,14 +718,6 @@ angular.module('adf')
                         size: 'lg'
                     });
 
-                    editDashboardScope.selectIcon = function(icon) {
-                        if (icon) {
-                            editDashboardScope.copy.icon = icon;
-                        } else {
-                            editDashboardScope.copy.icon = undefined;
-                        }
-                    };
-
                     editDashboardScope.changeStructure = function(name, structure) {
                         $log.info('change structure to ' + name);
                         changeStructure(model, structure);
@@ -744,6 +734,7 @@ angular.module('adf')
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
+                        $scope.$apply();
                     };
                 };
 

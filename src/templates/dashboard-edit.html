@@ -14,12 +14,12 @@
         </div>
         <div class="form-group col-xs-12 col-md-6">
             <label for="icon">Icon</label>
-            <ui-select tagging="tagTransform" id="icon" ng-model="tempIcon.selected" theme="bootstrap" allow-clear="false" required="true" on-select="selectIcon($select.selected)" title="Choose icon">
+            <ui-select tagging="tagTransform" id="icon" ng-model="copy.icon" theme="bootstrap" allow-clear="false" required="true" on-select="selectIcon($select.selected)" title="Choose icon">
                 <ui-select-match placeholder="Choose icon" allow-clear="false">
                     <i class="fa {{$select.selected}} fa-2x"></i> <span>{{$select.selected}}</span>
                 </ui-select-match>
                 <ui-select-choices class="oux-icon-selector" repeat="iconTmp in availableIcons | filter: $select.search">
-                    <i class="fa {{ iconTmp}}" title="{{iconTmp}}"></i>
+                    <i class="fa {{iconTmp}}" title="{{iconTmp}}"></i>
                 </ui-select-choices>
             </ui-select>
         </div>

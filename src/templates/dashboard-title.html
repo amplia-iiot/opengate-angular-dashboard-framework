@@ -1,6 +1,6 @@
 <div class="row " style="padding:0px;">
     <div class="col-xs-12" ng-class="hideButtons?'col-md-12':'col-md-5'">
-        <span ng-if="model.icon" id="idDashboardIdcon" class="fa fa-2x {{model.icon}}"></span>
+        <span ng-if="model.icon" id="idDashboardIcon" class="fa fa-2x" ng-class="model.icon"></span>
         <span id="idDashboardTitle" class="fa-2x text-primary">{{model.title}}</span>
         <span ng-if="model.description" id="idDashboardDescription">{{model.description}}</span>
     </div>
