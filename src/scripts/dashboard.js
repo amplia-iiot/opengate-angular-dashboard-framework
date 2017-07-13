@@ -441,7 +441,7 @@ angular.module('adf')
                     editDashboardScope.copy = {
                         title: (model.title !== 'Empty Dashboard' ? model.title : ''),
                         description: model.description,
-                        icon: model.icon
+                        icon: model.icon ? model.icon : 'fa-tachometer'
                     };
 
                     // pass icon list
@@ -481,7 +481,6 @@ angular.module('adf')
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
-                        $scope.$apply();
                     };
                 };
 
