@@ -19,7 +19,8 @@
                     <i class="fa {{$select.selected}} fa-2x"></i> <span>{{$select.selected}}</span>
                 </ui-select-match>
                 <ui-select-choices class="oux-icon-selector" repeat="iconTmp in availableIcons | filter: $select.search">
-                    <i class="fa {{iconTmp}}" title="{{iconTmp}}"></i>
+                    <i class="fa" ng-class="iconTmp" title="{{iconTmp}}"></i><br/>
+                    <span ng-bind-html="iconTmp| highlight: $select.search"></span>
                 </ui-select-choices>
             </ui-select>
         </div>
