@@ -1752,8 +1752,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidget', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", function ($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter) {
-
+    .directive('adfWidget', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter) {
         function preLink($scope) {
             var definition = $scope.definition;
 
@@ -1837,7 +1836,7 @@ angular.module('adf')
                 }
 
                 // bind close function
-                var deleteWidget = function () {
+                var deleteWidget = function() {
                     var column = $scope.col;
                     if (column) {
                         var index = column.widgets.indexOf(definition);
@@ -1849,7 +1848,7 @@ angular.module('adf')
                     $rootScope.$broadcast('adfWidgetRemovedFromColumn');
                 };
 
-                $scope.remove = function () {
+                $scope.remove = function() {
                     if ($scope.options.enableConfirmDelete) {
                         var deleteScope = $scope.$new();
                         deleteScope.translate = dashboard.translate;
@@ -1865,11 +1864,11 @@ angular.module('adf')
                         };
                         var instance = $uibModal.open(opts);
 
-                        deleteScope.closeDialog = function () {
+                        deleteScope.closeDialog = function() {
                             instance.close();
                             deleteScope.$destroy();
                         };
-                        deleteScope.deleteDialog = function () {
+                        deleteScope.deleteDialog = function() {
                             deleteWidget();
                             deleteScope.closeDialog();
                         };
@@ -1879,13 +1878,13 @@ angular.module('adf')
                 };
 
 
-                $scope.print = function () {
+                $scope.print = function() {
                     if (!$scope.editMode) {
                         $scope.$broadcast('widgetPrint');
                     }
                 }
 
-                $scope.isExecuteOperationEnabled = function () {
+                $scope.isExecuteOperationEnabled = function() {
                     if ($scope.config.entityKey)
                         return true;
                     if (typeof $scope.config.filter === "string") {
@@ -1897,7 +1896,7 @@ angular.module('adf')
                     return false;
                 }
 
-                $scope.executeOperation = function () {
+                $scope.executeOperation = function() {
                     if (!$scope.editMode) {
                         $scope.$parent.$broadcast('widgetExecuteOperation');
                     }
@@ -1916,7 +1915,7 @@ angular.module('adf')
                     }
                 }
 
-                $scope.reload = function () {
+                $scope.reload = function() {
                     $scope.$broadcast('widgetReload');
                     _setReloadTimeout();
                 };
@@ -1924,7 +1923,7 @@ angular.module('adf')
                 // verificacion de periodo de refresco
                 _setReloadTimeout();
 
-                $element.on('$destroy', function () {
+                $element.on('$destroy', function() {
                     $interval.cancel(stopReloadTimeout);
                 });
 
@@ -1936,34 +1935,44 @@ angular.module('adf')
                     direction: ""
                 };
 
-                $scope.toggleAdvanced = false;
-                if (typeof $scope.config.filter === "object" && $scope.config.filter.oql.length > 2) {
+                $scope.toggleAdvanced = 1;
+                if (typeof $scope.config.filter === "object" && $scope.config.filter.oql && $scope.config.filter.oql.length > 2) {
                     $scope.search = {
                         oql: $scope.config.filter.oql,
                         json: $scope.config.filter.value
                     };
-                    $scope.toggleAdvanced = true;
+                    $scope.toggleAdvanced = 0;
                 } else if (typeof $scope.config.filter === "string") {
                     $scope.search = {
                         quick: $scope.config.filter
                     };
+                    $scope.toggleAdvanced = 1;
+                } else if (typeof $scope.config.filter === "object" && $scope.config.filter.fields) {
+                    $scope.search = {
+                        customFilter: $scope.config.filter.fields
+                    };
+                    $scope.search.fields = [];
+                    angular.forEach($scope.config.filter.fields, function(v, key) {
+                        $scope.search.fields.push(v.name);
+                    });
+                    $scope.toggleAdvanced = 2;
                 } else {
                     $scope.search = {
                         quick: $scope.config.filter = ""
                     };
                 }
 
-                $scope.toggleFilter = function (advanced) {
+                $scope.toggleFilter = function(advanced) {
                     $scope.toggleAdvanced = advanced;
                 };
                 $scope.filterAvailable = false;
-                $scope.showFilter = function () {
+                $scope.showFilter = function() {
                     $scope.filterAvailable = $scope.filterAvailable === true ? false : true;
                 };
 
                 $scope.showFinalFilter = false;
 
-                $scope.launchSearching = function () {
+                $scope.launchSearching = function() {
                     var widget = {
                         definition: definition,
                         element: $element
@@ -1972,8 +1981,46 @@ angular.module('adf')
                     $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, $scope.config.filter);
                     $scope.reload();
                 }
+                $scope.addCustomFilter = function(key) {
+                    $scope.search.customFilter = $scope.search.customFilter ? $scope.search.customFilter : [];
+                    $scope.search.customFilter.push({ name: key, value: '' });
+                }
 
-                $scope.launchSearchingAdv = function () {
+                $scope.launchCustomFilter = function() {
+
+                    var filtersElements = [];
+                    angular.forEach($scope.search.customFilter, function(v, key) {
+                        if (v.value) {
+                            var like = {};
+                            like[v.name] = v.value || undefined;
+                            filtersElements.push({ 'like': like });
+                        }
+
+                    });
+                    $scope.search.oql = $scope.search.json = '';
+
+                    $scope.config.filter = {
+                        value: JSON.stringify({
+                            'and': filtersElements
+
+                        }),
+                        fields: $scope.search.customFilter
+                    };
+                    $scope.launchSearching();
+                }
+
+
+
+                $scope.deleteFilter = function(value, model) {
+                    angular.forEach($scope.search.customFilter, function(v, key) {
+                        if (v.name === value) {
+                            $scope.search.customFilter.splice(key, 1);
+                        }
+                    });
+                };
+
+
+                $scope.launchSearchingAdv = function() {
                     $scope.search.quick = '';
                     $scope.config.filter = {
                         oql: $scope.search.oql,
@@ -1988,17 +2035,17 @@ angular.module('adf')
 
                 }
 
-                $scope.applyFilter = function (event) {
+                $scope.applyFilter = function(event) {
                     $scope.launchSearching();
                 }
 
-                $scope.launchSearchingQuick = function () {
+                $scope.launchSearchingQuick = function() {
                     $scope.search.oql = $scope.search.json = '';
                     $scope.config.filter = $scope.search.quick;
                     $scope.launchSearching();
                 }
 
-                var windowTimeChanged = $scope.$on('onWindowTimeChanged', function (event, timeObj) {
+                var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
                     $scope.config.windowFilter = timeObj ? timeObj : ($scope.config.windowFilter ? {} : timeObj);
                     var widget = {
                         definition: definition,
@@ -2021,7 +2068,7 @@ angular.module('adf')
                     };
                 }
 
-                $scope.config.getWindowTime = function () {
+                $scope.config.getWindowTime = function() {
                     var windowFilter = $scope.config.windowFilter;
                     if (windowFilter && windowFilter.type) {
                         var winTime = _getWindowTime(windowFilter.type);
@@ -2037,13 +2084,16 @@ angular.module('adf')
                     }
                 }
 
-                $scope.enter = function (event) {
+                $scope.enter = function(event) {
                     var keycode = (event.keyCode ? event.keyCode : event.which);
                     if (keycode === 13) {
-                        if ($scope.toggleAdvanced)
+                        if ($scope.toggleAdvanced === 0)
                             $scope.launchSearchingAdv();
-                        else
+                        if ($scope.toggleAdvanced === 1)
                             $scope.launchSearchingQuick();
+                        if ($scope.toggleAdvanced === 2)
+                            $scope.launchCustomFilter();
+
                     }
                     if (keycode === 19) {
                         $scope.showFinalFilter = $scope.showFinalFilter === false ? true : false;
@@ -2052,17 +2102,39 @@ angular.module('adf')
 
 
                 $scope.customSelectors = [];
-                $scope.getCustomSelectors = function () {
-                    $scope.config.widgetSelectors().findFields("").then(function (fields) {
+                $scope.getCustomSelectors = function() {
+                    $scope.config.widgetSelectors().findFields("").then(function(fields) {
                         $scope.customSelectors = fields;
                         $scope.$apply();
-                    }).catch(function (err) {
+                    }).catch(function(err) {
                         $log.error(err);
                     });
 
                 }
 
-                $scope.changeDirection = function () {
+                $scope.customFilter = [];
+                $scope.getcustomFilter = function() {
+                    $scope.config.widgetSelectors().findFields("").then(function(fields) {
+                        $scope.customFilter = fields;
+                        $scope.$apply();
+                    }).catch(function(err) {
+                        $log.error(err);
+                    });
+
+                }
+
+
+
+                $scope.ifCustomFilter = function() {
+                    return $scope.customSelectors && $scope.config.sort && $scope.config.title === 'IoT Devices List' && $scope.toggleAdvanced === 2;
+                }
+
+                $scope.showCustomFields = function() {
+                    return $scope.config.title === 'IoT Devices List' && $scope.toggleAdvanced === 2 && $scope.search.customFilter && $scope.filterAvailable && !$scope.editMode;
+                }
+
+
+                $scope.changeDirection = function() {
                     if ($scope.config.sort.direction === 'DESCENDING') {
                         $scope.config.sort.direction = 'ASCENDING'
                     } else if ($scope.config.sort.direction === 'ASCENDING') {
@@ -2071,25 +2143,24 @@ angular.module('adf')
                     $scope.reload();
                 }
 
-
-                $scope.debugQuery = function () {
+                $scope.debugQuery = function() {
 
 
                     Filter.parseQuery($scope.search.oql || '')
-                        .then(function (data) {
+                        .then(function(data) {
                             //$scope.elementos = data;
                             $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
                             $scope.unknownWords = '';
                             $scope.filter.error = null;
                         })
-                        .catch(function (err) {
+                        .catch(function(err) {
                             $scope.filter.error = err;
                             // Tratar el error
                         });
 
                 }
 
-                $scope.autocomplete_options = function () {
+                $scope.autocomplete_options = function() {
                     var autocomplete_options = {
                         suggest: Filter.suggest_field_delimited,
                         customSelectors: $scope.config.widgetSelectors()
@@ -2100,7 +2171,7 @@ angular.module('adf')
                 };
 
                 // bind edit function
-                $scope.edit = function () {
+                $scope.edit = function() {
                     var editScope = $scope.$new();
                     editScope.translate = dashboard.translate;
                     editScope.definition = angular.copy(definition);
@@ -2119,7 +2190,7 @@ angular.module('adf')
 
                     var instance = $uibModal.open(opts);
 
-                    editScope.closeDialog = function () {
+                    editScope.closeDialog = function() {
                         instance.close();
                         editScope.$destroy();
                     };
@@ -2141,7 +2212,7 @@ angular.module('adf')
                         return promise;
                     }
 
-                    editScope.saveDialog = function () {
+                    editScope.saveDialog = function() {
                         // clear validation error
                         editScope.validationError = null;
 
@@ -2155,7 +2226,7 @@ angular.module('adf')
                         if (widget.edit) {
                             applyFn = widget.edit.apply;
                         } else {
-                            applyFn = function () {
+                            applyFn = function() {
                                 return true;
                             };
                         }
@@ -2169,7 +2240,7 @@ angular.module('adf')
 
                         // invoke apply function and apply if success
                         var result = $injector.invoke(applyFn, applyFn, locals);
-                        createApplyPromise(result).then(function () {
+                        createApplyPromise(result).then(function() {
                             definition.title = editScope.definition.title;
                             angular.extend(definition.config, editScope.definition.config);
                             if (widget.edit && widget.edit.reload) {
@@ -2177,7 +2248,7 @@ angular.module('adf')
                                 $scope.$broadcast('widgetConfigChanged');
                             }
                             editScope.closeDialog();
-                        }, function (err) {
+                        }, function(err) {
                             if (err) {
                                 editScope.validationError = err;
                             } else {
@@ -2205,31 +2276,31 @@ angular.module('adf')
                 options: '=',
                 widgetState: '='
             },
-            controller: ["$scope", function ($scope) {
+            controller: ["$scope", function($scope) {
 
-                var adfDashboardCollapseExpand = $scope.$on('adfDashboardCollapseExpand', function (event, args) {
+                var adfDashboardCollapseExpand = $scope.$on('adfDashboardCollapseExpand', function(event, args) {
                     $scope.widgetState.isCollapsed = args.collapseExpandStatus;
                 });
 
-                var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function (event, widget) {
+                var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function(event, widget) {
                     if (dashboard.idEquals($scope.definition.wid, widget.wid)) {
                         $scope.edit();
                     }
                 });
 
-                var adfIsEditMode = $scope.$on('adfIsEditMode', function (event, widget) {
+                var adfIsEditMode = $scope.$on('adfIsEditMode', function(event, widget) {
                     $scope.editing = true;
                 });
 
-                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function (event, widget) {
+                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function(event, widget) {
                     $scope.editing = false;
                 });
 
-                var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function (event, widget) {
+                var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function(event, widget) {
                     $scope.editing = false;
                 });
 
-                $scope.$on('$destroy', function () {
+                $scope.$on('$destroy', function() {
                     adfDashboardCollapseExpand();
                     adfWidgetEnterEditMode();
                     adfIsEditMode();
@@ -2237,7 +2308,7 @@ angular.module('adf')
                     adfDashboardEditsCancelled();
                 });
 
-                $scope.widgetClasses = function (w, definition) {
+                $scope.widgetClasses = function(w, definition) {
                     var classes = definition.styleClass || '';
                     // w is undefined, if the type of the widget is unknown
                     // see issue #216
@@ -2247,7 +2318,7 @@ angular.module('adf')
                     return classes;
                 };
 
-                $scope.openFullScreen = function () {
+                $scope.openFullScreen = function() {
                     var definition = $scope.definition;
                     var fullScreenScope = $scope.$new();
                     var opts = {
@@ -2259,51 +2330,51 @@ angular.module('adf')
                     };
 
                     var instance = $uibModal.open(opts);
-                    fullScreenScope.closeDialog = function () {
+                    fullScreenScope.closeDialog = function() {
                         instance.close();
                         fullScreenScope.$destroy();
                     };
                 };
 
-                $scope.openFilter = function () {
+                $scope.openFilter = function() {
 
                 }
 
-                $scope.openAboutScreen = function (size) {
+                $scope.openAboutScreen = function(size) {
                     size = 'md';
                     var modalInstance = $uibModal.open({
                         animation: true,
                         templateUrl: 'widgetAboutModal.html',
-                        controller: ["$scope", "$uibModalInstance", "information", function ($scope, $uibModalInstance, information) {
+                        controller: ["$scope", "$uibModalInstance", "information", function($scope, $uibModalInstance, information) {
                             $scope.about = {};
                             $scope.about.info = information;
-                            $scope.ok = function () {
+                            $scope.ok = function() {
                                 $uibModalInstance.close();
                             };
                         }],
                         'size': size,
                         resolve: {
-                            information: function () {
+                            information: function() {
                                 return $scope.config.about;
                             }
                         }
                     });
 
-                    modalInstance.result.then(function (selectedItem) {
+                    modalInstance.result.then(function(selectedItem) {
                         $scope.selected = selectedItem;
-                    }, function () {
+                    }, function() {
                         $log.info('Modal dismissed at: ' + new Date());
                     });
                 };
 
-                $scope.saveWidgetScreen = function (wId) {
+                $scope.saveWidgetScreen = function(wId) {
                     $scope.$emit('generateSnapshot', {
                         'objectSelector': '.widget_' + wId,
                         'fileName': 'capture_' + new Date().getTime()
                     });
                 };
             }],
-            compile: function () {
+            compile: function() {
 
                 /**
                  * use pre link, because link of widget-content
@@ -2327,6 +2398,6 @@ $templateCache.put("../src/templates/widget-add.html","<div class=modal-header> 
 $templateCache.put("../src/templates/widget-delete.html","<div class=modal-header> <h4 class=modal-title><span ng-bind=\"translate(\'ADF_COMMON_DELETE\')\">Delete</span> {{widget.title}}</h4> </div> <div class=modal-body> <form role=form> <div class=form-group> <label for=widgetTitle ng-bind=\"translate(\'ADF_WIDGET_DELETE_CONFIRM_MESSAGE\')\">Are you sure you want to delete this widget ?</label> </div> </form> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> <button type=button class=\"btn btn-primary\" ng-click=deleteDialog() ng-bind=\"translate(\'ADF_COMMON_DELETE\')\">Delete</button> </div> ");
 $templateCache.put("../src/templates/widget-edit.html","<form name=widgetEditForm novalidate role=form ng-submit=saveDialog()> <div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title>{{widget.title}}</h3> </div> <div class=modal-body> <div class=row> <div class=col-xs-12> <div class=\"alert alert-danger\" role=alert ng-show=validationError> <strong>Apply error:</strong> {{validationError}} </div> </div> </div> <div class=row> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetTitle ng-bind=\"translate(\'ADF_COMMON_TITLE\')\">Title</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-model=definition.title placeholder=\"Enter title\"> </div> </div> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetReloadPeriod ng-bind=\"translate(\'ADF_WIDGET_TOOLTIP_REFRESH\')\">Refresh</label> <select class=form-control id=widgetReloadPeriod aria-label=\"ngSelected demo\" ng-model=definition.config.reloadPeriod required> <option ng-selected=selected value=0>MANUAL</option> <option value=20>20 SECONDS</option> <option value=40>40 SECONDS</option> <option value=60>EVERY MINUTE</option> </select> </div> </div> </div> <div ng-if=widget.edit class=row> <div class=col-xs-12> <adf-widget-content model=definition content=widget.edit> </adf-widget-content></div> </div> <div class=row> <div class=col-xs-12> <div class=form-group> <label for=widgetAbout>About</label> <textarea class=\"form-control text-primary\" id=widgetAbout ng-model=definition.config.about placeholder=\"Enter widget description\"></textarea> </div> </div> </div> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CANCEL\')\">Cancel</button> <button type=submit class=\"btn btn-primary\" ng-disabled=widgetEditForm.$invalid ng-value=\"translate(\'ADF_COMMON_APPLY\')\">Apply</button> </div> </form>");
 $templateCache.put("../src/templates/widget-fullscreen.html","<div class=modal-header> <div class=\"pull-right widget-icons\"> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REFRESH\') }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a> <a href title=close ng-click=closeDialog()> <i class=\"glyphicon glyphicon-remove\"></i> </a> <a href title=\"insert into dashboard\" ng-if=persistDashboard ng-click=persistDashboard()> <i class=\"glyphicon glyphicon-save\"></i> </a> </div> <h4 class=modal-title>&nbsp;{{ definition.title }}</h4> </div> <div class=\"modal-body widget\" style=overflow:hidden;> <adf-widget-content model=definition content=widget> </adf-widget-content></div> <div class=modal-footer> <button type=button class=\"btn btn-primary\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> </div>");
-$templateCache.put("../src/templates/widget-title.html","<div class=panel-title style=margin:0px;> <span class=pull-left> <h4 ng-if=\"!widget.frameless && definition.title\" style=margin:0px;>{{definition.title}}</h4> </span> <div class=pull-right> <span ng-if=config.about> <a href uib-popover=\"{{ config.about }}\" popover-trigger=\"\'mouseenter\'\" popover-placement=top ng-click=openAboutScreen()> <i class=\"glyphicon glyphicon-info-sign\"></i></a> <script type=text/ng-template id=widgetAboutModal.html> <div class=\"modal-header\"> <h4 class=\"modal-title\">About</h4> </div> <div class=\"modal-body\">{{ about.info }}</div> <div class=\"modal-footer\"><button class=\"btn btn-primary\" type=\"button\" ng-click=\"ok()\">OK</button></div> </script> </span> <a ng-if=\"!editMode && widget.print\" href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_PRINT\') }}\" ng-click=print()> <i class=\"glyphicon glyphicon-print\"></i> </a> <span ng-if=\"!editMode && config.widgetOnToggleView && config.widgetViews\" uib-popover=\"Change view\" popover-trigger=\"\'mouseenter\'\" popover-placement=top uib-dropdown> <a href id=toggle_{{definition.wid}} uib-dropdown-toggle> <i class=\"glyphicon glyphicon-eye-close\"></i> </a> <ul class=dropdown-menu uib-dropdown-menu aria-labelledby=\"Change view\"> <li ng-repeat=\"choice in config.widgetViews\"> <a ng-click=config.widgetOnToggleView(choice.value)>{{choice.name}}</a> </li> </ul> </span> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REFRESH\') }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_OPERATION\') }}\" ng-if=\"widget.executeOperation && !editMode && isExecuteOperationEnabled()\" ng-click=executeOperation()> <i class=\"glyphicon glyphicon-flash\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FILTER\') }}\" ng-if=\"config.widgetSelectors && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-filter\" ng-class=\"{\'active\': search.json || search.quick}\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_SORT\') }}\" ng-if=\"config.sort && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-sort\" ng-class=\"{\'active\': (config.sort.value && config.sort.value !== \'\')}\"></i> </a>  <a href title=\"Save picture\" ng-if=\"!editMode && !widgetState.isCollapsed\" ng-click=saveWidgetScreen(definition.wid)> <i class=\"glyphicon glyphicon-picture\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_MOVE\') }}\" class=adf-move ng-if=editMode> <i class=\"glyphicon glyphicon-move\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_COLLAPSE\') }}\" ng-show=\"options.collapsible && !widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-minus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EXPAND\') }}\" ng-show=\"options.collapsible && widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-plus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EDIT\') }}\" ng-click=edit() ng-if=editMode> <i class=\"glyphicon glyphicon-cog\"></i> </a> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FULLSCREEN\') }}\" ng-click=openFullScreen() ng-show=options.maximizable> <i class=\"glyphicon glyphicon-fullscreen\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REMOVE\') }}\" ng-click=remove() ng-if=editMode> <i class=\"glyphicon glyphicon-trash\"></i> </a> </div> </div>");
-$templateCache.put("../src/templates/widget.html","<div adf-id={{definition.wid}} adf-widget-type={{definition.type}} ng-class=\"widgetClasses(widget, definition)\" class=\"widget widget_{{definition.wid}}\"> <a name={{definition.wid}} id={{definition.wid}}></a> <div class=\"panel-heading clearfix bg-primary\" ng-if=\"!widget.frameless || editMode\"> <div ng-include src=definition.titleTemplateUrl></div> </div> <div ng-if=\"!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div ng-if=toggleAdvanced class=\"col-xs-12 col-md-8\"> <div class=filter mass-autocomplete> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.oql placeholder=\"Enter your advanced filter\" mass-autocomplete-item=autocomplete_options() ng-change=debugQuery()> <label ng-click=launchSearchingAdv() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> <div ng-if=\"!editMode && filter.error\" class=col-xs-12> <alert type=danger class=\"text-center text-danger\"> <span>{{filter.error}}</span> </alert> </div> <div ng-if=\"showFinalFilter && search.json\" class=col-xs-12> <pre>{{ search.json }}</pre> </div> </div> <div ng-if=!toggleAdvanced class=\"col-xs-12 col-md-8\"> <div class=filter> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.quick placeholder=\"Enter your basic filter here\"> <label ng-click=launchSearchingQuick() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> </div> <div class=\"col-xs-12 col-md-4\" uib-dropdown> <button class=\"btn btn-sm\" uib-dropdown-toggle title=\"Toggle Advanced/Basic filter\"> <i class=\"advanced-filter glyphicon\" ng-class=\"{\'glyphicon-font\' : toggleAdvanced, \'glyphicon-bold\' : !toggleAdvanced }\"></i> <span class=caret></span> </button> <ul class=\"dropdown-menu panel\" style=\"border: 1px groove;\" uib-dropdown-menu aria-labelledby=simple-dropdown> <li ng-click=toggleFilter(true)><a href><i class=\"advanced-filter glyphicon glyphicon-font txt-primary\"></i> Advanced filter</a></li> <li ng-click=toggleFilter(false)><a href><i class=\"basic-filter glyphicon glyphicon-bold txt-primary\"></i> Basic filter</a></li> </ul> </div> </div> <div ng-if=\"customSelectors && config.sort && filterAvailable\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div class=\"sort col-xs-12 col-md-8\"> <ui-select ng-model=config.sort.value theme=bootstrap title=\"Choose a filter\" allow-clear=true append-to-body=true ng-change=launchSearching() ng-click=getCustomSelectors()> <ui-select-match placeholder=\"Sorted by ...\" allow-clear=true>Sort by: {{$select.selected}}</ui-select-match> <ui-select-choices repeat=\"selector in customSelectors | filter: $select.search\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> <div class=\"sortDirection col-xs-4 col-md-4\"> <button class=\"btn btn-sm pointer\" ng-click=changeDirection() ng-disabled=\"config.sort.value === \'\'\" title=\"Toggle sorting direction\"> <i class=glyphicon style=font-size:1.3em; ng-class=\"config.sort.direction===\'ASCENDING\' ? \'glyphicon-sort-by-attributes\': \'glyphicon-sort-by-attributes-alt\'\"></i> </button> </div> </div> <div ng-class=\"{\'panel-body\':!widget.frameless || editMode}\" uib-collapse=widgetState.isCollapsed style=overflow:hidden;> <adf-widget-content model=definition content=widget editing=editMode> </adf-widget-content></div> </div>");}]);
+$templateCache.put("../src/templates/widget-title.html","<div class=panel-title style=margin:0px;> <span class=pull-left> <h4 ng-if=\"!widget.frameless && definition.title\" style=margin:0px;>{{definition.title}}</h4> </span> <div class=pull-right> <span ng-if=config.about> <a href uib-popover=\"{{ config.about }}\" popover-trigger=\"\'mouseenter\'\" popover-placement=top ng-click=openAboutScreen()> <i class=\"glyphicon glyphicon-info-sign\"></i></a> <script type=text/ng-template id=widgetAboutModal.html> <div class=\"modal-header\"> <h4 class=\"modal-title\">About</h4> </div> <div class=\"modal-body\">{{ about.info }}</div> <div class=\"modal-footer\"><button class=\"btn btn-primary\" type=\"button\" ng-click=\"ok()\">OK</button></div> </script> </span> <a ng-if=\"!editMode && widget.print\" href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_PRINT\') }}\" ng-click=print()> <i class=\"glyphicon glyphicon-print\"></i> </a> <span ng-if=\"!editMode && config.widgetOnToggleView && config.widgetViews\" uib-popover=\"Change view\" popover-trigger=\"\'mouseenter\'\" popover-placement=top uib-dropdown> <a href id=toggle_{{definition.wid}} uib-dropdown-toggle> <i class=\"glyphicon glyphicon-eye-close\"></i> </a> <ul class=dropdown-menu uib-dropdown-menu aria-labelledby=\"Change view\"> <li ng-repeat=\"choice in config.widgetViews\"> <a ng-click=config.widgetOnToggleView(choice.value)>{{choice.name}}</a> </li> </ul> </span> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REFRESH\') }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_OPERATION\') }}\" ng-if=\"widget.executeOperation && !editMode && isExecuteOperationEnabled()\" ng-click=executeOperation()> <i class=\"glyphicon glyphicon-flash\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FILTER\') }}\" ng-if=\"config.widgetSelectors && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-filter\" ng-class=\"{\'active\': search.json || search.quick ||search.customFilter}\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_SORT\') }}\" ng-if=\"config.sort && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-sort\" ng-class=\"{\'active\': (config.sort.value && config.sort.value !== \'\')}\"></i> </a>  <a href title=\"Save picture\" ng-if=\"!editMode && !widgetState.isCollapsed\" ng-click=saveWidgetScreen(definition.wid)> <i class=\"glyphicon glyphicon-picture\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_MOVE\') }}\" class=adf-move ng-if=editMode> <i class=\"glyphicon glyphicon-move\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_COLLAPSE\') }}\" ng-show=\"options.collapsible && !widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-minus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EXPAND\') }}\" ng-show=\"options.collapsible && widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-plus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EDIT\') }}\" ng-click=edit() ng-if=editMode> <i class=\"glyphicon glyphicon-cog\"></i> </a> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FULLSCREEN\') }}\" ng-click=openFullScreen() ng-show=options.maximizable> <i class=\"glyphicon glyphicon-fullscreen\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REMOVE\') }}\" ng-click=remove() ng-if=editMode> <i class=\"glyphicon glyphicon-trash\"></i> </a> </div> </div>");
+$templateCache.put("../src/templates/widget.html","<div adf-id={{definition.wid}} adf-widget-type={{definition.type}} ng-class=\"widgetClasses(widget, definition)\" class=\"widget widget_{{definition.wid}}\"> <a name={{definition.wid}} id={{definition.wid}}></a> <div class=\"panel-heading clearfix bg-primary\" ng-if=\"!widget.frameless || editMode\"> <div ng-include src=definition.titleTemplateUrl></div> </div> <div ng-if=\"!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div ng-if=\"toggleAdvanced === 0\" class=\"col-xs-12 col-md-8\"> <div class=filter mass-autocomplete> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.oql placeholder=\"Enter your advanced filter\" mass-autocomplete-item=autocomplete_options() ng-change=debugQuery()> <label ng-click=launchSearchingAdv() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> <div ng-if=\"!editMode && filter.error\" class=col-xs-12> <alert type=danger class=\"text-center text-danger\"> <span>{{filter.error}}</span> </alert> </div> <div ng-if=\"showFinalFilter && search.json\" class=col-xs-12> <pre>{{ search.json }}</pre> </div> </div> <div ng-if=ifCustomFilter() class=\"col-xs-12 col-md-8\"> <div class=\"filter form-group\"> <a href class=text-danger ng-click=\"options.customFilter.open = !options.customFilter.open\"> <i class=glyphicon ng-class=\"{\'glyphicon-chevron-up\': options.customFilter.open, \'glyphicon-chevron-down\': !options.customFilter.open}\"></i> Pick filter fields </a> <label ng-click=launchCustomFilter() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> <div class=row ng-if=options.customFilter.open> <ui-select multiple=true ng-model=search.fields theme=bootstrap title=\"Choose a filter\" on-select=addCustomFilter($item) on-remove=deleteFilter($item) ng-click=getcustomFilter()> <ui-select-match placeholder=\"Pick filter fields ...\" allow-clear=true> {{$item}} </ui-select-match> <ui-select-choices repeat=\"selector in (customFilter | filter: $select.search) track by $index\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> </div> </div> <div ng-if=\"toggleAdvanced === 1\" class=\"col-xs-12 col-md-8\"> <div class=filter> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.quick placeholder=\"Enter your basic filter here\"> <label ng-click=launchSearchingQuick() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> </div> <div class=\"col-xs-12 col-md-4\" uib-dropdown> <button class=\"btn btn-sm\" uib-dropdown-toggle title=\"Toggle Advanced/Basic filter\"> <i class=\"advanced-filter glyphicon\" ng-class=\"{\'glyphicon-font\' : toggleAdvanced === 0, \'glyphicon-bold\' : toggleAdvanced ===1 , \'glyphicon-filter\' : toggleAdvanced === 2, }\"></i> <span class=caret></span> </button> <ul class=\"dropdown-menu panel\" style=\"border: 1px groove;\" uib-dropdown-menu aria-labelledby=simple-dropdown> <li ng-click=toggleFilter(0)><a href><i class=\"advanced-filter glyphicon glyphicon-font txt-primary\"></i> Advanced filter</a></li> <li ng-click=toggleFilter(1)><a href><i class=\"basic-filter glyphicon glyphicon-bold txt-primary\"></i> Basic filter</a></li> <li ng-if=\"config.title === \'IoT Devices List\'\" ng-click=toggleFilter(2)><a href><i class=\"custom-filter glyphicon glyphicon-filter txt-primary\"></i> Custom filter</a></li> </ul> </div> </div> <div ng-if=\"customSelectors && config.sort && filterAvailable && toggleAdvanced != 2\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div class=\"sort col-xs-12 col-md-8\"> <ui-select ng-model=config.sort.value theme=bootstrap title=\"Choose a filter\" allow-clear=true append-to-body=true ng-change=launchSearching() ng-click=getCustomSelectors()> <ui-select-match placeholder=\"Sorted by ...\" allow-clear=true>Sort by: {{$select.selected}}</ui-select-match> <ui-select-choices repeat=\"selector in customSelectors | filter: $select.search\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> <div class=\"sortDirection col-xs-4 col-md-4\"> <button class=\"btn btn-sm pointer\" ng-click=changeDirection() ng-disabled=\"config.sort.value === \'\'\" title=\"Toggle sorting direction\"> <i class=glyphicon style=font-size:1.3em; ng-class=\"config.sort.direction===\'ASCENDING\' ? \'glyphicon-sort-by-attributes\': \'glyphicon-sort-by-attributes-alt\'\"></i> </button> </div> </div> <div ng-if=showCustomFields() class=\"col-xs-12 col-md-12\"> <div class=\"col-xs-12 col-md-4\" ng-repeat=\"model in search.customFilter\"> <label>{{model.name}}</label> <input class=form-control id={{model.name}} name={{model.name}} type=text ng-model=search.customFilter[$index].value ng-keypress=enter($event)> </div> </div> <div ng-class=\"{ \'panel-body\':!widget.frameless || editMode}\" uib-collapse=widgetState.isCollapsed style=overflow:hidden;> <adf-widget-content model=definition content=widget editing=editMode> </adf-widget-content></div> </div>");}]);
 })(window);
