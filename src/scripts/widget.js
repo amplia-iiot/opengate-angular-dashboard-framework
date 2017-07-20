@@ -260,25 +260,26 @@ angular.module('adf')
                 }
 
                 $scope.launchCustomFilter = function() {
+                    if ($scope.search.customFilter && $scope.search.customFilter.length > 0) {
+                        $scope.search.oql = $scope.search.json = '';
 
-                    var filtersElements = [];
-                    angular.forEach($scope.search.customFilter, function(v, key) {
-                        if (v.value) {
-                            var like = {};
-                            like[v.name] = v.value || undefined;
-                            filtersElements.push({ 'like': like });
+                        $scope.config.filter = {
+                            value: {
+                                and: []
+                            },
+                            fields: $scope.search.customFilter
                         }
+                        angular.forEach($scope.search.customFilter, function(v, key) {
+                            if (v.value) {
+                                var like = {};
+                                like[v.name] = v.value;
+                                $scope.config.filter.value.and.push({ 'like': like });
+                            }
 
-                    });
-                    $scope.search.oql = $scope.search.json = '';
+                        });
+                        $scope.config.filter.value = JSON.stringify($scope.config.filter.value);
+                    }
 
-                    $scope.config.filter = {
-                        value: JSON.stringify({
-                            'and': filtersElements
-
-                        }),
-                        fields: $scope.search.customFilter
-                    };
                     $scope.launchSearching();
                 }
 
@@ -290,6 +291,9 @@ angular.module('adf')
                             $scope.search.customFilter.splice(key, 1);
                         }
                     });
+                    if ($scope.search.customFilter.length === 0) {
+                        $scope.config.filter = {};
+                    }
                 };
 
 
