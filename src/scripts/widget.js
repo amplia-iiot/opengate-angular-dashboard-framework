@@ -88,6 +88,10 @@ angular.module('adf')
                         $scope.widget.show_modal_footer = true;
                     }
 
+                    if (typeof $scope.widget.show_reload_config === "undefined") {
+                        $scope.widget.show_reload_config = true;
+                    }
+
                     // pass config to scope
                     $scope.config = config;
 
