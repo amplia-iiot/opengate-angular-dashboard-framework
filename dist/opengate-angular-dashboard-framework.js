@@ -1811,6 +1811,10 @@ angular.module('adf')
                         config.reloadPeriod = "0";
                     }
 
+                    if (typeof config.show_modal_footer === "undefined") {
+                        config.show_modal_footer = true;
+                    }
+
                     // pass config to scope
                     $scope.config = config;
 
