@@ -528,11 +528,13 @@ angular.module('adf')
                         createApplyPromise(result).then(function() {
                             definition.title = editScope.definition.title;
                             angular.extend(definition.config, editScope.definition.config);
+
+                            editScope.closeDialog();
+
                             if (widget.edit && widget.edit.reload) {
                                 // reload content after edit dialog is closed
                                 $scope.$broadcast('widgetConfigChanged');
                             }
-                            editScope.closeDialog();
                         }, function(err) {
                             if (err) {
                                 editScope.validationError = err;

@@ -29,7 +29,7 @@ angular.module('adf', ['adf.provider', 'adf.locale', 'ui.bootstrap', 'opengate-a
     .value('adfTemplatePath', '../src/templates/')
     .value('rowTemplate', '<adf-dashboard-row row="row" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="row in column.rows" />')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '2.4.0');
+    .value('adfVersion', '2.5.0');
 /*
  * The MIT License
  *
@@ -2255,11 +2255,13 @@ angular.module('adf')
                         createApplyPromise(result).then(function() {
                             definition.title = editScope.definition.title;
                             angular.extend(definition.config, editScope.definition.config);
+
+                            editScope.closeDialog();
+
                             if (widget.edit && widget.edit.reload) {
                                 // reload content after edit dialog is closed
                                 $scope.$broadcast('widgetConfigChanged');
                             }
-                            editScope.closeDialog();
                         }, function(err) {
                             if (err) {
                                 editScope.validationError = err;
