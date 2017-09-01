@@ -340,35 +340,6 @@ angular.module('adf')
                     $scope.reload();
                 });
 
-                function _getWindowTime(type) {
-                    if (type === "custom") {
-                        return {
-                            from: $scope.config.windowFilter.from,
-                            to: $scope.config.windowFilter.to
-                        }
-                    }
-                    var from = window.moment().subtract(1, type);
-                    return {
-                        from: from._d
-                    };
-                }
-
-                $scope.config.getWindowTime = function() {
-                    var windowFilter = $scope.config.windowFilter;
-                    if (windowFilter && windowFilter.type) {
-                        var winTime = _getWindowTime(windowFilter.type);
-                        /* jshint ignore:start */
-                        if (!window.eval($scope.config.windowFilter.rawdate)) {
-                            for (var key in winTime) {
-                                winTime[key] = window.moment(winTime[key]).format();
-                            }
-                            winTime['rawdate'] = true;
-                        }
-                        /* jshint ignore:end */
-                        return winTime;
-                    }
-                }
-
                 $scope.enter = function(event) {
                     var keycode = (event.keyCode ? event.keyCode : event.which);
                     if (keycode === 13) {
