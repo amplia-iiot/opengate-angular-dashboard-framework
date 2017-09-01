@@ -1551,6 +1551,35 @@ angular.module('adf')
                 }
             }
 
+            function _getWindowTime(type) {
+                if (type === "custom") {
+                    return {
+                        from: newScope.config.windowFilter.from,
+                        to: newScope.config.windowFilter.to
+                    }
+                }
+                var from = window.moment().subtract(1, type);
+                return {
+                    from: from._d
+                };
+            }
+
+            newScope.config.getWindowTime = function() {
+                var windowFilter = newScope.config.windowFilter;
+                if (windowFilter && windowFilter.type) {
+                    var winTime = _getWindowTime(windowFilter.type);
+                    /* jshint ignore:start */
+                    if (!window.eval(newScope.config.windowFilter.rawdate)) {
+                        for (var key in winTime) {
+                            winTime[key] = window.moment(winTime[key]).format();
+                        }
+                        winTime['rawdate'] = true;
+                    }
+                    /* jshint ignore:end */
+                    return winTime;
+                }
+            }
+
             newScope.editing = editing ? editing : false;
             return newScope;
         }
