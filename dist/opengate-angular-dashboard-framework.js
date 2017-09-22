@@ -2138,11 +2138,11 @@ angular.module('adf')
 
 
                 $scope.ifCustomFilter = function() {
-                    return $scope.customSelectors && $scope.config.sort && $scope.config.title === 'IoT Devices List' && $scope.toggleAdvanced === 2;
+                    return $scope.customSelectors && $scope.config.sort && $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2;
                 }
 
                 $scope.showCustomFields = function() {
-                    return $scope.config.title === 'IoT Devices List' && $scope.toggleAdvanced === 2 && $scope.search.customFilter && $scope.filterAvailable && !$scope.editMode;
+                    return $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2 && $scope.search.customFilter && $scope.filterAvailable && !$scope.editMode;
                 }
 
 
