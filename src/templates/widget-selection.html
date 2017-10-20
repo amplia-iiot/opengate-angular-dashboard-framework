@@ -1,0 +1,45 @@
+<style>
+    .selected-entities-control .ui-select-container>div:first-child {
+        max-height: 300px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+</style>
+
+
+<form name="widgetSelectionForm" novalidate role="form" ng-submit="saveChangesDialog()">
+    <div class="modal-header">
+        <div class="col-xs-12 col-md-12">
+            <h3 class="modal-title text-left"><i class="fa fa-check-square-o" aria-hidden="true"></i> Selected items...</h3>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="col-xs-12 col-md-6 text-left">
+            <button type="button" class="btn btn-success btn-sm" ng-click="restoreSelection()" ng-disabled="currentSelection.selected.length === selectedItemsLength" ng-bind="translate('ADF_WIDGET_RESTORE')">Restore</button>
+            <button type="button" class="btn btn-danger btn-sm" ng-click="clearSelection()" ng-disabled="currentSelection.selected.length < 1" ng-bind="translate('ADF_WIDGET_CLEAR')">Clear</button>
+        </div>
+        <div class="col-xs-12 col-md-6 text-right">
+            <a ng-click="applyFilter()" class="btn btn-primary btn-sm" ng-if="filterOnSelection" ng-disabled="currentSelection.selected.length < 1" title="{{translate('ADF_WIDGET_FILTER')}}">
+                <i class="glyphicon glyphicon-filter pointer"></i>
+            </a>
+            <a ng-click="executeOperation()" class="btn btn-primary btn-sm" ng-if="currentSelection.selected.length> 0" ng-disabled="currentSelection.selected.length < 1" title="{{translate('ADF_WIDGET_TOOLTIP_OPERATION')}}">
+                <i class="glyphicon glyphicon-flash pointer"></i>
+            </a>
+        </div>
+        <div class="col-xs-12">
+            <div class="form-group selected-entities-control">
+                <label for="currentSelection">Current selection</label>
+                <ui-select multiple tagging ng-model="currentSelection.selected" theme="bootstrap" sortable="false" title="Selected items">
+                    <ui-select-match placeholder="No items selected">{{$item.key}}</ui-select-match>
+                    <ui-select-choices repeat="itemSel in currentSelection.selected | filter:$select.search">
+                        {{itemSel.key}}
+                    </ui-select-choices>
+                </ui-select>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" ng-click="closeDialog()" ng-bind="translate('ADF_COMMON_CANCEL')">Cancel</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="widgetSelectionForm.$invalid" ng-value="translate('ADF_COMMON_APPLY')">Apply</button>
+    </div>
+</form>

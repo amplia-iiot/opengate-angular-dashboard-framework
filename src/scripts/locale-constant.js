@@ -60,7 +60,11 @@ angular.module('adf.locale')
                 ADF_WIDGET_TOOLTIP_EDIT: 'Edit widget configuration',
                 ADF_WIDGET_TOOLTIP_FULLSCREEN: 'Fullscreen widget',
                 ADF_WIDGET_TOOLTIP_REMOVE: 'Remove widget',
-                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation'
+                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation',
+                ADF_WIDGET_TOOLTIP_SELECTION: 'Items selected',
+                ADF_WIDGET_CLEAR: 'Clear',
+                ADF_WIDGET_RESTORE: 'Restore',
+                ADF_WIDGET_FILTER: 'Filter'
             },
             'sv-SE': {
                 ADF_COMMON_CLOSE: 'Stäng',
@@ -86,7 +90,11 @@ angular.module('adf.locale')
                 ADF_WIDGET_TOOLTIP_EDIT: 'Ändra widget konfigurering',
                 ADF_WIDGET_TOOLTIP_FULLSCREEN: 'Visa widget i fullskärm',
                 ADF_WIDGET_TOOLTIP_REMOVE: 'Ta bort widget',
-                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation'
+                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation',
+                ADF_WIDGET_TOOLTIP_SELECTION: 'Items selected',
+                ADF_WIDGET_CLEAR: 'Clear',
+                ADF_WIDGET_RESTORE: 'Restore',
+                ADF_WIDGET_FILTER: 'Filter'
             }
         }
     });

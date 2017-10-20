@@ -941,7 +941,11 @@ angular.module('adf.locale')
                 ADF_WIDGET_TOOLTIP_EDIT: 'Edit widget configuration',
                 ADF_WIDGET_TOOLTIP_FULLSCREEN: 'Fullscreen widget',
                 ADF_WIDGET_TOOLTIP_REMOVE: 'Remove widget',
-                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation'
+                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation',
+                ADF_WIDGET_TOOLTIP_SELECTION: 'Items selected',
+                ADF_WIDGET_CLEAR: 'Clear',
+                ADF_WIDGET_RESTORE: 'Restore',
+                ADF_WIDGET_FILTER: 'Filter'
             },
             'sv-SE': {
                 ADF_COMMON_CLOSE: 'Stäng',
@@ -967,7 +971,11 @@ angular.module('adf.locale')
                 ADF_WIDGET_TOOLTIP_EDIT: 'Ändra widget konfigurering',
                 ADF_WIDGET_TOOLTIP_FULLSCREEN: 'Visa widget i fullskärm',
                 ADF_WIDGET_TOOLTIP_REMOVE: 'Ta bort widget',
-                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation'
+                ADF_WIDGET_TOOLTIP_OPERATION: 'Execute operation',
+                ADF_WIDGET_TOOLTIP_SELECTION: 'Items selected',
+                ADF_WIDGET_CLEAR: 'Clear',
+                ADF_WIDGET_RESTORE: 'Restore',
+                ADF_WIDGET_FILTER: 'Filter'
             }
         }
     });
@@ -1922,6 +1930,8 @@ angular.module('adf')
                 }
 
                 $scope.isExecuteOperationEnabled = function() {
+                    if ($scope.selectedItemsLength > 0)
+                        return true;
                     if ($scope.config.entityKey)
                         return true;
                     if (typeof $scope.config.filter === "string") {
@@ -2135,8 +2145,6 @@ angular.module('adf')
 
                 }
 
-
-
                 $scope.ifCustomFilter = function() {
                     return $scope.customSelectors && $scope.config.sort && $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2;
                 }
@@ -2144,7 +2152,6 @@ angular.module('adf')
                 $scope.showCustomFields = function() {
                     return $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2 && $scope.search.customFilter && $scope.filterAvailable && !$scope.editMode;
                 }
-
 
                 $scope.changeDirection = function() {
                     if ($scope.config.sort.direction === 'DESCENDING') {
@@ -2156,8 +2163,6 @@ angular.module('adf')
                 }
 
                 $scope.debugQuery = function() {
-
-
                     Filter.parseQuery($scope.search.oql || '')
                         .then(function(data) {
                             //$scope.elementos = data;
@@ -2181,6 +2186,90 @@ angular.module('adf')
                     return autocomplete_options;
 
                 };
+
+                // Multiple selection
+                $scope.selectedItems = {};
+
+                // Gestor de seleccion
+                $scope.selectionManager = {
+                    currentSelection: $scope.selectedItems,
+                    isSelected: function(key) {
+                        return $scope.selectedItems[key] ? true : false;
+                    },
+                    totalSelected: function() {
+                        return $scope.selectedItemsLength;
+                    }
+                };
+
+                $scope.manageSelectedItems = function() {
+                    var selectionScope = $scope.$new();
+
+                    selectionScope.filterOnSelection = $scope.config.filterOnSelection;
+
+                    selectionScope.selectedItems = [];
+                    angular.forEach($scope.selectedItems, function(value, key) {
+                        selectionScope.selectedItems.push({ key: key, value: value });
+                    });
+
+                    selectionScope.currentSelection = {
+                        selected: selectionScope.selectedItems
+                    };
+
+                    var manageItemsSelectedTemplate = adfTemplatePath + 'widget-selection.html';
+                    var opts = {
+                        scope: selectionScope,
+                        templateUrl: manageItemsSelectedTemplate,
+                        backdrop: 'static',
+                        size: 'md',
+                        animation: true
+                    };
+
+                    var instance = $uibModal.open(opts);
+
+                    selectionScope.restoreSelection = function() {
+                        selectionScope.currentSelection = {
+                            selected: selectionScope.selectedItems
+                        };
+                    };
+
+                    selectionScope.clearSelection = function() {
+                        selectionScope.currentSelection.selected = [];
+                    };
+
+                    // Cierra sy guarda los datos de nueva selección
+                    selectionScope.applyFilter = function() {
+                        selectionScope.filterOnSelection(selectionScope.currentSelection.selected);
+                    };
+
+                    selectionScope.executeOperation = function() {
+                        if (!$scope.editMode) {
+                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectionScope.currentSelection.selected });
+                        }
+                    };
+
+                    // Cierra sy guarda los datos de nueva selección
+                    selectionScope.saveChangesDialog = function() {
+                        var finalSelection = {};
+                        angular.forEach(selectionScope.currentSelection.selected, function(data, idx) {
+                            finalSelection[data.key] = data.value;
+                        });
+
+                        $scope.selectedItems = angular.copy(finalSelection);
+                        $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+
+                        $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
+
+                        instance.close();
+                        selectionScope.$destroy();
+                    };
+
+                    // Cierra sin realizar ninguna acción
+                    selectionScope.closeDialog = function() {
+                        instance.close();
+                        selectionScope.$destroy();
+                    };
+                };
+
 
                 // bind edit function
                 $scope.edit = function() {
@@ -2291,7 +2380,6 @@ angular.module('adf')
                 widgetState: '='
             },
             controller: ["$scope", function($scope) {
-
                 var adfDashboardCollapseExpand = $scope.$on('adfDashboardCollapseExpand', function(event, args) {
                     $scope.widgetState.isCollapsed = args.collapseExpandStatus;
                 });
@@ -2312,14 +2400,6 @@ angular.module('adf')
 
                 var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function(event, widget) {
                     $scope.editing = false;
-                });
-
-                $scope.$on('$destroy', function() {
-                    adfDashboardCollapseExpand();
-                    adfWidgetEnterEditMode();
-                    adfIsEditMode();
-                    adfDashboardChanged();
-                    adfDashboardEditsCancelled();
                 });
 
                 $scope.widgetClasses = function(w, definition) {
@@ -2387,6 +2467,34 @@ angular.module('adf')
                         'fileName': 'capture_' + new Date().getTime()
                     });
                 };
+
+
+                var addItemToSelection = $scope.$on('addItemToSelection', function(event, item) {
+                    if (!$scope.selectedItems[item.key]) {
+                        $scope.selectedItems[item.key] = item.data;
+                        $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
+                    }
+
+                });
+
+                var removeItemToSelection = $scope.$on('removeItemToSelection', function(event, item) {
+                    if ($scope.selectedItems[item.key]) {
+                        delete $scope.selectedItems[item.key];
+                        $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
+                    }
+                });
+
+                $scope.$on('$destroy', function() {
+                    adfDashboardCollapseExpand();
+                    adfWidgetEnterEditMode();
+                    adfIsEditMode();
+                    adfDashboardChanged();
+                    adfDashboardEditsCancelled();
+                    addItemToSelection();
+                    removeItemToSelection();
+                });
             }],
             compile: function() {
 
