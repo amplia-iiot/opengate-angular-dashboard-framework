@@ -709,6 +709,7 @@ angular.module('adf')
                     if (!$scope.selectedItems[item.key]) {
                         $scope.selectedItems[item.key] = item.data;
                         $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        $scope.selectionManager.lastItem = item;
                         $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
                     }
 
@@ -718,6 +719,7 @@ angular.module('adf')
                     if ($scope.selectedItems[item.key]) {
                         delete $scope.selectedItems[item.key];
                         $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        $scope.selectionManager.lastItem = item;
                         $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
                     }
                 });
