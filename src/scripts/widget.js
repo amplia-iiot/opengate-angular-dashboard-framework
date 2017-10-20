@@ -493,6 +493,7 @@ angular.module('adf')
                         $scope.selectedItems = angular.copy(finalSelection);
                         $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
 
+                        $scope.selectionManager.lastItem = {};
                         $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
 
                         instance.close();
@@ -709,16 +710,18 @@ angular.module('adf')
                     if (!$scope.selectedItems[item.key]) {
                         $scope.selectedItems[item.key] = item.data;
                         $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        item.isSelected = true;
                         $scope.selectionManager.lastItem = item;
                         $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
                     }
 
                 });
 
-                var removeItemToSelection = $scope.$on('removeItemToSelection', function(event, item) {
+                var removeItemFromSelection = $scope.$on('removeItemFromSelection', function(event, item) {
                     if ($scope.selectedItems[item.key]) {
                         delete $scope.selectedItems[item.key];
                         $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        item.isSelected = false;
                         $scope.selectionManager.lastItem = item;
                         $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
                     }
@@ -731,7 +734,7 @@ angular.module('adf')
                     adfDashboardChanged();
                     adfDashboardEditsCancelled();
                     addItemToSelection();
-                    removeItemToSelection();
+                    removeItemFromSelection();
                 });
             },
             compile: function() {
