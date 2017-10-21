@@ -14,18 +14,6 @@
         </div>
     </div>
     <div class="modal-body">
-        <div class="col-xs-12 col-md-6 text-left">
-            <button type="button" class="btn btn-success btn-sm" ng-click="restoreSelection()" ng-disabled="currentSelection.selected.length === selectedItemsLength" ng-bind="translate('ADF_WIDGET_RESTORE')">Restore</button>
-            <button type="button" class="btn btn-danger btn-sm" ng-click="clearSelection()" ng-disabled="currentSelection.selected.length < 1" ng-bind="translate('ADF_WIDGET_CLEAR')">Clear</button>
-        </div>
-        <div class="col-xs-12 col-md-6 text-right">
-            <a ng-click="applyFilter()" class="btn btn-primary btn-sm" ng-if="filterOnSelection" ng-disabled="currentSelection.selected.length < 1" title="{{translate('ADF_WIDGET_FILTER')}}">
-                <i class="glyphicon glyphicon-filter pointer"></i>
-            </a>
-            <a ng-click="executeOperation()" class="btn btn-primary btn-sm" ng-if="currentSelection.selected.length> 0" ng-disabled="currentSelection.selected.length < 1" title="{{translate('ADF_WIDGET_TOOLTIP_OPERATION')}}">
-                <i class="glyphicon glyphicon-flash pointer"></i>
-            </a>
-        </div>
         <div class="col-xs-12">
             <div class="form-group selected-entities-control">
                 <label for="currentSelection">Current selection</label>
@@ -37,9 +25,23 @@
                 </ui-select>
             </div>
         </div>
+        <div class="col-xs-12 text-left">
+            <button type="button" class="btn btn-success btn-sm" ng-click="restoreSelection()" ng-disabled="currentSelection.selected.length === selectedItemsLength" ng-bind="translate('ADF_WIDGET_RESTORE')">Restore</button>
+            <button type="button" class="btn btn-danger btn-sm" ng-click="clearSelection()" ng-disabled="currentSelection.selected.length < 1" ng-bind="translate('ADF_WIDGET_CLEAR')">Clear</button>
+        </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-default" ng-click="closeDialog()" ng-bind="translate('ADF_COMMON_CANCEL')">Cancel</button>
-        <button type="submit" class="btn btn-primary" ng-disabled="widgetSelectionForm.$invalid" ng-value="translate('ADF_COMMON_APPLY')">Apply</button>
+        <div class="col-xs-12 col-md-6 text-left">
+            <button type="button" ng-click="applyFilter()" class="btn btn-primary" ng-if="filterOnSelection" ng-disabled="currentSelection.selected.length < 1" title="{{translate('ADF_WIDGET_FILTER')}}">
+                <i class="glyphicon glyphicon-filter pointer"></i> Filter
+            </button>
+            <button type="button" ng-click="executeOperation()" class="btn btn-primary" ng-disabled="currentSelection.selected.length < 1" title="{{translate('ADF_WIDGET_TOOLTIP_OPERATION')}}">
+                <i class="glyphicon glyphicon-flash pointer"></i> Exec. Operation
+            </button>
+        </div>
+        <div class="col-xs-12 col-md-6 text-right">
+            <button type="button" class="btn btn-default" ng-click="closeDialog()" ng-bind="translate('ADF_COMMON_CLOSE')">Close</button>
+            <button type="submit" class="btn btn-primary" ng-disabled="widgetSelectionForm.$invalid" ng-value="translate('ADF_COMMON_APPLY')">Apply</button>
+        </div>
     </div>
 </form>

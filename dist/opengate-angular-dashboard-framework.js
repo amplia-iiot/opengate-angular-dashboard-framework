@@ -1930,7 +1930,7 @@ angular.module('adf')
                 }
 
                 $scope.isExecuteOperationEnabled = function() {
-                    if ($scope.selectedItemsLength > 0)
+                    if ($scope.selectionManager.totalSelected() > 0)
                         return true;
                     if ($scope.config.entityKey)
                         return true;
@@ -1945,7 +1945,11 @@ angular.module('adf')
 
                 $scope.executeOperation = function() {
                     if (!$scope.editMode) {
-                        $scope.$parent.$broadcast('widgetExecuteOperation');
+                        if ($scope.selectionManager.totalSelected() > 0) {
+                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectionScope.currentSelection.selected });
+                        } else {
+                            $scope.$parent.$broadcast('widgetExecuteOperation');
+                        }
                     }
                 };
 
@@ -2197,7 +2201,7 @@ angular.module('adf')
                         return $scope.selectedItems[key] ? true : false;
                     },
                     totalSelected: function() {
-                        return $scope.selectedItemsLength;
+                        return Object.keys($scope.selectedItems).length;
                     }
                 };
 
@@ -2220,7 +2224,7 @@ angular.module('adf')
                         scope: selectionScope,
                         templateUrl: manageItemsSelectedTemplate,
                         backdrop: 'static',
-                        size: 'md',
+                        size: 'lg',
                         animation: true
                     };
 
@@ -2238,7 +2242,21 @@ angular.module('adf')
 
                     // Cierra sy guarda los datos de nueva selección
                     selectionScope.applyFilter = function() {
-                        selectionScope.filterOnSelection(selectionScope.currentSelection.selected);
+                        var customOql = selectionScope.filterOnSelection(selectionScope.currentSelection.selected);
+
+                        if (customOql) {
+                            $scope.toggleAdvanced = 0;
+                            Filter.parseQuery(customOql).then(function(data) {
+                                $scope.search.oql = customOql;
+                                $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                                $scope.unknownWords = '';
+                                $scope.filter.error = null;
+
+                                $scope.launchSearchingAdv();
+                            }).catch(function(err) {
+                                $scope.filter.error = err;
+                            });
+                        }
                     };
 
                     selectionScope.executeOperation = function() {
