@@ -1946,7 +1946,11 @@ angular.module('adf')
                 $scope.executeOperation = function() {
                     if (!$scope.editMode) {
                         if ($scope.selectionManager.totalSelected() > 0) {
-                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectionScope.currentSelection.selected });
+                            var selectedItems = [];
+                            angular.forEach($scope.selectionManager.currentSelection, function(data, key) {
+                                selectedItems.push({ key: key, value: data });
+                            });
+                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectedItems });
                         } else {
                             $scope.$parent.$broadcast('widgetExecuteOperation');
                         }
