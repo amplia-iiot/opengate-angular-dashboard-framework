@@ -1930,8 +1930,8 @@ angular.module('adf')
                 }
 
                 $scope.isExecuteOperationEnabled = function() {
-                    if ($scope.selectionManager.totalSelected() > 0)
-                        return true;
+                    // if ($scope.selectionManager.totalSelected() > 0)
+                    //     return true;
                     if ($scope.config.entityKey)
                         return true;
                     if (typeof $scope.config.filter === "string") {
@@ -1945,15 +1945,15 @@ angular.module('adf')
 
                 $scope.executeOperation = function() {
                     if (!$scope.editMode) {
-                        if ($scope.selectionManager.totalSelected() > 0) {
-                            var selectedItems = [];
-                            angular.forEach($scope.selectionManager.currentSelection, function(data, key) {
-                                selectedItems.push({ key: key, value: data });
-                            });
-                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectedItems });
-                        } else {
-                            $scope.$parent.$broadcast('widgetExecuteOperation');
-                        }
+                        // if ($scope.selectionManager.totalSelected() > 0) {
+                        //     var selectedItems = [];
+                        //     angular.forEach($scope.selectionManager.currentSelection, function(data, key) {
+                        //         selectedItems.push({ key: key, value: data });
+                        //     });
+                        //     $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectedItems });
+                        // } else {
+                        $scope.$parent.$broadcast('widgetExecuteOperation');
+                        // }
                     }
                 };
 
@@ -2201,7 +2201,11 @@ angular.module('adf')
                 // Gestor de seleccion
                 $scope.selectionManager = {
                     currentSelection: $scope.selectedItems,
-                    isSelected: function(key) {
+                    isSelected: function(key, obj) {
+                        if ($scope.selectedItems[key] && !angular.isUndefined(obj)) {
+                            $scope.selectedItems[key].data = obj;
+                        }
+
                         return $scope.selectedItems[key] ? true : false;
                     },
                     totalSelected: function() {
@@ -2212,7 +2216,7 @@ angular.module('adf')
                 $scope.manageSelectedItems = function() {
                     var selectionScope = $scope.$new();
 
-                    selectionScope.filterOnSelection = $scope.config.filterOnSelection;
+                    selectionScope.selectionConfig = $scope.config.selectionConfig;
 
                     selectionScope.selectedItems = [];
                     angular.forEach($scope.selectedItems, function(value, key) {
@@ -2245,8 +2249,8 @@ angular.module('adf')
                     };
 
                     // Cierra sy guarda los datos de nueva selección
-                    selectionScope.applyFilter = function() {
-                        var customOql = selectionScope.filterOnSelection(selectionScope.currentSelection.selected);
+                    selectionScope.applyFilter = function(type) {
+                        var customOql = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
 
                         if (customOql) {
                             $scope.toggleAdvanced = 0;
@@ -2263,9 +2267,9 @@ angular.module('adf')
                         }
                     };
 
-                    selectionScope.executeOperation = function() {
+                    selectionScope.executeOperation = function(operationType) {
                         if (!$scope.editMode) {
-                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectionScope.currentSelection.selected });
+                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectionScope.currentSelection.selected, 'type': operationType });
                         }
                     };
 
@@ -2273,7 +2277,7 @@ angular.module('adf')
                     selectionScope.saveChangesDialog = function() {
                         var finalSelection = {};
                         angular.forEach(selectionScope.currentSelection.selected, function(data, idx) {
-                            finalSelection[data.key] = data.value;
+                            finalSelection[data.key] = { data: data.value.data, visible: data.value.visible };
                         });
 
                         $scope.selectedItems = angular.copy(finalSelection);
@@ -2494,7 +2498,10 @@ angular.module('adf')
 
                 var addItemToSelection = $scope.$on('addItemToSelection', function(event, item) {
                     if (!$scope.selectedItems[item.key]) {
-                        $scope.selectedItems[item.key] = item.data;
+                        $scope.selectedItems[item.key] = {
+                            data: item.data,
+                            visible: item.visible
+                        };
                         $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
                         item.isSelected = true;
                         $scope.selectionManager.lastItem = item;
