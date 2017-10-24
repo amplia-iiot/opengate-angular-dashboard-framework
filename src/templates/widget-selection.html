@@ -19,9 +19,9 @@
                 <label for="currentSelection">Current selection</label>
                 <ui-select multiple tagging ng-model="currentSelection.selected" theme="bootstrap" sortable="false" title="Selected items">
                     <ui-select-match placeholder="No items selected">
-                        <div class="text-left" style="margin-right: 15px;font-size: 0.9em;">
-                            <span ng-if="$item.value.visible" ng-repeat="(k,v) in $item.value.visible track by $index"><strong>{{k}}:</strong> {{v}}<br></span>
-                            <span ng-if="!$item.value.visible">{{$item.key}}</span>
+                        <div class="text-left" style="margin-right: 15px;font-size: 0.9em;max-width:350px;">
+                            <span style="white-space: initial;word-break: break-word;" ng-if="$item.value.visible" ng-repeat="(k,v) in $item.value.visible track by $index"><strong>{{k}}:</strong> {{v}}<br></span>
+                            <span style="white-space: initial;word-break: break-word;" ng-if="!$item.value.visible">{{$item.key}}</span>
                         </div>
                     </ui-select-match>
                     <ui-select-choices repeat="itemSel in currentSelection.selected | filter:$select.search">
@@ -36,27 +36,25 @@
         </div>
     </div>
     <div class="modal-footer">
-        <div class="col-xs-12 col-md-8 text-left">
-            <div class="col-xs-3" uib-dropdown ng-if="selectionConfig && selectionConfig.filterTypes">
-                <button id="single-button" type="button" class="btn btn-primary" uib-dropdown-toggle>
+        <div class="col-xs-12 col-md-4 text-left" uib-dropdown ng-if="selectionConfig && selectionConfig.filterTypes">
+            <button id="single-button" type="button" class="btn btn-primary" uib-dropdown-toggle>
                     <i class="glyphicon glyphicon-filter pointer"></i> Filter by <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button">
-                    <li role="menuitem" ng-repeat="filterType in selectionConfig.filterTypes"><a href="" ng-disabled="currentSelection.selected.length < 1" ng-click="applyFilter(filterType)" title="{{translate('ADF_WIDGET_FILTER')}} {{filterType}}">Selected {{filterType|humanize}}</a></li>
-                </ul>
-            </div>
-            <div class="col-xs-3" uib-dropdown ng-if="selectionConfig && selectionConfig.operationTypes">
-                <button id="single-button" type="button" class="btn btn-primary" uib-dropdown-toggle>
+            <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button">
+                <li role="menuitem" ng-repeat="filterType in selectionConfig.filterTypes"><a href="" ng-disabled="currentSelection.selected.length < 1" ng-click="applyFilter(filterType)" title="{{translate('ADF_WIDGET_FILTER')}} {{filterType}}">Selected {{filterType|humanize}}</a></li>
+            </ul>
+        </div>
+        <div class="col-xs-12 col-md-4 text-left" uib-dropdown ng-if="selectionConfig && selectionConfig.operationTypes">
+            <button id="single-button" type="button" class="btn btn-primary" uib-dropdown-toggle>
                     <i class="glyphicon glyphicon-flash pointer"></i> Exec. Operation <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button">
-                    <li role="menuitem" ng-repeat="operationType in selectionConfig.operationTypes"><a href="" ng-disabled="currentSelection.selected.length < 1" ng-click="executeOperation(operationType)" title="{{translate('ADF_WIDGET_FILTER')}} {{operationType}}">{{operationType|humanize}}</a></li>
-                </ul>
-            </div>
+            <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button">
+                <li role="menuitem" ng-repeat="operationType in selectionConfig.operationTypes"><a href="" ng-disabled="currentSelection.selected.length < 1" ng-click="executeOperation(operationType)" title="{{translate('ADF_WIDGET_FILTER')}} {{operationType}}">{{operationType|humanize}}</a></li>
+            </ul>
         </div>
         <div class="col-xs-12 col-md-4 text-right">
+            <button type="submit" class="btn btn-primary" ng-disabled="currentSelection.selected.length === selectedItemsLength" ng-value="translate('ADF_COMMON_APPLY')">Apply</button>
             <button type="button" class="btn btn-default" ng-click="closeDialog()" ng-bind="translate('ADF_COMMON_CLOSE')">Close</button>
-            <button type="submit" class="btn btn-primary" ng-disabled="widgetSelectionForm.$invalid" ng-value="translate('ADF_COMMON_APPLY')">Apply</button>
         </div>
     </div>
 </form>
