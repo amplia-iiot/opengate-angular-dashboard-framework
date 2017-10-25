@@ -1537,7 +1537,7 @@ angular.module('adf')
 
             var newScope = currentScope;
             if (!model) {
-                renderError($element, 'model is undefined')
+                renderError($element, 'model is undefined');
             } else if (!content) {
                 var msg = 'widget content is undefined, please have a look at your browser log';
                 renderError($element, msg);
@@ -2252,7 +2252,7 @@ angular.module('adf')
                     selectionScope.applyFilter = function(type) {
                         var customOql = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
 
-                        if (customOql) {
+                        if (!angular.isUndefined(customOql) && customOql !== null) {
                             $scope.toggleAdvanced = 0;
                             Filter.parseQuery(customOql).then(function(data) {
                                 $scope.search.oql = customOql;

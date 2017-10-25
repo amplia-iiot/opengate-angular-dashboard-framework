@@ -1,7 +1,10 @@
 <div class="panel-title" style="margin:0px;">
     <span class="pull-left">
-      <h4 ng-if="!widget.frameless && definition.title" style="margin:0px;">{{definition.title}}</h4>
-       
+        <!-- selected items control -->
+        <a href="" ng-if="selectedItemsLength > 0" title="{{ translate('ADF_WIDGET_TOOLTIP_SELECTION') }}" ng-click="manageSelectedItems()" style="float:left;"> 
+            <i class="glyphicon glyphicon-check"></i><small class="ogux-budget">{{ selectedItemsLength }}</small>
+        </a>
+        <h4 ng-if="!widget.frameless && definition.title" style="margin:0px 0px 0px 2px;float:left;">{{definition.title}}</h4>
     </span>
     <div class="pull-right">
         <span ng-if="config.about">
@@ -31,11 +34,6 @@
                 </span>
         <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_REFRESH') }}" ng-if="widget.reload" ng-click="reload()">
             <i class="glyphicon glyphicon-refresh"></i>
-        </a>
-
-        <!-- selected items control -->
-        <a href="" ng-if="selectedItemsLength > 0" title="{{ translate('ADF_WIDGET_TOOLTIP_SELECTION') }}" ng-click="manageSelectedItems()">
-            <i class="glyphicon glyphicon-check"></i><small class="ogux-budget">{{ selectedItemsLength }}</small>
         </a>
 
         <!-- execute operation over filter/selected -->

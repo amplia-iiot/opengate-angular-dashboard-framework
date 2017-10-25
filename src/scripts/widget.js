@@ -488,7 +488,7 @@ angular.module('adf')
                     selectionScope.applyFilter = function(type) {
                         var customOql = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
 
-                        if (customOql) {
+                        if (!angular.isUndefined(customOql) && customOql !== null) {
                             $scope.toggleAdvanced = 0;
                             Filter.parseQuery(customOql).then(function(data) {
                                 $scope.search.oql = customOql;

@@ -40,7 +40,7 @@ angular.module('adf')
 
             var newScope = currentScope;
             if (!model) {
-                renderError($element, 'model is undefined')
+                renderError($element, 'model is undefined');
             } else if (!content) {
                 var msg = 'widget content is undefined, please have a look at your browser log';
                 renderError($element, msg);
