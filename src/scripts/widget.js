@@ -206,8 +206,13 @@ angular.module('adf')
                     }
                 }
 
-                $scope.reload = function() {
-                    $scope.$broadcast('widgetReload');
+                $scope.reload = function(completeReload) {
+                    if (completeReload) {
+                        $scope.$broadcast('widgetReload', completeReload);
+                    } else {
+                        $scope.$broadcast('widgetReload');
+                    }
+
                     _setReloadTimeout();
                 };
 
@@ -270,7 +275,7 @@ angular.module('adf')
                     };
 
                     $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, $scope.config.filter);
-                    $scope.reload();
+                    $scope.reload(true);
                 }
                 $scope.addCustomFilter = function(key) {
                     $scope.search.customFilter = $scope.search.customFilter ? $scope.search.customFilter : [];

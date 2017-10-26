@@ -33,7 +33,7 @@ angular.module('adf')
             $element.html(dashboard.messageTemplate.replace(/{}/g, msg));
         }
 
-        function compileWidget($scope, $element, currentScope, configChanged) {
+        function compileWidget($scope, $element, currentScope, configChanged, showFirstPage) {
             var model = $scope.model;
             var content = $scope.content;
             var editing = $scope.editing;
@@ -52,10 +52,10 @@ angular.module('adf')
                         if (newScope.itemsPerPage !== undefined && isNaN(newScope.itemsPerPage)) {
                             newScope = renderWidget($scope, $element, currentScope, model, content);
                         } else {
-                            newScope.reloadData();
+                            newScope.reloadData(showFirstPage ? true : false);
                         }
                     } else if (newScope && newScope.reloadData && newScope.needConfiguration !== undefined && !newScope.needConfiguration) {
-                        newScope.reloadData();
+                        newScope.reloadData(showFirstPage ? true : false);
                     } else {
                         newScope = renderWidget($scope, $element, currentScope, model, content, editing);
                     }
@@ -178,13 +178,18 @@ angular.module('adf')
             },
             link: function($scope, $element) {
                 var currentScope = compileWidget($scope, $element, null);
-                $scope.$on('widgetConfigChanged', function() {
+                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function() {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
-                $scope.$on('widgetReload', function() {
-                    currentScope = compileWidget($scope, $element, currentScope, false);
+
+                var widgetReloadEvt = $scope.$on('widgetReload', function(event, completeReload) {
+                    currentScope = compileWidget($scope, $element, currentScope, false, completeReload ? true : false);
+                });
+
+                $scope.$on('destroy', function() {
+                    widgetConfigChangedEvt();
+                    widgetReloadEvt();
                 });
             }
         };
-
     });
