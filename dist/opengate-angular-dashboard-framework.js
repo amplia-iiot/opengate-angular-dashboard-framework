@@ -1606,6 +1606,7 @@ angular.module('adf')
 
             templateScope.config = model.config;
             templateScope.editing = editing;
+            templateScope.selectionManager = (currentScope && currentScope.selectionManager) ? currentScope.selectionManager : undefined;
 
             // local injections
             var base = {
