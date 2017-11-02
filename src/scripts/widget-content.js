@@ -25,7 +25,7 @@
 'use strict';
 
 angular.module('adf')
-    .directive('adfWidgetContent', function($log, $q, widgetService,
+    .directive('adfWidgetContent', function ($log, $q, widgetService,
         $compile, $controller, $injector, dashboard) {
 
         function renderError($element, msg) {
@@ -33,7 +33,7 @@ angular.module('adf')
             $element.html(dashboard.messageTemplate.replace(/{}/g, msg));
         }
 
-        function compileWidget($scope, $element, currentScope, configChanged, showFirstPage) {
+        function compileWidget($scope, $element, currentScope, configChanged) {
             var model = $scope.model;
             var content = $scope.content;
             var editing = $scope.editing;
@@ -45,20 +45,16 @@ angular.module('adf')
                 var msg = 'widget content is undefined, please have a look at your browser log';
                 renderError($element, msg);
             } else {
-                if (newScope && newScope.menu !== undefined) { //adf-widget-browser
-                    newScope = renderWidget($scope, $element, currentScope, model, content);
-                } else {
-                    if (newScope && newScope.reloadData && !configChanged) {
-                        if (newScope.itemsPerPage !== undefined && isNaN(newScope.itemsPerPage)) {
-                            newScope = renderWidget($scope, $element, currentScope, model, content);
-                        } else {
-                            newScope.reloadData(showFirstPage ? true : false);
-                        }
-                    } else if (newScope && newScope.reloadData && newScope.needConfiguration !== undefined && !newScope.needConfiguration) {
-                        newScope.reloadData(showFirstPage ? true : false);
+                if (newScope) {
+                    var is_menu = newScope.menu !== undefined && newScope.menu !== null;
+                    var is_itemsPerPage = newScope.itemsPerPage !== undefined && newScope.itemsPerPage !== null;
+                    if (is_menu || is_itemsPerPage || configChanged || !angular.isFunction(newScope.reloadData)) {
+                        newScope = renderWidget($scope, $element, currentScope, model, content);
                     } else {
-                        newScope = renderWidget($scope, $element, currentScope, model, content, editing);
+                        newScope.reloadData();
                     }
+                } else {
+                    newScope = renderWidget($scope, $element, currentScope, model, content);
                 }
             }
 
@@ -75,7 +71,7 @@ angular.module('adf')
                 };
             }
 
-            newScope.config.getWindowTime = function() {
+            newScope.config.getWindowTime = function () {
                 var windowFilter = newScope.config.windowFilter;
                 if (windowFilter && windowFilter.type) {
                     var winTime = _getWindowTime(windowFilter.type);
@@ -122,7 +118,7 @@ angular.module('adf')
             var resolvers = {};
             resolvers.$tpl = widgetService.getTemplate(content);
             if (content.resolve) {
-                angular.forEach(content.resolve, function(promise, key) {
+                angular.forEach(content.resolve, function (promise, key) {
                     if (angular.isString(promise)) {
                         resolvers[key] = $injector.get(promise);
                     } else {
@@ -132,7 +128,7 @@ angular.module('adf')
             }
 
             // resolve all resolvers
-            $q.all(resolvers).then(function(locals) {
+            $q.all(resolvers).then(function (locals) {
                 angular.extend(locals, base);
 
                 // pass resolve map to template scope as defined in resolveAs
@@ -151,7 +147,7 @@ angular.module('adf')
                     $element.children().data('$ngControllerController', templateCtrl);
                 }
                 $compile($element.contents())(templateScope);
-            }, function(reason) {
+            }, function (reason) {
                 // handle promise rejection
                 var msg = 'Could not resolve all promises';
                 if (reason) {
@@ -177,17 +173,17 @@ angular.module('adf')
                 content: '=',
                 editing: '='
             },
-            link: function($scope, $element) {
+            link: function ($scope, $element) {
                 var currentScope = compileWidget($scope, $element, null);
-                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function() {
+                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function(event, completeReload) {
-                    currentScope = compileWidget($scope, $element, currentScope, false, completeReload ? true : false);
+                var widgetReloadEvt = $scope.$on('widgetReload', function () {
+                    currentScope = compileWidget($scope, $element, currentScope, false);
                 });
 
-                $scope.$on('destroy', function() {
+                $scope.$on('destroy', function () {
                     widgetConfigChangedEvt();
                     widgetReloadEvt();
                 });

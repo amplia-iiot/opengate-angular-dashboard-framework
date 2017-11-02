@@ -1522,7 +1522,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", function($log, $q, widgetService,
+    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", function ($log, $q, widgetService,
         $compile, $controller, $injector, dashboard) {
 
         function renderError($element, msg) {
@@ -1530,7 +1530,7 @@ angular.module('adf')
             $element.html(dashboard.messageTemplate.replace(/{}/g, msg));
         }
 
-        function compileWidget($scope, $element, currentScope, configChanged, showFirstPage) {
+        function compileWidget($scope, $element, currentScope, configChanged) {
             var model = $scope.model;
             var content = $scope.content;
             var editing = $scope.editing;
@@ -1542,20 +1542,16 @@ angular.module('adf')
                 var msg = 'widget content is undefined, please have a look at your browser log';
                 renderError($element, msg);
             } else {
-                if (newScope && newScope.menu !== undefined) { //adf-widget-browser
-                    newScope = renderWidget($scope, $element, currentScope, model, content);
-                } else {
-                    if (newScope && newScope.reloadData && !configChanged) {
-                        if (newScope.itemsPerPage !== undefined && isNaN(newScope.itemsPerPage)) {
-                            newScope = renderWidget($scope, $element, currentScope, model, content);
-                        } else {
-                            newScope.reloadData(showFirstPage ? true : false);
-                        }
-                    } else if (newScope && newScope.reloadData && newScope.needConfiguration !== undefined && !newScope.needConfiguration) {
-                        newScope.reloadData(showFirstPage ? true : false);
+                if (newScope) {
+                    var is_menu = newScope.menu !== undefined && newScope.menu !== null;
+                    var is_itemsPerPage = newScope.itemsPerPage !== undefined && newScope.itemsPerPage !== null;
+                    if (is_menu || is_itemsPerPage || configChanged || !angular.isFunction(newScope.reloadData)) {
+                        newScope = renderWidget($scope, $element, currentScope, model, content);
                     } else {
-                        newScope = renderWidget($scope, $element, currentScope, model, content, editing);
+                        newScope.reloadData();
                     }
+                } else {
+                    newScope = renderWidget($scope, $element, currentScope, model, content);
                 }
             }
 
@@ -1572,7 +1568,7 @@ angular.module('adf')
                 };
             }
 
-            newScope.config.getWindowTime = function() {
+            newScope.config.getWindowTime = function () {
                 var windowFilter = newScope.config.windowFilter;
                 if (windowFilter && windowFilter.type) {
                     var winTime = _getWindowTime(windowFilter.type);
@@ -1619,7 +1615,7 @@ angular.module('adf')
             var resolvers = {};
             resolvers.$tpl = widgetService.getTemplate(content);
             if (content.resolve) {
-                angular.forEach(content.resolve, function(promise, key) {
+                angular.forEach(content.resolve, function (promise, key) {
                     if (angular.isString(promise)) {
                         resolvers[key] = $injector.get(promise);
                     } else {
@@ -1629,7 +1625,7 @@ angular.module('adf')
             }
 
             // resolve all resolvers
-            $q.all(resolvers).then(function(locals) {
+            $q.all(resolvers).then(function (locals) {
                 angular.extend(locals, base);
 
                 // pass resolve map to template scope as defined in resolveAs
@@ -1648,7 +1644,7 @@ angular.module('adf')
                     $element.children().data('$ngControllerController', templateCtrl);
                 }
                 $compile($element.contents())(templateScope);
-            }, function(reason) {
+            }, function (reason) {
                 // handle promise rejection
                 var msg = 'Could not resolve all promises';
                 if (reason) {
@@ -1674,17 +1670,17 @@ angular.module('adf')
                 content: '=',
                 editing: '='
             },
-            link: function($scope, $element) {
+            link: function ($scope, $element) {
                 var currentScope = compileWidget($scope, $element, null);
-                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function() {
+                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function(event, completeReload) {
-                    currentScope = compileWidget($scope, $element, currentScope, false, completeReload ? true : false);
+                var widgetReloadEvt = $scope.$on('widgetReload', function () {
+                    currentScope = compileWidget($scope, $element, currentScope, false);
                 });
 
-                $scope.$on('destroy', function() {
+                $scope.$on('destroy', function () {
                     widgetConfigChangedEvt();
                     widgetReloadEvt();
                 });
@@ -1795,7 +1791,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidget', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter) {
+    .directive('adfWidget', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", function ($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter) {
         function preLink($scope) {
             var definition = $scope.definition;
 
@@ -1881,528 +1877,531 @@ angular.module('adf')
 
         function postLink($scope, $element) {
             var definition = $scope.definition;
-            if (definition) {
-                if (!$scope.config.reloadPeriod) {
-                    $scope.config.reloadPeriod = "0";
-                }
+            if (!definition) {
+                $log.debug('widget not found');
+                return;
+            }
 
-                // bind close function
-                var deleteWidget = function() {
-                    var column = $scope.col;
-                    if (column) {
-                        var index = column.widgets.indexOf(definition);
-                        if (index >= 0) {
-                            column.widgets.splice(index, 1);
-                        }
+            var config = $scope.config;
+
+            // bind close function
+            var deleteWidget = function () {
+                var column = $scope.col;
+                if (column) {
+                    var index = column.widgets.indexOf(definition);
+                    if (index >= 0) {
+                        column.widgets.splice(index, 1);
                     }
-                    $element.remove();
-                    $rootScope.$broadcast('adfWidgetRemovedFromColumn');
-                };
+                }
+                $element.remove();
+                $rootScope.$broadcast('adfWidgetRemovedFromColumn');
+            };
 
-                $scope.remove = function() {
-                    if ($scope.options.enableConfirmDelete) {
-                        var deleteScope = $scope.$new();
-                        deleteScope.translate = dashboard.translate;
+            $scope.remove = function () {
+                if ($scope.options.enableConfirmDelete) {
+                    var deleteScope = $scope.$new();
+                    deleteScope.translate = dashboard.translate;
 
-                        var deleteTemplateUrl = adfTemplatePath + 'widget-delete.html';
-                        if (definition.deleteTemplateUrl) {
-                            deleteTemplateUrl = definition.deleteTemplateUrl;
-                        }
-                        var opts = {
-                            scope: deleteScope,
-                            templateUrl: deleteTemplateUrl,
-                            backdrop: 'static'
-                        };
-                        var instance = $uibModal.open(opts);
+                    var deleteTemplateUrl = adfTemplatePath + 'widget-delete.html';
+                    if (definition.deleteTemplateUrl) {
+                        deleteTemplateUrl = definition.deleteTemplateUrl;
+                    }
+                    var opts = {
+                        scope: deleteScope,
+                        templateUrl: deleteTemplateUrl,
+                        backdrop: 'static'
+                    };
+                    var instance = $uibModal.open(opts);
 
-                        deleteScope.closeDialog = function() {
-                            instance.close();
-                            deleteScope.$destroy();
-                        };
-                        deleteScope.deleteDialog = function() {
-                            deleteWidget();
-                            deleteScope.closeDialog();
-                        };
-                    } else {
+                    deleteScope.closeDialog = function () {
+                        instance.close();
+                        deleteScope.$destroy();
+                    };
+                    deleteScope.deleteDialog = function () {
                         deleteWidget();
-                    }
-                };
-
-
-                $scope.print = function() {
-                    if (!$scope.editMode) {
-                        $scope.$broadcast('widgetPrint');
-                    }
-                }
-
-                $scope.isExecuteOperationEnabled = function() {
-                    // if ($scope.selectionManager.totalSelected() > 0)
-                    //     return true;
-                    if ($scope.config.entityKey)
-                        return true;
-                    if (typeof $scope.config.filter === "string") {
-                        return $scope.config.filter.length > 0;
-                    }
-                    if (typeof $scope.config.filter === "object") {
-                        return $scope.config.filter.value.length > 2 && $scope.config.filter.oql;
-                    }
-                    return false;
-                }
-
-                $scope.executeOperation = function() {
-                    if (!$scope.editMode) {
-                        // if ($scope.selectionManager.totalSelected() > 0) {
-                        //     var selectedItems = [];
-                        //     angular.forEach($scope.selectionManager.currentSelection, function(data, key) {
-                        //         selectedItems.push({ key: key, value: data });
-                        //     });
-                        //     $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectedItems });
-                        // } else {
-                        $scope.$parent.$broadcast('widgetExecuteOperation');
-                        // }
-                    }
-                };
-
-                // bind reload function
-                var stopReloadTimeout;
-
-                function _setReloadTimeout() {
-                    if ($scope.config && $scope.config && $scope.config.reloadPeriod && $scope.config.reloadPeriod !== "0") {
-                        if (angular.isDefined(stopReloadTimeout)) {
-                            $interval.cancel(stopReloadTimeout)
-                            stopReloadTimeout = undefined;
-                        };
-                        stopReloadTimeout = $interval($scope.reload, ($scope.config.reloadPeriod * 1000));
-                    }
-                }
-
-                $scope.reload = function(completeReload) {
-                    if (completeReload) {
-                        $scope.$broadcast('widgetReload', completeReload);
-                    } else {
-                        $scope.$broadcast('widgetReload');
-                    }
-
-                    _setReloadTimeout();
-                };
-
-                // verificacion de periodo de refresco
-                _setReloadTimeout();
-
-                $element.on('$destroy', function() {
-                    $interval.cancel(stopReloadTimeout);
-                });
-
-                $scope.filter = {
-                    value: ""
-                };
-                $scope.sort = {
-                    value: "",
-                    direction: ""
-                };
-
-                $scope.toggleAdvanced = 1;
-                if (typeof $scope.config.filter === "object" && $scope.config.filter.oql && $scope.config.filter.oql.length > 2) {
-                    $scope.search = {
-                        oql: $scope.config.filter.oql,
-                        json: $scope.config.filter.value
+                        deleteScope.closeDialog();
                     };
-                    $scope.toggleAdvanced = 0;
-                } else if (typeof $scope.config.filter === "string") {
-                    $scope.search = {
-                        quick: $scope.config.filter
-                    };
-                    $scope.toggleAdvanced = 1;
-                } else if (typeof $scope.config.filter === "object" && $scope.config.filter.fields) {
-                    $scope.search = {
-                        customFilter: $scope.config.filter.fields
-                    };
-                    $scope.search.fields = [];
-                    angular.forEach($scope.config.filter.fields, function(v, key) {
-                        $scope.search.fields.push(v.name);
-                    });
-                    $scope.toggleAdvanced = 2;
                 } else {
-                    $scope.search = {
-                        quick: $scope.config.filter = ""
+                    deleteWidget();
+                }
+            };
+
+
+            $scope.print = function () {
+                if (!$scope.editMode) {
+                    $scope.$broadcast('widgetPrint');
+                }
+            }
+
+            $scope.isExecuteOperationEnabled = function () {
+                // if ($scope.selectionManager.totalSelected() > 0)
+                //     return true;
+                if (config.entityKey)
+                    return true;
+                var filter = config.filter;
+                if (typeof filter === "string") {
+                    return filter.length > 0;
+                }
+                if (typeof filter === "object") {
+                    return filter.value.length > 2 && filter.oql;
+                }
+                return false;
+            }
+
+            $scope.executeOperation = function () {
+                if (!$scope.editMode) {
+                    // if ($scope.selectionManager.totalSelected() > 0) {
+                    //     var selectedItems = [];
+                    //     angular.forEach($scope.selectionManager.currentSelection, function(data, key) {
+                    //         selectedItems.push({ key: key, value: data });
+                    //     });
+                    //     $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectedItems });
+                    // } else {
+                    $scope.$parent.$broadcast('widgetExecuteOperation');
+                    // }
+                }
+            };
+
+            // bind reload function
+            var stopReloadTimeout;
+
+            function _setReloadTimeout() {
+                if (config && config.reloadPeriod && config.reloadPeriod !== "0") {
+                    if (angular.isDefined(stopReloadTimeout)) {
+                        $interval.cancel(stopReloadTimeout)
+                        stopReloadTimeout = undefined;
                     };
+                    stopReloadTimeout = $interval($scope.reload, (config.reloadPeriod * 1000));
+                }
+            }
+
+            $scope.reload = function (completeReload) {
+                if (completeReload) {
+                    $scope.$broadcast('widgetReload', completeReload);
+                } else {
+                    $scope.$broadcast('widgetReload');
                 }
 
-                $scope.toggleFilter = function(advanced) {
-                    $scope.toggleAdvanced = advanced;
+                _setReloadTimeout();
+            };
+
+            // verificacion de periodo de refresco
+            _setReloadTimeout();
+
+            $element.on('$destroy', function () {
+                $interval.cancel(stopReloadTimeout);
+            });
+
+            $scope.filter = {
+                value: ""
+            };
+            $scope.sort = {
+                value: "",
+                direction: ""
+            };
+
+            $scope.toggleAdvanced = 1;
+            var filter = config.fiilter;
+            if (typeof filter === "object" && filter.oql && filter.oql.length > 2) {
+                $scope.search = {
+                    oql: filter.oql,
+                    json: filter.value
                 };
-                $scope.filterAvailable = false;
-                $scope.showFilter = function() {
-                    $scope.filterAvailable = $scope.filterAvailable === true ? false : true;
+                $scope.toggleAdvanced = 0;
+            } else if (typeof filter === "string") {
+                $scope.search = {
+                    quick: filter
+                };
+                $scope.toggleAdvanced = 1;
+            } else if (typeof filter === "object" && filter.fields) {
+                $scope.search = {
+                    customFilter: filter.fields
+                };
+                $scope.search.fields = [];
+                angular.forEach(filter.fields, function (v, key) {
+                    $scope.search.fields.push(v.name);
+                });
+                $scope.toggleAdvanced = 2;
+            } else {
+                $scope.search = {
+                    quick: filter = ""
+                };
+            }
+
+            $scope.toggleFilter = function (advanced) {
+                $scope.toggleAdvanced = advanced;
+            };
+            $scope.filterAvailable = false;
+            $scope.showFilter = function () {
+                $scope.filterAvailable = $scope.filterAvailable === true ? false : true;
+            };
+
+            $scope.showFinalFilter = false;
+
+            $scope.launchSearching = function () {
+                var widget = {
+                    definition: definition,
+                    element: $element
                 };
 
-                $scope.showFinalFilter = false;
+                $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, config.filter);
+                $scope.reload(true);
+            }
+            $scope.addCustomFilter = function (key) {
+                $scope.search.customFilter = $scope.search.customFilter ? $scope.search.customFilter : [];
+                $scope.search.customFilter.push({ name: key, value: '' });
+            }
 
-                $scope.launchSearching = function() {
-                    var widget = {
-                        definition: definition,
-                        element: $element
-                    };
-
-                    $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, $scope.config.filter);
-                    $scope.reload(true);
-                }
-                $scope.addCustomFilter = function(key) {
-                    $scope.search.customFilter = $scope.search.customFilter ? $scope.search.customFilter : [];
-                    $scope.search.customFilter.push({ name: key, value: '' });
-                }
-
-                $scope.launchCustomFilter = function() {
-                    if ($scope.search.customFilter && $scope.search.customFilter.length > 0) {
-                        $scope.search.oql = $scope.search.json = '';
-
-                        $scope.config.filter = {
-                            value: {
-                                and: []
-                            },
-                            fields: $scope.search.customFilter
-                        }
-                        angular.forEach($scope.search.customFilter, function(v, key) {
-                            if (v.value) {
-                                var like = {};
-                                like[v.name] = v.value;
-                                $scope.config.filter.value.and.push({ 'like': like });
-                            }
-
-                        });
-                        $scope.config.filter.value = JSON.stringify($scope.config.filter.value);
-                    }
-
-                    $scope.launchSearching();
-                }
-
-
-
-                $scope.deleteFilter = function(value, model) {
-                    angular.forEach($scope.search.customFilter, function(v, key) {
-                        if (v.name === value) {
-                            $scope.search.customFilter.splice(key, 1);
-                        }
-                    });
-                    if ($scope.search.customFilter.length === 0) {
-                        $scope.config.filter = {};
-                    }
-                };
-
-
-                $scope.launchSearchingAdv = function() {
-                    $scope.search.quick = '';
-                    $scope.config.filter = {
-                        oql: $scope.search.oql,
-                        value: $scope.search.json
-                    };
-                    if ($scope.search.json === '')
-                        $scope.config.filter = {
-                            oql: '',
-                            value: ''
-                        };
-                    $scope.launchSearching();
-
-                }
-
-                $scope.applyFilter = function(event) {
-                    $scope.launchSearching();
-                }
-
-                $scope.launchSearchingQuick = function() {
+            $scope.launchCustomFilter = function () {
+                if ($scope.search.customFilter && $scope.search.customFilter.length > 0) {
                     $scope.search.oql = $scope.search.json = '';
-                    $scope.config.filter = $scope.search.quick;
-                    $scope.launchSearching();
+
+                    $scope.config.filter = {
+                        value: {
+                            and: []
+                        },
+                        fields: $scope.search.customFilter
+                    }
+                    angular.forEach($scope.search.customFilter, function (v, key) {
+                        if (v.value) {
+                            var like = {};
+                            like[v.name] = v.value;
+                            $scope.config.filter.value.and.push({ 'like': like });
+                        }
+
+                    });
+                    $scope.config.filter.value = JSON.stringify($scope.config.filter.value);
                 }
 
-                var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
-                    $scope.config.windowFilter = timeObj ? timeObj : ($scope.config.windowFilter ? {} : timeObj);
-                    var widget = {
-                        definition: definition,
-                        element: $element
+                $scope.launchSearching();
+            }
+
+
+
+            $scope.deleteFilter = function (value, model) {
+                angular.forEach($scope.search.customFilter, function (v, key) {
+                    if (v.name === value) {
+                        $scope.search.customFilter.splice(key, 1);
                     }
-                    $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
-                    $scope.reload();
+                });
+                if ($scope.search.customFilter.length === 0) {
+                    $scope.config.filter = {};
+                }
+            };
+
+
+            $scope.launchSearchingAdv = function () {
+                $scope.search.quick = '';
+                $scope.config.filter = {
+                    oql: $scope.search.oql,
+                    value: $scope.search.json
+                };
+                if ($scope.search.json === '')
+                    $scope.config.filter = {
+                        oql: '',
+                        value: ''
+                    };
+                $scope.launchSearching();
+
+            }
+
+            $scope.applyFilter = function (event) {
+                $scope.launchSearching();
+            }
+
+            $scope.launchSearchingQuick = function () {
+                $scope.search.oql = $scope.search.json = '';
+                $scope.config.filter = $scope.search.quick;
+                $scope.launchSearching();
+            }
+
+            var windowTimeChanged = $scope.$on('onWindowTimeChanged', function (event, timeObj) {
+                $scope.config.windowFilter = timeObj ? timeObj : (config.windowFilter ? {} : timeObj);
+                var widget = {
+                    definition: definition,
+                    element: $element
+                }
+                $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, config.windowFilter);
+                $scope.reload();
+            });
+
+            $scope.enter = function (event) {
+                var keycode = (event.keyCode ? event.keyCode : event.which);
+                if (keycode === 13) {
+                    if ($scope.toggleAdvanced === 0)
+                        $scope.launchSearchingAdv();
+                    if ($scope.toggleAdvanced === 1)
+                        $scope.launchSearchingQuick();
+                    if ($scope.toggleAdvanced === 2)
+                        $scope.launchCustomFilter();
+
+                }
+                if (keycode === 19) {
+                    $scope.showFinalFilter = $scope.showFinalFilter === false ? true : false;
+                }
+            }
+
+
+            $scope.customSelectors = [];
+            $scope.getCustomSelectors = function () {
+                config.widgetSelectors().findFields("").then(function (fields) {
+                    $scope.customSelectors = fields;
+                    $scope.$apply();
+                }).catch(function (err) {
+                    $log.error(err);
                 });
 
-                $scope.enter = function(event) {
-                    var keycode = (event.keyCode ? event.keyCode : event.which);
-                    if (keycode === 13) {
-                        if ($scope.toggleAdvanced === 0)
-                            $scope.launchSearchingAdv();
-                        if ($scope.toggleAdvanced === 1)
-                            $scope.launchSearchingQuick();
-                        if ($scope.toggleAdvanced === 2)
-                            $scope.launchCustomFilter();
+            }
 
-                    }
-                    if (keycode === 19) {
-                        $scope.showFinalFilter = $scope.showFinalFilter === false ? true : false;
-                    }
+            $scope.customFilter = [];
+            $scope.getcustomFilter = function () {
+                config.widgetSelectors().findFields("").then(function (fields) {
+                    $scope.customFilter = fields;
+                    $scope.$apply();
+                }).catch(function (err) {
+                    $log.error(err);
+                });
+
+            }
+
+            $scope.ifCustomFilter = function () {
+                return $scope.customSelectors && config.sort && $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2;
+            }
+
+            $scope.showCustomFields = function () {
+                return $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2 && $scope.search.customFilter && $scope.filterAvailable && !$scope.editMode;
+            }
+
+            $scope.changeDirection = function () {
+                var direction = config.sort.direction;
+                if (direction === 'DESCENDING') {
+                    direction = 'ASCENDING'
+                } else if (direction === 'ASCENDING') {
+                    direction = 'DESCENDING'
                 }
+                $scope.reload();
+            }
 
-
-                $scope.customSelectors = [];
-                $scope.getCustomSelectors = function() {
-                    $scope.config.widgetSelectors().findFields("").then(function(fields) {
-                        $scope.customSelectors = fields;
-                        $scope.$apply();
-                    }).catch(function(err) {
-                        $log.error(err);
+            $scope.debugQuery = function () {
+                Filter.parseQuery($scope.search.oql || '')
+                    .then(function (data) {
+                        //$scope.elementos = data;
+                        $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                        $scope.unknownWords = '';
+                        $scope.filter.error = null;
+                    })
+                    .catch(function (err) {
+                        $scope.filter.error = err;
+                        // Tratar el error
                     });
 
-                }
+            }
 
-                $scope.customFilter = [];
-                $scope.getcustomFilter = function() {
-                    $scope.config.widgetSelectors().findFields("").then(function(fields) {
-                        $scope.customFilter = fields;
-                        $scope.$apply();
-                    }).catch(function(err) {
-                        $log.error(err);
-                    });
-
-                }
-
-                $scope.ifCustomFilter = function() {
-                    return $scope.customSelectors && $scope.config.sort && $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2;
-                }
-
-                $scope.showCustomFields = function() {
-                    return $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2 && $scope.search.customFilter && $scope.filterAvailable && !$scope.editMode;
-                }
-
-                $scope.changeDirection = function() {
-                    if ($scope.config.sort.direction === 'DESCENDING') {
-                        $scope.config.sort.direction = 'ASCENDING'
-                    } else if ($scope.config.sort.direction === 'ASCENDING') {
-                        $scope.config.sort.direction = 'DESCENDING'
-                    }
-                    $scope.reload();
-                }
-
-                $scope.debugQuery = function() {
-                    Filter.parseQuery($scope.search.oql || '')
-                        .then(function(data) {
-                            //$scope.elementos = data;
-                            $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
-                            $scope.unknownWords = '';
-                            $scope.filter.error = null;
-                        })
-                        .catch(function(err) {
-                            $scope.filter.error = err;
-                            // Tratar el error
-                        });
-
-                }
-
-                $scope.autocomplete_options = function() {
-                    var autocomplete_options = {
-                        suggest: Filter.suggest_field_delimited,
-                        customSelectors: $scope.config.widgetSelectors()
-                    };
-
-                    return autocomplete_options;
-
+            $scope.autocomplete_options = function () {
+                var autocomplete_options = {
+                    suggest: Filter.suggest_field_delimited,
+                    customSelectors: config.widgetSelectors()
                 };
 
-                // Multiple selection
-                $scope.selectedItems = {};
+                return autocomplete_options;
 
-                // Gestor de seleccion
-                $scope.selectionManager = {
-                    currentSelection: $scope.selectedItems,
-                    isSelected: function(key, obj) {
-                        if ($scope.selectedItems[key] && !angular.isUndefined(obj)) {
-                            $scope.selectedItems[key].data = obj;
-                        }
+            };
 
-                        return $scope.selectedItems[key] ? true : false;
-                    },
-                    totalSelected: function() {
-                        return Object.keys($scope.selectedItems).length;
+            // Multiple selection
+            $scope.selectedItems = {};
+
+            // Gestor de seleccion
+            $scope.selectionManager = {
+                currentSelection: $scope.selectedItems,
+                isSelected: function (key, obj) {
+                    if ($scope.selectedItems[key] && !angular.isUndefined(obj)) {
+                        $scope.selectedItems[key].data = obj;
                     }
+
+                    return $scope.selectedItems[key] ? true : false;
+                },
+                totalSelected: function () {
+                    return Object.keys($scope.selectedItems).length;
+                }
+            };
+
+            $scope.manageSelectedItems = function () {
+                var selectionScope = $scope.$new();
+
+                selectionScope.selectionConfig = config.selectionConfig;
+
+                selectionScope.selectedItems = [];
+                angular.forEach($scope.selectedItems, function (value, key) {
+                    selectionScope.selectedItems.push({ key: key, value: value });
+                });
+
+                selectionScope.currentSelection = {
+                    selected: selectionScope.selectedItems
                 };
 
-                $scope.manageSelectedItems = function() {
-                    var selectionScope = $scope.$new();
+                var manageItemsSelectedTemplate = adfTemplatePath + 'widget-selection.html';
+                var opts = {
+                    scope: selectionScope,
+                    templateUrl: manageItemsSelectedTemplate,
+                    backdrop: 'static',
+                    size: 'lg',
+                    animation: true
+                };
 
-                    selectionScope.selectionConfig = $scope.config.selectionConfig;
+                var instance = $uibModal.open(opts);
 
-                    selectionScope.selectedItems = [];
-                    angular.forEach($scope.selectedItems, function(value, key) {
-                        selectionScope.selectedItems.push({ key: key, value: value });
-                    });
-
+                selectionScope.restoreSelection = function () {
                     selectionScope.currentSelection = {
                         selected: selectionScope.selectedItems
                     };
-
-                    var manageItemsSelectedTemplate = adfTemplatePath + 'widget-selection.html';
-                    var opts = {
-                        scope: selectionScope,
-                        templateUrl: manageItemsSelectedTemplate,
-                        backdrop: 'static',
-                        size: 'lg',
-                        animation: true
-                    };
-
-                    var instance = $uibModal.open(opts);
-
-                    selectionScope.restoreSelection = function() {
-                        selectionScope.currentSelection = {
-                            selected: selectionScope.selectedItems
-                        };
-                    };
-
-                    selectionScope.clearSelection = function() {
-                        selectionScope.currentSelection.selected = [];
-                    };
-
-                    // Cierra sy guarda los datos de nueva selección
-                    selectionScope.applyFilter = function(type) {
-                        var customOql = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
-
-                        if (!angular.isUndefined(customOql) && customOql !== null) {
-                            $scope.toggleAdvanced = 0;
-                            Filter.parseQuery(customOql).then(function(data) {
-                                $scope.search.oql = customOql;
-                                $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
-                                $scope.unknownWords = '';
-                                $scope.filter.error = null;
-
-                                $scope.launchSearchingAdv();
-                            }).catch(function(err) {
-                                $scope.filter.error = err;
-                            });
-                        }
-                    };
-
-                    selectionScope.executeOperation = function(operationType) {
-                        if (!$scope.editMode) {
-                            $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectionScope.currentSelection.selected, 'type': operationType });
-                        }
-                    };
-
-                    // Cierra sy guarda los datos de nueva selección
-                    selectionScope.saveChangesDialog = function() {
-                        var finalSelection = {};
-                        angular.forEach(selectionScope.currentSelection.selected, function(data, idx) {
-                            finalSelection[data.key] = { data: data.value.data, visible: data.value.visible };
-                        });
-
-                        $scope.selectedItems = angular.copy(finalSelection);
-                        $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
-
-                        $scope.selectionManager.lastItem = {};
-                        $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
-
-                        instance.close();
-                        selectionScope.$destroy();
-                    };
-
-                    // Cierra sin realizar ninguna acción
-                    selectionScope.closeDialog = function() {
-                        instance.close();
-                        selectionScope.$destroy();
-                    };
                 };
 
-
-                // bind edit function
-                $scope.edit = function() {
-                    var editScope = $scope.$new();
-                    editScope.translate = dashboard.translate;
-                    editScope.definition = angular.copy(definition);
-
-                    var adfEditTemplatePath = adfTemplatePath + 'widget-edit.html';
-                    if (definition.editTemplateUrl) {
-                        adfEditTemplatePath = definition.editTemplateUrl;
-                    }
-
-                    var opts = {
-                        scope: editScope,
-                        templateUrl: adfEditTemplatePath,
-                        backdrop: 'static',
-                        size: 'lg'
-                    };
-
-                    var instance = $uibModal.open(opts);
-
-                    editScope.closeDialog = function() {
-                        instance.close();
-                        editScope.$destroy();
-                    };
-
-                    // TODO create util method
-                    function createApplyPromise(result) {
-                        var promise;
-                        if (typeof result === 'boolean') {
-                            var deferred = $q.defer();
-                            if (result) {
-                                deferred.resolve();
-                            } else {
-                                deferred.reject();
-                            }
-                            promise = deferred.promise;
-                        } else {
-                            promise = $q.when(result);
-                        }
-                        return promise;
-                    }
-
-                    editScope.saveDialog = function() {
-                        // clear validation error
-                        editScope.validationError = null;
-
-                        // build injection locals
-                        var widget = $scope.widget;
-
-                        // create a default apply method for widgets
-                        // without edit mode
-                        // see issue https://goo.gl/KHPQLZ
-                        var applyFn;
-                        if (widget.edit) {
-                            applyFn = widget.edit.apply;
-                        } else {
-                            applyFn = function() {
-                                return true;
-                            };
-                        }
-
-                        // injection locals
-                        var locals = {
-                            widget: widget,
-                            definition: editScope.definition,
-                            config: editScope.definition.config
-                        };
-
-                        // invoke apply function and apply if success
-                        var result = $injector.invoke(applyFn, applyFn, locals);
-                        createApplyPromise(result).then(function() {
-                            definition.title = editScope.definition.title;
-                            angular.extend(definition.config, editScope.definition.config);
-
-                            editScope.closeDialog();
-
-                            if (widget.edit && widget.edit.reload) {
-                                // reload content after edit dialog is closed
-                                $scope.$broadcast('widgetConfigChanged');
-                            }
-                        }, function(err) {
-                            if (err) {
-                                editScope.validationError = err;
-                            } else {
-                                editScope.validationError = 'Validation durring apply failed';
-                            }
-                        });
-                    };
-
+                selectionScope.clearSelection = function () {
+                    selectionScope.currentSelection.selected = [];
                 };
 
-            } else {
-                $log.debug('widget not found');
-            }
+                // Cierra sy guarda los datos de nueva selección
+                selectionScope.applyFilter = function (type) {
+                    var customOql = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
+
+                    if (!angular.isUndefined(customOql) && customOql !== null) {
+                        $scope.toggleAdvanced = 0;
+                        Filter.parseQuery(customOql).then(function (data) {
+                            $scope.search.oql = customOql;
+                            $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                            $scope.unknownWords = '';
+                            $scope.filter.error = null;
+
+                            $scope.launchSearchingAdv();
+                        }).catch(function (err) {
+                            $scope.filter.error = err;
+                        });
+                    }
+                };
+
+                selectionScope.executeOperation = function (operationType) {
+                    if (!$scope.editMode) {
+                        $scope.$parent.$broadcast('widgetExecuteOperation', { 'selectedItems': selectionScope.currentSelection.selected, 'type': operationType });
+                    }
+                };
+
+                // Cierra sy guarda los datos de nueva selección
+                selectionScope.saveChangesDialog = function () {
+                    var finalSelection = {};
+                    angular.forEach(selectionScope.currentSelection.selected, function (data, idx) {
+                        finalSelection[data.key] = { data: data.value.data, visible: data.value.visible };
+                    });
+
+                    $scope.selectedItems = angular.copy(finalSelection);
+                    $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+
+                    $scope.selectionManager.lastItem = {};
+                    $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
+
+                    instance.close();
+                    selectionScope.$destroy();
+                };
+
+                // Cierra sin realizar ninguna acción
+                selectionScope.closeDialog = function () {
+                    instance.close();
+                    selectionScope.$destroy();
+                };
+            };
+
+
+            // bind edit function
+            $scope.edit = function () {
+                var editScope = $scope.$new();
+                editScope.translate = dashboard.translate;
+                editScope.definition = angular.copy(definition);
+
+                var adfEditTemplatePath = adfTemplatePath + 'widget-edit.html';
+                if (definition.editTemplateUrl) {
+                    adfEditTemplatePath = definition.editTemplateUrl;
+                }
+
+                var opts = {
+                    scope: editScope,
+                    templateUrl: adfEditTemplatePath,
+                    backdrop: 'static',
+                    size: 'lg'
+                };
+
+                var instance = $uibModal.open(opts);
+
+                editScope.closeDialog = function () {
+                    instance.close();
+                    editScope.$destroy();
+                };
+
+                // TODO create util method
+                function createApplyPromise(result) {
+                    var promise;
+                    if (typeof result === 'boolean') {
+                        var deferred = $q.defer();
+                        if (result) {
+                            deferred.resolve();
+                        } else {
+                            deferred.reject();
+                        }
+                        promise = deferred.promise;
+                    } else {
+                        promise = $q.when(result);
+                    }
+                    return promise;
+                }
+
+                editScope.saveDialog = function () {
+                    // clear validation error
+                    editScope.validationError = null;
+
+                    // build injection locals
+                    var widget = $scope.widget;
+
+                    // create a default apply method for widgets
+                    // without edit mode
+                    // see issue https://goo.gl/KHPQLZ
+                    var applyFn;
+                    if (widget.edit) {
+                        applyFn = widget.edit.apply;
+                    } else {
+                        applyFn = function () {
+                            return true;
+                        };
+                    }
+
+                    // injection locals
+                    var locals = {
+                        widget: widget,
+                        definition: editScope.definition,
+                        config: editScope.definition.config
+                    };
+
+                    // invoke apply function and apply if success
+                    var result = $injector.invoke(applyFn, applyFn, locals);
+                    createApplyPromise(result).then(function () {
+                        definition.title = editScope.definition.title;
+                        angular.extend(definition.config, editScope.definition.config);
+
+                        editScope.closeDialog();
+
+                        if (widget.edit && widget.edit.reload) {
+                            // reload content after edit dialog is closed
+                            $scope.$broadcast('widgetConfigChanged');
+                        }
+                    }, function (err) {
+                        if (err) {
+                            editScope.validationError = err;
+                        } else {
+                            editScope.validationError = 'Validation durring apply failed';
+                        }
+                    });
+                };
+
+            };
+
+
         }
 
         return {
@@ -2417,30 +2416,30 @@ angular.module('adf')
                 options: '=',
                 widgetState: '='
             },
-            controller: ["$scope", function($scope) {
-                var adfDashboardCollapseExpand = $scope.$on('adfDashboardCollapseExpand', function(event, args) {
+            controller: ["$scope", function ($scope) {
+                var adfDashboardCollapseExpand = $scope.$on('adfDashboardCollapseExpand', function (event, args) {
                     $scope.widgetState.isCollapsed = args.collapseExpandStatus;
                 });
 
-                var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function(event, widget) {
+                var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function (event, widget) {
                     if (dashboard.idEquals($scope.definition.wid, widget.wid)) {
                         $scope.edit();
                     }
                 });
 
-                var adfIsEditMode = $scope.$on('adfIsEditMode', function(event, widget) {
+                var adfIsEditMode = $scope.$on('adfIsEditMode', function (event, widget) {
                     $scope.editing = true;
                 });
 
-                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function(event, widget) {
+                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function (event, widget) {
                     $scope.editing = false;
                 });
 
-                var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function(event, widget) {
+                var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function (event, widget) {
                     $scope.editing = false;
                 });
 
-                $scope.widgetClasses = function(w, definition) {
+                $scope.widgetClasses = function (w, definition) {
                     var classes = definition.styleClass || '';
                     // w is undefined, if the type of the widget is unknown
                     // see issue #216
@@ -2450,7 +2449,7 @@ angular.module('adf')
                     return classes;
                 };
 
-                $scope.openFullScreen = function() {
+                $scope.openFullScreen = function () {
                     var definition = $scope.definition;
                     var fullScreenScope = $scope.$new();
                     var opts = {
@@ -2462,44 +2461,44 @@ angular.module('adf')
                     };
 
                     var instance = $uibModal.open(opts);
-                    fullScreenScope.closeDialog = function() {
+                    fullScreenScope.closeDialog = function () {
                         instance.close();
                         fullScreenScope.$destroy();
                     };
                 };
 
-                $scope.openFilter = function() {
+                $scope.openFilter = function () {
 
                 }
 
-                $scope.openAboutScreen = function(size) {
+                $scope.openAboutScreen = function (size) {
                     size = 'md';
                     var modalInstance = $uibModal.open({
                         animation: true,
                         templateUrl: 'widgetAboutModal.html',
-                        controller: ["$scope", "$uibModalInstance", "information", function($scope, $uibModalInstance, information) {
+                        controller: ["$scope", "$uibModalInstance", "information", function ($scope, $uibModalInstance, information) {
                             $scope.about = {};
                             $scope.about.info = information;
-                            $scope.ok = function() {
+                            $scope.ok = function () {
                                 $uibModalInstance.close();
                             };
                         }],
                         'size': size,
                         resolve: {
-                            information: function() {
+                            information: function () {
                                 return $scope.config.about;
                             }
                         }
                     });
 
-                    modalInstance.result.then(function(selectedItem) {
+                    modalInstance.result.then(function (selectedItem) {
                         $scope.selected = selectedItem;
-                    }, function() {
+                    }, function () {
                         $log.info('Modal dismissed at: ' + new Date());
                     });
                 };
 
-                $scope.saveWidgetScreen = function(wId) {
+                $scope.saveWidgetScreen = function (wId) {
                     $scope.$emit('generateSnapshot', {
                         'objectSelector': '.widget_' + wId,
                         'fileName': 'capture_' + new Date().getTime()
@@ -2507,7 +2506,7 @@ angular.module('adf')
                 };
 
 
-                var addItemToSelection = $scope.$on('addItemToSelection', function(event, item) {
+                var addItemToSelection = $scope.$on('addItemToSelection', function (event, item) {
                     if (!$scope.selectedItems[item.key]) {
                         $scope.selectedItems[item.key] = {
                             data: item.data,
@@ -2521,7 +2520,7 @@ angular.module('adf')
 
                 });
 
-                var removeItemFromSelection = $scope.$on('removeItemFromSelection', function(event, item) {
+                var removeItemFromSelection = $scope.$on('removeItemFromSelection', function (event, item) {
                     if ($scope.selectedItems[item.key]) {
                         delete $scope.selectedItems[item.key];
                         $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
@@ -2531,7 +2530,7 @@ angular.module('adf')
                     }
                 });
 
-                $scope.$on('$destroy', function() {
+                $scope.$on('$destroy', function () {
                     adfDashboardCollapseExpand();
                     adfWidgetEnterEditMode();
                     adfIsEditMode();
@@ -2541,7 +2540,7 @@ angular.module('adf')
                     removeItemFromSelection();
                 });
             }],
-            compile: function() {
+            compile: function () {
 
                 /**
                  * use pre link, because link of widget-content
@@ -2565,7 +2564,7 @@ $templateCache.put("../src/templates/widget-add.html","<div class=modal-header> 
 $templateCache.put("../src/templates/widget-delete.html","<div class=modal-header> <h4 class=modal-title><span ng-bind=\"translate(\'ADF_COMMON_DELETE\')\">Delete</span> {{widget.title}}</h4> </div> <div class=modal-body> <form role=form> <div class=form-group> <label for=widgetTitle ng-bind=\"translate(\'ADF_WIDGET_DELETE_CONFIRM_MESSAGE\')\">Are you sure you want to delete this widget ?</label> </div> </form> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> <button type=button class=\"btn btn-primary\" ng-click=deleteDialog() ng-bind=\"translate(\'ADF_COMMON_DELETE\')\">Delete</button> </div> ");
 $templateCache.put("../src/templates/widget-edit.html","<form name=widgetEditForm novalidate role=form ng-submit=saveDialog()> <div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title>{{widget.title}}</h3> </div> <div class=modal-body> <div class=row> <div class=col-xs-12> <div class=\"alert alert-danger\" role=alert ng-show=validationError> <strong>Apply error:</strong> {{validationError}} </div> </div> </div> <div class=row ng-if=widget.show_reload_config> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetTitle ng-bind=\"translate(\'ADF_COMMON_TITLE\')\">Title</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-model=definition.title placeholder=\"Enter title\"> </div> </div> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetReloadPeriod ng-bind=\"translate(\'ADF_WIDGET_TOOLTIP_REFRESH\')\">Refresh</label> <select class=form-control id=widgetReloadPeriod aria-label=\"ngSelected demo\" ng-model=definition.config.reloadPeriod required> <option ng-selected=selected value=0>MANUAL</option> <option value=20>20 SECONDS</option> <option value=40>40 SECONDS</option> <option value=60>EVERY MINUTE</option> </select> </div> </div> </div> <div class=row ng-if=!widget.show_reload_config> <div class=\"col-xs-12 col-md-12\"> <div class=form-group> <label for=widgetTitle ng-bind=\"translate(\'ADF_COMMON_TITLE\')\">Title</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-model=definition.title placeholder=\"Enter title\"> </div> </div> </div> <div ng-if=widget.edit class=row> <div class=col-xs-12> <adf-widget-content model=definition content=widget.edit> </adf-widget-content></div> </div> <div class=row> <div class=col-xs-12> <div class=form-group> <label for=widgetAbout>About</label> <textarea class=\"form-control text-primary\" id=widgetAbout ng-model=definition.config.about placeholder=\"Enter widget description\"></textarea> </div> </div> </div> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CANCEL\')\">Cancel</button> <button type=submit class=\"btn btn-primary\" ng-disabled=widgetEditForm.$invalid ng-value=\"translate(\'ADF_COMMON_APPLY\')\">Apply</button> </div> </form>");
 $templateCache.put("../src/templates/widget-fullscreen.html","<div class=modal-header> <div class=\"pull-right widget-icons\"> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REFRESH\') }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a> <a href title=close ng-click=closeDialog()> <i class=\"glyphicon glyphicon-remove\"></i> </a> <a href title=\"insert into dashboard\" ng-if=persistDashboard ng-click=persistDashboard()> <i class=\"glyphicon glyphicon-save\"></i> </a> </div> <h4 class=modal-title>&nbsp;{{ definition.title }}</h4> </div> <div class=\"modal-body widget\" style=overflow:hidden;> <adf-widget-content model=definition content=widget> </adf-widget-content></div> <div class=modal-footer ng-if=widget.show_modal_footer> <button type=button class=\"btn btn-primary\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> </div>");
-$templateCache.put("../src/templates/widget-selection.html","<style>\n    .selected-entities-control .ui-select-container>div:first-child {\n        max-height: 300px;\n        overflow-y: scroll;\n        overflow-x: hidden;\n    }\n</style> <form name=widgetSelectionForm novalidate role=form ng-submit=saveChangesDialog()> <div class=modal-header> <div class=\"col-xs-12 col-md-12\"> <h3 class=\"modal-title text-left\"><i class=\"fa fa-check-square-o\" aria-hidden=true></i> Selected items...</h3> </div> </div> <div class=modal-body> <div class=col-xs-12> <div class=\"form-group selected-entities-control\"> <label for=currentSelection>Current selection</label> <ui-select multiple tagging ng-model=currentSelection.selected theme=bootstrap sortable=false title=\"Selected items\"> <ui-select-match placeholder=\"No items selected\"> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\" ng-repeat=\"(k,v) in $item.value.visible track by $index\" ng-if=\"v !== undefined\"><strong>{{k}}:</strong> {{v}}<br></span> </div> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=!$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\">{{$item.key}}</span> </div> </ui-select-match> <ui-select-choices repeat=\"itemSel in currentSelection.selected | filter:$select.search\"> {{itemSel.key}} </ui-select-choices> </ui-select> </div> </div> <div class=\"col-xs-12 text-left\"> <button type=button class=\"btn btn-success btn-sm\" ng-click=restoreSelection() ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" ng-bind=\"translate(\'ADF_WIDGET_RESTORE\')\">Restore</button> <button type=button class=\"btn btn-danger btn-sm\" ng-click=clearSelection() ng-disabled=\"currentSelection.selected.length < 1\" ng-bind=\"translate(\'ADF_WIDGET_CLEAR\')\">Clear</button> </div> </div> <div class=modal-footer> <div class=\"col-xs-12 col-md-2 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.filterTypes && currentSelection.selected.length > 0\"> <button id=applyFilterBy type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-filter pointer\"></i> Filter by <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=applyFilterBy> <li role=menuitem ng-repeat=\"filterType in selectionConfig.filterTypes\"><a href ng-click=applyFilter(filterType) title=\"Selected {{filterType}}\">Selected {{filterType}}</a></li> </ul> </div> </div> <div class=\"col-xs-12 col-md-3 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.operationTypes && currentSelection.selected.length > 0\"> <button id=executeOperation type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-flash pointer\"></i> Exec. Operation <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=executeOperation> <li role=menuitem ng-repeat=\"operationType in selectionConfig.operationTypes\"><a href ng-click=executeOperation(operationType) title={{operationType}}>{{operationType|humanize}}</a></li> </ul> </div> </div> <div class=\"col-xs-12 col-md-7 text-right\"> <button type=submit class=\"btn btn-primary\" ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" ng-value=\"translate(\'ADF_COMMON_APPLY\')\">Apply</button> <button type=button class=\"btn btn-default\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> </div> </div> </form>");
+$templateCache.put("../src/templates/widget-selection.html","<style>\r\n    .selected-entities-control .ui-select-container>div:first-child {\r\n        max-height: 300px;\r\n        overflow-y: scroll;\r\n        overflow-x: hidden;\r\n    }\r\n</style> <form name=widgetSelectionForm novalidate role=form ng-submit=saveChangesDialog()> <div class=modal-header> <div class=\"col-xs-12 col-md-12\"> <h3 class=\"modal-title text-left\"><i class=\"fa fa-check-square-o\" aria-hidden=true></i> Selected items...</h3> </div> </div> <div class=modal-body> <div class=col-xs-12> <div class=\"form-group selected-entities-control\"> <label for=currentSelection>Current selection</label> <ui-select multiple tagging ng-model=currentSelection.selected theme=bootstrap sortable=false title=\"Selected items\"> <ui-select-match placeholder=\"No items selected\"> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\" ng-repeat=\"(k,v) in $item.value.visible track by $index\" ng-if=\"v !== undefined\"><strong>{{k}}:</strong> {{v}}<br></span> </div> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=!$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\">{{$item.key}}</span> </div> </ui-select-match> <ui-select-choices repeat=\"itemSel in currentSelection.selected | filter:$select.search\"> {{itemSel.key}} </ui-select-choices> </ui-select> </div> </div> <div class=\"col-xs-12 text-left\"> <button type=button class=\"btn btn-success btn-sm\" ng-click=restoreSelection() ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" ng-bind=\"translate(\'ADF_WIDGET_RESTORE\')\">Restore</button> <button type=button class=\"btn btn-danger btn-sm\" ng-click=clearSelection() ng-disabled=\"currentSelection.selected.length < 1\" ng-bind=\"translate(\'ADF_WIDGET_CLEAR\')\">Clear</button> </div> </div> <div class=modal-footer> <div class=\"col-xs-12 col-md-2 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.filterTypes && currentSelection.selected.length > 0\"> <button id=applyFilterBy type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-filter pointer\"></i> Filter by <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=applyFilterBy> <li role=menuitem ng-repeat=\"filterType in selectionConfig.filterTypes\"><a href ng-click=applyFilter(filterType) title=\"Selected {{filterType}}\">Selected {{filterType}}</a></li> </ul> </div> </div> <div class=\"col-xs-12 col-md-3 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.operationTypes && currentSelection.selected.length > 0\"> <button id=executeOperation type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-flash pointer\"></i> Exec. Operation <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=executeOperation> <li role=menuitem ng-repeat=\"operationType in selectionConfig.operationTypes\"><a href ng-click=executeOperation(operationType) title={{operationType}}>{{operationType|humanize}}</a></li> </ul> </div> </div> <div class=\"col-xs-12 col-md-7 text-right\"> <button type=submit class=\"btn btn-primary\" ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" ng-value=\"translate(\'ADF_COMMON_APPLY\')\">Apply</button> <button type=button class=\"btn btn-default\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> </div> </div> </form>");
 $templateCache.put("../src/templates/widget-title.html","<div class=panel-title style=margin:0px;> <span class=pull-left>  <a href ng-if=\"selectedItemsLength > 0\" title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_SELECTION\') }}\" ng-click=manageSelectedItems() style=float:left;> <i class=\"glyphicon glyphicon-check\"></i><small class=ogux-budget>{{ selectedItemsLength }}</small> </a> <h4 ng-if=\"!widget.frameless && definition.title\" style=\"margin:0px 0px 0px 2px;float:left;\">{{definition.title}}</h4> </span> <div class=pull-right> <span ng-if=config.about> <a href uib-popover=\"{{ config.about }}\" popover-trigger=\"\'mouseenter\'\" popover-placement=top ng-click=openAboutScreen()> <i class=\"glyphicon glyphicon-info-sign\"></i></a> <script type=text/ng-template id=widgetAboutModal.html> <div class=\"modal-header\"> <h4 class=\"modal-title\">About</h4> </div> <div class=\"modal-body\">{{ about.info }}</div> <div class=\"modal-footer\"><button class=\"btn btn-primary\" type=\"button\" ng-click=\"ok()\">OK</button></div> </script> </span> <a ng-if=\"!editMode && widget.print\" href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_PRINT\') }}\" ng-click=print()> <i class=\"glyphicon glyphicon-print\"></i> </a> <span ng-if=\"!editMode && config.widgetOnToggleView && config.widgetViews\" uib-popover=\"Change view\" popover-trigger=\"\'mouseenter\'\" popover-placement=top uib-dropdown> <a href id=toggle_{{definition.wid}} uib-dropdown-toggle> <i class=\"glyphicon glyphicon-eye-close\"></i> </a> <ul class=dropdown-menu uib-dropdown-menu aria-labelledby=\"Change view\"> <li ng-repeat=\"choice in config.widgetViews\"> <a ng-click=config.widgetOnToggleView(choice.value)>{{choice.name}}</a> </li> </ul> </span> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REFRESH\') }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_OPERATION\') }}\" ng-if=\"widget.executeOperation && !editMode && isExecuteOperationEnabled()\" ng-click=executeOperation()> <i class=\"glyphicon glyphicon-flash\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FILTER\') }}\" ng-if=\"config.widgetSelectors && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-filter\" ng-class=\"{\'active\': search.json || search.quick ||search.customFilter}\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_SORT\') }}\" ng-if=\"config.sort && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-sort\" ng-class=\"{\'active\': (config.sort.value && config.sort.value !== \'\')}\"></i> </a>  <a href title=\"Save picture\" ng-if=\"!editMode && !widgetState.isCollapsed\" ng-click=saveWidgetScreen(definition.wid)> <i class=\"glyphicon glyphicon-picture\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_MOVE\') }}\" class=adf-move ng-if=editMode> <i class=\"glyphicon glyphicon-move\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_COLLAPSE\') }}\" ng-show=\"options.collapsible && !widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-minus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EXPAND\') }}\" ng-show=\"options.collapsible && widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-plus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EDIT\') }}\" ng-click=edit() ng-if=editMode> <i class=\"glyphicon glyphicon-cog\"></i> </a> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FULLSCREEN\') }}\" ng-click=openFullScreen() ng-show=options.maximizable> <i class=\"glyphicon glyphicon-fullscreen\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REMOVE\') }}\" ng-click=remove() ng-if=editMode> <i class=\"glyphicon glyphicon-trash\"></i> </a> </div> </div>");
 $templateCache.put("../src/templates/widget.html","<div adf-id={{definition.wid}} adf-widget-type={{definition.type}} ng-class=\"widgetClasses(widget, definition)\" class=\"widget widget_{{definition.wid}}\"> <a name={{definition.wid}} id={{definition.wid}}></a> <div class=\"panel-heading clearfix bg-primary\" ng-if=\"!widget.frameless || editMode\"> <div ng-include src=definition.titleTemplateUrl></div> </div> <div ng-if=\"!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div ng-if=\"toggleAdvanced === 0\" class=\"col-xs-12 col-md-8\"> <div class=filter mass-autocomplete> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.oql placeholder=\"Enter your advanced filter\" mass-autocomplete-item=autocomplete_options() ng-change=debugQuery()> <label ng-click=launchSearchingAdv() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> <div ng-if=\"!editMode && filter.error\" class=col-xs-12> <alert type=danger class=\"text-center text-danger\"> <span>{{filter.error}}</span> </alert> </div> <div ng-if=\"showFinalFilter && search.json\" class=col-xs-12> <pre>{{ search.json }}</pre> </div> </div> <div ng-if=ifCustomFilter() class=\"col-xs-12 col-md-8\"> <div class=\"filter form-group\"> <a href class=text-danger ng-click=\"options.customFilter.open = !options.customFilter.open\"> <i class=glyphicon ng-class=\"{\'glyphicon-chevron-up\': options.customFilter.open, \'glyphicon-chevron-down\': !options.customFilter.open}\"></i> Pick filter fields </a> <label ng-click=launchCustomFilter() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> <div class=row ng-if=options.customFilter.open> <ui-select multiple=true ng-model=search.fields theme=bootstrap title=\"Choose a filter\" on-select=addCustomFilter($item) on-remove=deleteFilter($item) ng-click=getcustomFilter()> <ui-select-match placeholder=\"Pick filter fields ...\" allow-clear=true> {{$item}} </ui-select-match> <ui-select-choices repeat=\"selector in (customFilter | filter: $select.search) track by $index\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> </div> </div> <div ng-if=\"toggleAdvanced === 1\" class=\"col-xs-12 col-md-8\"> <div class=filter> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.quick placeholder=\"Enter your basic filter here\"> <label ng-click=launchSearchingQuick() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> </div> <div class=\"col-xs-12 col-md-4\" uib-dropdown> <button class=\"btn btn-sm\" uib-dropdown-toggle title=\"Toggle Advanced/Basic filter\"> <i class=\"advanced-filter glyphicon\" ng-class=\"{\'glyphicon-font\' : toggleAdvanced === 0, \'glyphicon-bold\' : toggleAdvanced ===1 , \'glyphicon-filter\' : toggleAdvanced === 2, }\"></i> <span class=caret></span> </button> <ul class=\"dropdown-menu panel\" style=\"border: 1px groove;\" uib-dropdown-menu aria-labelledby=simple-dropdown> <li ng-click=toggleFilter(0)><a href><i class=\"advanced-filter glyphicon glyphicon-font txt-primary\"></i> Advanced filter</a></li> <li ng-click=toggleFilter(1)><a href><i class=\"basic-filter glyphicon glyphicon-bold txt-primary\"></i> Basic filter</a></li> <li ng-if=\"definition.type === \'FullDevicesList\'\" ng-click=toggleFilter(2)><a href><i class=\"custom-filter glyphicon glyphicon-filter txt-primary\"></i> Custom filter</a></li> </ul> </div> </div> <div ng-if=\"customSelectors && config.sort && filterAvailable && toggleAdvanced != 2\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div class=\"sort col-xs-12 col-md-8\"> <ui-select ng-model=config.sort.value theme=bootstrap title=\"Choose a filter\" allow-clear=true append-to-body=true ng-change=launchSearching() ng-click=getCustomSelectors()> <ui-select-match placeholder=\"Sorted by ...\" allow-clear=true>Sort by: {{$select.selected}}</ui-select-match> <ui-select-choices repeat=\"selector in customSelectors | filter: $select.search\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> <div class=\"sortDirection col-xs-4 col-md-4\"> <button class=\"btn btn-sm pointer\" ng-click=changeDirection() ng-disabled=\"config.sort.value === \'\'\" title=\"Toggle sorting direction\"> <i class=glyphicon style=font-size:1.3em; ng-class=\"config.sort.direction===\'ASCENDING\' ? \'glyphicon-sort-by-attributes\': \'glyphicon-sort-by-attributes-alt\'\"></i> </button> </div> </div> <div ng-if=showCustomFields() class=\"col-xs-12 col-md-12\"> <div class=\"col-xs-12 col-md-4\" ng-repeat=\"model in search.customFilter\"> <label>{{model.name}}</label> <input class=form-control id={{model.name}} name={{model.name}} type=text ng-model=search.customFilter[$index].value ng-keypress=enter($event)> </div> </div> <div ng-class=\"{ \'panel-body\':!widget.frameless || editMode}\" uib-collapse=widgetState.isCollapsed style=overflow:hidden;> <adf-widget-content model=definition content=widget editing=editMode> </adf-widget-content></div> </div>");}]);
 })(window);
