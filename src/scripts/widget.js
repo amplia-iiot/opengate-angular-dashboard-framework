@@ -358,7 +358,7 @@ angular.module('adf')
                     definition: definition,
                     element: $element
                 }
-                $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, config.windowFilter);
+                $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
                 $scope.reload();
             });
 
@@ -412,9 +412,9 @@ angular.module('adf')
             $scope.changeDirection = function () {
                 var direction = config.sort.direction;
                 if (direction === 'DESCENDING') {
-                    direction = 'ASCENDING'
+                    $scope.config.sort.direction = 'ASCENDING'
                 } else if (direction === 'ASCENDING') {
-                    direction = 'DESCENDING'
+                    $scope.config.sort.direction = 'DESCENDING'
                 }
                 $scope.reload();
             }

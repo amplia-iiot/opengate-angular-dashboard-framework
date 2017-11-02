@@ -71,8 +71,10 @@
             <ui-select ng-model="config.sort.value" theme="bootstrap" title="Choose a filter" allow-clear="true" append-to-body="true"
                 ng-change="launchSearching()" ng-click="getCustomSelectors()">
                 <ui-select-match placeholder="Sorted by ..." allow-clear="true">Sort by: {{$select.selected}}</ui-select-match>
-                <ui-select-choices repeat="selector in customSelectors | filter: $select.search">
-                    <small ng-bind-html="selector | highlight: $select.search"></small>
+                <ui-select-choices repeat="selector in customSelectors | filter: $select.search track by $index">
+                    <small>
+                        <span ng-bind-html="selector | highlight: $select.search"></span>
+                    </small>
                 </ui-select-choices>
             </ui-select>
         </div>
