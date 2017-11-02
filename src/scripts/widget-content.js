@@ -42,7 +42,8 @@ angular.module('adf')
             if (!model) {
                 renderError($element, 'model is undefined');
             } else if (!content) {
-                var msg = 'widget content is undefined, please have a look at your browser log';
+                //var msg = 'widget content is undefined, please have a look at your browser log';
+                var msg = 'Widget ' + (model.title ? 'for "' + model.title + '"' : '') + ' has been deprecated. In order to continue you have to delete this one and look for the equivalent one.';
                 renderError($element, msg);
             } else {
                 if (newScope) {
@@ -71,23 +72,27 @@ angular.module('adf')
                 };
             }
 
-            newScope.config.getWindowTime = function () {
-                var windowFilter = newScope.config.windowFilter;
-                if (windowFilter && windowFilter.type) {
-                    var winTime = _getWindowTime(windowFilter.type);
-                    /* jshint ignore:start */
-                    if (!window.eval(newScope.config.windowFilter.rawdate)) {
-                        for (var key in winTime) {
-                            winTime[key] = window.moment(winTime[key]).format();
+            if (newScope) {
+                if (newScope.config) {
+                    newScope.config.getWindowTime = function () {
+                        var windowFilter = newScope.config.windowFilter;
+                        if (windowFilter && windowFilter.type) {
+                            var winTime = _getWindowTime(windowFilter.type);
+                            /* jshint ignore:start */
+                            if (!window.eval(newScope.config.windowFilter.rawdate)) {
+                                for (var key in winTime) {
+                                    winTime[key] = window.moment(winTime[key]).format();
+                                }
+                                winTime['rawdate'] = true;
+                            }
+                            /* jshint ignore:end */
+                            return winTime;
                         }
-                        winTime['rawdate'] = true;
                     }
-                    /* jshint ignore:end */
-                    return winTime;
                 }
-            }
 
-            newScope.editing = editing ? editing : false;
+                newScope.editing = editing ? editing : false;
+            }
             return newScope;
         }
 

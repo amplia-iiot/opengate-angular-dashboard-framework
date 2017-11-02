@@ -115,6 +115,9 @@ angular.module('adf')
                 $log.debug('widget not found');
                 return;
             }
+            if (!$scope.config) {
+                $scope.config = {};
+            }
 
             var config = $scope.config;
 

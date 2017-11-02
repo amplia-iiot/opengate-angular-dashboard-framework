@@ -1053,331 +1053,330 @@ angular.module('adf')
  * The dashboardProvider can be used to register structures and widgets.
  */
 angular.module('adf.provider', ['adf.locale'])
-  .provider('dashboard', ["adfLocale", function(adfLocale){
+    .provider('dashboard', ["adfLocale", function(adfLocale) {
 
-    var widgets = {};
-    var widgetsPath = '';
-    var structures = {};
-    var messageTemplate = '<div class="alert alert-danger">{}</div>';
-    var loadingTemplate = '\
+        var widgets = {};
+        var widgetsPath = '';
+        var structures = {};
+        var messageTemplate = '<div class="alert alert-primary">{}</div>';
+        var loadingTemplate = '\
       <div class="progress progress-striped active">\n\
         <div class="progress-bar" role="progressbar" style="width: 100%">\n\
           <span class="sr-only">loading ...</span>\n\
         </div>\n\
       </div>';
-    var customWidgetTemplatePath = null;
+        var customWidgetTemplatePath = null;
 
-    // default apply function of widget.edit.apply
-    var defaultApplyFunction = function(){
-      return true;
-    };
-
-    var activeLocale = adfLocale.defaultLocale;
-    var locales = adfLocale.frameworkLocales;
-
-    function getLocales() {
-      return locales;
-    }
-
-    function getActiveLocale() {
-      return activeLocale;
-    }
-
-    function translate(label) {
-      var translation = locales[activeLocale][label];
-      return translation ? translation : label;
-    }
-
-   /**
-    * @ngdoc method
-    * @name adf.dashboardProvider#widget
-    * @methodOf adf.dashboardProvider
-    * @description
-    *
-    * Registers a new widget.
-    *
-    * @param {string} name of the widget
-    * @param {object} widget to be registered.
-    *
-    *   Object properties:
-    *
-    *   - `title` - `{string=}` - The title of the widget.
-    *   - `description` - `{string=}` - Description of the widget.
-    *   - `category` - `{string=}` - Category of the widget.
-    *   - `collapsed` - `{boolean=}` - true if the widget should be in collapsed state. Default is false.
-    *   - `config` - `{object}` - Predefined widget configuration.
-    *   - `controller` - `{string=|function()=}` - Controller fn that should be
-    *      associated with newly created scope of the widget or the name of a
-    *      {@link http://docs.angularjs.org/api/angular.Module#controller registered controller}
-    *      if passed as a string.
-    *   - `controllerAs` - `{string=}` - A controller alias name. If present the controller will be
-    *      published to scope under the `controllerAs` name.
-    *   - `frameless` - `{boolean=}` - false if the widget should be shown in frameless mode. The default is false.
-    *   - `styleClass` - `{object}` - space delimited string or map of classes bound to the widget.
-    *   - `template` - `{string=|function()=}` - html template as a string.
-    *   - `templateUrl` - `{string=}` - path to an html template.
-    *   - `reload` - `{boolean=}` - true if the widget could be reloaded. The default is false.
-    *   - `resolve` - `{Object.<string, function>=}` - An optional map of dependencies which should
-    *      be injected into the controller. If any of these dependencies are promises, the widget
-    *      will wait for them all to be resolved or one to be rejected before the controller is
-    *      instantiated.
-    *      If all the promises are resolved successfully, the values of the resolved promises are
-    *      injected.
-    *
-    *      The map object is:
-    *      - `key` – `{string}`: a name of a dependency to be injected into the controller.
-    *      - `factory` - `{string|function}`: If `string` then it is an alias for a service.
-    *        Otherwise if function, then it is {@link http://docs.angularjs.org/api/AUTO.$injector#invoke injected}
-    *        and the return value is treated as the dependency. If the result is a promise, it is
-    *        resolved before its value is injected into the controller.
-    *   - `resolveAs` - `{string=}` - The name under which the resolve map will be available
-    *      on the scope of the widget.
-    *   - `edit` - `{object}` - Edit modus of the widget.
-    *      - `controller` - `{string=|function()=}` - Same as above, but for the edit mode of the widget.
-    *      - `controllerAs` - `{string=}` - Same as above, but for the edit mode of the widget.
-    *      - `template` - `{string=|function()=}` - Same as above, but for the edit mode of the widget.
-    *      - `templateUrl` - `{string=}` - Same as above, but for the edit mode of the widget.
-    *      - `resolve` - `{Object.<string, function>=}` - Same as above, but for the edit mode of the widget.
-    *      - `resolveAs` - `{string=}` - The name under which the resolve map will be available
-    *        on the scope of the widget.
-    *      - `reload` - {boolean} - true if the widget should be reloaded, after the edit mode is closed.
-    *        Default is true.
-    *      - `immediate` - {boolean} - The widget enters the edit mode immediately after creation. Default is false.
-    *      - `apply` - `{function()=}` - The apply function is called, before the widget is saved.
-    *        The function have to return a boolean or an promise which can be resolved to a boolean.
-    *        The function can use injection.
-    *
-    * @returns {Object} self
-    */
-    this.widget = function(name, widget){
-      var w = angular.extend({reload: false, frameless: false}, widget);
-      if ( w.edit ){
-        var edit = {
-          reload: true,
-          immediate: false,
-          apply: defaultApplyFunction
+        // default apply function of widget.edit.apply
+        var defaultApplyFunction = function() {
+            return true;
         };
-        angular.extend(edit, w.edit);
-        w.edit = edit;
-      }
-      widgets[name] = w;
-      return this;
-    };
 
-    /**
-     * @ngdoc method
-     * @name adf.dashboardProvider#widgetsPath
-     * @methodOf adf.dashboardProvider
-     * @description
-     *
-     * Sets the path to the directory which contains the widgets. The widgets
-     * path is used for widgets with a templateUrl which contains the
-     * placeholder {widgetsPath}. The placeholder is replaced with the
-     * configured value, before the template is loaded, but the template is
-     * cached with the unmodified templateUrl (e.g.: {widgetPath}/src/widgets).
-     * The default value of widgetPaths is ''.
-     *
-     *
-     * @param {string} path to the directory which contains the widgets
-     *
-     * @returns {Object} self
-     */
-    this.widgetsPath = function(path){
-      widgetsPath = path;
-      return this;
-    };
+        var activeLocale = adfLocale.defaultLocale;
+        var locales = adfLocale.frameworkLocales;
 
-   /**
-    * @ngdoc method
-    * @name adf.dashboardProvider#structure
-    * @methodOf adf.dashboardProvider
-    * @description
-    *
-    * Registers a new structure.
-    *
-    * @param {string} name of the structure
-    * @param {object} structure to be registered.
-    *
-    *   Object properties:
-    *
-    *   - `rows` - `{Array.<Object>}` - Rows of the dashboard structure.
-    *     - `styleClass` - `{string}` - CSS Class of the row.
-    *     - `columns` - `{Array.<Object>}` - Columns of the row.
-    *       - `styleClass` - `{string}` - CSS Class of the column.
-    *
-    * @returns {Object} self
-    */
-    this.structure = function(name, structure){
-      structures[name] = structure;
-      return this;
-    };
-
-   /**
-    * @ngdoc method
-    * @name adf.dashboardProvider#messageTemplate
-    * @methodOf adf.dashboardProvider
-    * @description
-    *
-    * Changes the template for messages.
-    *
-    * @param {string} template for messages.
-    *
-    * @returns {Object} self
-    */
-    this.messageTemplate = function(template){
-      messageTemplate = template;
-      return this;
-    };
-
-   /**
-    * @ngdoc method
-    * @name adf.dashboardProvider#loadingTemplate
-    * @methodOf adf.dashboardProvider
-    * @description
-    *
-    * Changes the template which is displayed as
-    * long as the widget resources are not resolved.
-    *
-    * @param {string} template loading template
-    *
-    * @returns {Object} self
-    */
-    this.loadingTemplate = function(template){
-      loadingTemplate = template;
-      return this;
-    };
-
-    /**
-     * @ngdoc method
-     * @name adf.dashboardProvider#customWidgetTemplatePath
-     * @propertyOf adf.dashboardProvider
-     * @description
-     *
-     * Changes the container template for the widgets
-     *
-     * @param {string} path to the custom widget template
-     *
-     * @returns {Object} self
-     */
-    this.customWidgetTemplatePath = function(templatePath) {
-      customWidgetTemplatePath = templatePath;
-      return this;
-    };
-
-    /**
-     * @ngdoc method
-     * @name adf.dashboardProvider#setLocale
-     * @methodOf adf.dashboardProvider
-     * @description
-     *
-     * Changes the locale setting of adf
-     *
-     * @param {string} ISO Language Code
-     *
-     * @returns {Object} self
-     */
-     this.setLocale = function(locale){
-       if(locales[locale]) {
-         activeLocale = locale;
-       } else {
-         throw new Error('Cannot set locale: ' + locale + '. Locale is not defined.');
-       }
-       return this;
-     };
-
-     /**
-      * @ngdoc method
-      * @name adf.dashboardProvider#addLocale
-      * @methodOf adf.dashboardProvider
-      * @description
-      *
-      * Adds a new locale to adf
-      *
-      * @param {string} ISO Language Code for the new locale
-      * @param {object} translations for the locale.
-      *
-      * @returns {Object} self
-      */
-      this.addLocale = function(locale, translations){
-        if(!angular.isString(locale)) {
-          throw new Error('locale must be an string');
+        function getLocales() {
+            return locales;
         }
 
-        if(!angular.isObject(translations)) {
-          throw new Error('translations must be an object');
+        function getActiveLocale() {
+            return activeLocale;
         }
 
-        locales[locale] = translations;
-        return this;
-      };
-
-   /**
-    * @ngdoc service
-    * @name adf.dashboard
-    * @description
-    *
-    * The dashboard holds all options, structures and widgets.
-    *
-    * @property {Array.<Object>} widgets Array of registered widgets.
-    * @property {string} widgetsPath Default path for widgets.
-    * @property {Array.<Object>} structures Array of registered structures.
-    * @property {string} messageTemplate Template for messages.
-    * @property {string} loadingTemplate Template for widget loading.
-    * @property {method} sets locale of adf.
-    * @property {Array.<Object>} hold all of the locale translations.
-    * @property {string} the active locale setting.
-    * @property {method} translation function passed to templates.
-    *
-    * @returns {Object} self
-    */
-    this.$get = function(){
-      var cid = 0;
-
-      return {
-        widgets: widgets,
-        widgetsPath: widgetsPath,
-        structures: structures,
-        messageTemplate: messageTemplate,
-        loadingTemplate: loadingTemplate,
-        setLocale: this.setLocale,
-        locales: getLocales,
-        activeLocale: getActiveLocale,
-        translate: translate,
-        customWidgetTemplatePath: customWidgetTemplatePath,
+        function translate(label) {
+            var translation = locales[activeLocale][label];
+            return translation ? translation : label;
+        }
 
         /**
          * @ngdoc method
-         * @name adf.dashboard#id
-         * @methodOf adf.dashboard
+         * @name adf.dashboardProvider#widget
+         * @methodOf adf.dashboardProvider
          * @description
          *
-         * Creates an ongoing numeric id. The method is used to create ids for
-         * columns and widgets in the dashboard.
+         * Registers a new widget.
+         *
+         * @param {string} name of the widget
+         * @param {object} widget to be registered.
+         *
+         *   Object properties:
+         *
+         *   - `title` - `{string=}` - The title of the widget.
+         *   - `description` - `{string=}` - Description of the widget.
+         *   - `category` - `{string=}` - Category of the widget.
+         *   - `collapsed` - `{boolean=}` - true if the widget should be in collapsed state. Default is false.
+         *   - `config` - `{object}` - Predefined widget configuration.
+         *   - `controller` - `{string=|function()=}` - Controller fn that should be
+         *      associated with newly created scope of the widget or the name of a
+         *      {@link http://docs.angularjs.org/api/angular.Module#controller registered controller}
+         *      if passed as a string.
+         *   - `controllerAs` - `{string=}` - A controller alias name. If present the controller will be
+         *      published to scope under the `controllerAs` name.
+         *   - `frameless` - `{boolean=}` - false if the widget should be shown in frameless mode. The default is false.
+         *   - `styleClass` - `{object}` - space delimited string or map of classes bound to the widget.
+         *   - `template` - `{string=|function()=}` - html template as a string.
+         *   - `templateUrl` - `{string=}` - path to an html template.
+         *   - `reload` - `{boolean=}` - true if the widget could be reloaded. The default is false.
+         *   - `resolve` - `{Object.<string, function>=}` - An optional map of dependencies which should
+         *      be injected into the controller. If any of these dependencies are promises, the widget
+         *      will wait for them all to be resolved or one to be rejected before the controller is
+         *      instantiated.
+         *      If all the promises are resolved successfully, the values of the resolved promises are
+         *      injected.
+         *
+         *      The map object is:
+         *      - `key` – `{string}`: a name of a dependency to be injected into the controller.
+         *      - `factory` - `{string|function}`: If `string` then it is an alias for a service.
+         *        Otherwise if function, then it is {@link http://docs.angularjs.org/api/AUTO.$injector#invoke injected}
+         *        and the return value is treated as the dependency. If the result is a promise, it is
+         *        resolved before its value is injected into the controller.
+         *   - `resolveAs` - `{string=}` - The name under which the resolve map will be available
+         *      on the scope of the widget.
+         *   - `edit` - `{object}` - Edit modus of the widget.
+         *      - `controller` - `{string=|function()=}` - Same as above, but for the edit mode of the widget.
+         *      - `controllerAs` - `{string=}` - Same as above, but for the edit mode of the widget.
+         *      - `template` - `{string=|function()=}` - Same as above, but for the edit mode of the widget.
+         *      - `templateUrl` - `{string=}` - Same as above, but for the edit mode of the widget.
+         *      - `resolve` - `{Object.<string, function>=}` - Same as above, but for the edit mode of the widget.
+         *      - `resolveAs` - `{string=}` - The name under which the resolve map will be available
+         *        on the scope of the widget.
+         *      - `reload` - {boolean} - true if the widget should be reloaded, after the edit mode is closed.
+         *        Default is true.
+         *      - `immediate` - {boolean} - The widget enters the edit mode immediately after creation. Default is false.
+         *      - `apply` - `{function()=}` - The apply function is called, before the widget is saved.
+         *        The function have to return a boolean or an promise which can be resolved to a boolean.
+         *        The function can use injection.
+         *
+         * @returns {Object} self
          */
-        id: function(){
-          return new Date().getTime() + '-' + (++cid);
-        },
+        this.widget = function(name, widget) {
+            var w = angular.extend({ reload: false, frameless: false }, widget);
+            if (w.edit) {
+                var edit = {
+                    reload: true,
+                    immediate: false,
+                    apply: defaultApplyFunction
+                };
+                angular.extend(edit, w.edit);
+                w.edit = edit;
+            }
+            widgets[name] = w;
+            return this;
+        };
 
         /**
          * @ngdoc method
-         * @name adf.dashboard#idEqual
-         * @methodOf adf.dashboard
+         * @name adf.dashboardProvider#widgetsPath
+         * @methodOf adf.dashboardProvider
          * @description
          *
-         * Checks if the given ids are equal.
+         * Sets the path to the directory which contains the widgets. The widgets
+         * path is used for widgets with a templateUrl which contains the
+         * placeholder {widgetsPath}. The placeholder is replaced with the
+         * configured value, before the template is loaded, but the template is
+         * cached with the unmodified templateUrl (e.g.: {widgetPath}/src/widgets).
+         * The default value of widgetPaths is ''.
          *
-         * @param {string} id widget or column id
-         * @param {string} other widget or column id
+         *
+         * @param {string} path to the directory which contains the widgets
+         *
+         * @returns {Object} self
          */
-         idEquals: function(id, other){
-           // use toString, because old ids are numbers
-           return ((id) && (other)) && (id.toString() === other.toString());
-         }
-      };
-    };
+        this.widgetsPath = function(path) {
+            widgetsPath = path;
+            return this;
+        };
 
-  }]);
+        /**
+         * @ngdoc method
+         * @name adf.dashboardProvider#structure
+         * @methodOf adf.dashboardProvider
+         * @description
+         *
+         * Registers a new structure.
+         *
+         * @param {string} name of the structure
+         * @param {object} structure to be registered.
+         *
+         *   Object properties:
+         *
+         *   - `rows` - `{Array.<Object>}` - Rows of the dashboard structure.
+         *     - `styleClass` - `{string}` - CSS Class of the row.
+         *     - `columns` - `{Array.<Object>}` - Columns of the row.
+         *       - `styleClass` - `{string}` - CSS Class of the column.
+         *
+         * @returns {Object} self
+         */
+        this.structure = function(name, structure) {
+            structures[name] = structure;
+            return this;
+        };
 
+        /**
+         * @ngdoc method
+         * @name adf.dashboardProvider#messageTemplate
+         * @methodOf adf.dashboardProvider
+         * @description
+         *
+         * Changes the template for messages.
+         *
+         * @param {string} template for messages.
+         *
+         * @returns {Object} self
+         */
+        this.messageTemplate = function(template) {
+            messageTemplate = template;
+            return this;
+        };
+
+        /**
+         * @ngdoc method
+         * @name adf.dashboardProvider#loadingTemplate
+         * @methodOf adf.dashboardProvider
+         * @description
+         *
+         * Changes the template which is displayed as
+         * long as the widget resources are not resolved.
+         *
+         * @param {string} template loading template
+         *
+         * @returns {Object} self
+         */
+        this.loadingTemplate = function(template) {
+            loadingTemplate = template;
+            return this;
+        };
+
+        /**
+         * @ngdoc method
+         * @name adf.dashboardProvider#customWidgetTemplatePath
+         * @propertyOf adf.dashboardProvider
+         * @description
+         *
+         * Changes the container template for the widgets
+         *
+         * @param {string} path to the custom widget template
+         *
+         * @returns {Object} self
+         */
+        this.customWidgetTemplatePath = function(templatePath) {
+            customWidgetTemplatePath = templatePath;
+            return this;
+        };
+
+        /**
+         * @ngdoc method
+         * @name adf.dashboardProvider#setLocale
+         * @methodOf adf.dashboardProvider
+         * @description
+         *
+         * Changes the locale setting of adf
+         *
+         * @param {string} ISO Language Code
+         *
+         * @returns {Object} self
+         */
+        this.setLocale = function(locale) {
+            if (locales[locale]) {
+                activeLocale = locale;
+            } else {
+                throw new Error('Cannot set locale: ' + locale + '. Locale is not defined.');
+            }
+            return this;
+        };
+
+        /**
+         * @ngdoc method
+         * @name adf.dashboardProvider#addLocale
+         * @methodOf adf.dashboardProvider
+         * @description
+         *
+         * Adds a new locale to adf
+         *
+         * @param {string} ISO Language Code for the new locale
+         * @param {object} translations for the locale.
+         *
+         * @returns {Object} self
+         */
+        this.addLocale = function(locale, translations) {
+            if (!angular.isString(locale)) {
+                throw new Error('locale must be an string');
+            }
+
+            if (!angular.isObject(translations)) {
+                throw new Error('translations must be an object');
+            }
+
+            locales[locale] = translations;
+            return this;
+        };
+
+        /**
+         * @ngdoc service
+         * @name adf.dashboard
+         * @description
+         *
+         * The dashboard holds all options, structures and widgets.
+         *
+         * @property {Array.<Object>} widgets Array of registered widgets.
+         * @property {string} widgetsPath Default path for widgets.
+         * @property {Array.<Object>} structures Array of registered structures.
+         * @property {string} messageTemplate Template for messages.
+         * @property {string} loadingTemplate Template for widget loading.
+         * @property {method} sets locale of adf.
+         * @property {Array.<Object>} hold all of the locale translations.
+         * @property {string} the active locale setting.
+         * @property {method} translation function passed to templates.
+         *
+         * @returns {Object} self
+         */
+        this.$get = function() {
+            var cid = 0;
+
+            return {
+                widgets: widgets,
+                widgetsPath: widgetsPath,
+                structures: structures,
+                messageTemplate: messageTemplate,
+                loadingTemplate: loadingTemplate,
+                setLocale: this.setLocale,
+                locales: getLocales,
+                activeLocale: getActiveLocale,
+                translate: translate,
+                customWidgetTemplatePath: customWidgetTemplatePath,
+
+                /**
+                 * @ngdoc method
+                 * @name adf.dashboard#id
+                 * @methodOf adf.dashboard
+                 * @description
+                 *
+                 * Creates an ongoing numeric id. The method is used to create ids for
+                 * columns and widgets in the dashboard.
+                 */
+                id: function() {
+                    return new Date().getTime() + '-' + (++cid);
+                },
+
+                /**
+                 * @ngdoc method
+                 * @name adf.dashboard#idEqual
+                 * @methodOf adf.dashboard
+                 * @description
+                 *
+                 * Checks if the given ids are equal.
+                 *
+                 * @param {string} id widget or column id
+                 * @param {string} other widget or column id
+                 */
+                idEquals: function(id, other) {
+                    // use toString, because old ids are numbers
+                    return ((id) && (other)) && (id.toString() === other.toString());
+                }
+            };
+        };
+
+    }]);
 /*
 * The MIT License
 *
@@ -1539,7 +1538,8 @@ angular.module('adf')
             if (!model) {
                 renderError($element, 'model is undefined');
             } else if (!content) {
-                var msg = 'widget content is undefined, please have a look at your browser log';
+                //var msg = 'widget content is undefined, please have a look at your browser log';
+                var msg = 'Widget ' + (model.title ? 'for "' + model.title + '"' : '') + ' has been deprecated. In order to continue you have to delete this one and look for the equivalent one.';
                 renderError($element, msg);
             } else {
                 if (newScope) {
@@ -1568,23 +1568,27 @@ angular.module('adf')
                 };
             }
 
-            newScope.config.getWindowTime = function () {
-                var windowFilter = newScope.config.windowFilter;
-                if (windowFilter && windowFilter.type) {
-                    var winTime = _getWindowTime(windowFilter.type);
-                    /* jshint ignore:start */
-                    if (!window.eval(newScope.config.windowFilter.rawdate)) {
-                        for (var key in winTime) {
-                            winTime[key] = window.moment(winTime[key]).format();
+            if (newScope) {
+                if (newScope.config) {
+                    newScope.config.getWindowTime = function () {
+                        var windowFilter = newScope.config.windowFilter;
+                        if (windowFilter && windowFilter.type) {
+                            var winTime = _getWindowTime(windowFilter.type);
+                            /* jshint ignore:start */
+                            if (!window.eval(newScope.config.windowFilter.rawdate)) {
+                                for (var key in winTime) {
+                                    winTime[key] = window.moment(winTime[key]).format();
+                                }
+                                winTime['rawdate'] = true;
+                            }
+                            /* jshint ignore:end */
+                            return winTime;
                         }
-                        winTime['rawdate'] = true;
                     }
-                    /* jshint ignore:end */
-                    return winTime;
                 }
-            }
 
-            newScope.editing = editing ? editing : false;
+                newScope.editing = editing ? editing : false;
+            }
             return newScope;
         }
 
@@ -1880,6 +1884,9 @@ angular.module('adf')
             if (!definition) {
                 $log.debug('widget not found');
                 return;
+            }
+            if (!$scope.config) {
+                $scope.config = {};
             }
 
             var config = $scope.config;
@@ -2566,5 +2573,5 @@ $templateCache.put("../src/templates/widget-edit.html","<form name=widgetEditFor
 $templateCache.put("../src/templates/widget-fullscreen.html","<div class=modal-header> <div class=\"pull-right widget-icons\"> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REFRESH\') }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a> <a href title=close ng-click=closeDialog()> <i class=\"glyphicon glyphicon-remove\"></i> </a> <a href title=\"insert into dashboard\" ng-if=persistDashboard ng-click=persistDashboard()> <i class=\"glyphicon glyphicon-save\"></i> </a> </div> <h4 class=modal-title>&nbsp;{{ definition.title }}</h4> </div> <div class=\"modal-body widget\" style=overflow:hidden;> <adf-widget-content model=definition content=widget> </adf-widget-content></div> <div class=modal-footer ng-if=widget.show_modal_footer> <button type=button class=\"btn btn-primary\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> </div>");
 $templateCache.put("../src/templates/widget-selection.html","<style>\r\n    .selected-entities-control .ui-select-container>div:first-child {\r\n        max-height: 300px;\r\n        overflow-y: scroll;\r\n        overflow-x: hidden;\r\n    }\r\n</style> <form name=widgetSelectionForm novalidate role=form ng-submit=saveChangesDialog()> <div class=modal-header> <div class=\"col-xs-12 col-md-12\"> <h3 class=\"modal-title text-left\"><i class=\"fa fa-check-square-o\" aria-hidden=true></i> Selected items...</h3> </div> </div> <div class=modal-body> <div class=col-xs-12> <div class=\"form-group selected-entities-control\"> <label for=currentSelection>Current selection</label> <ui-select multiple tagging ng-model=currentSelection.selected theme=bootstrap sortable=false title=\"Selected items\"> <ui-select-match placeholder=\"No items selected\"> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\" ng-repeat=\"(k,v) in $item.value.visible track by $index\" ng-if=\"v !== undefined\"><strong>{{k}}:</strong> {{v}}<br></span> </div> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=!$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\">{{$item.key}}</span> </div> </ui-select-match> <ui-select-choices repeat=\"itemSel in currentSelection.selected | filter:$select.search\"> {{itemSel.key}} </ui-select-choices> </ui-select> </div> </div> <div class=\"col-xs-12 text-left\"> <button type=button class=\"btn btn-success btn-sm\" ng-click=restoreSelection() ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" ng-bind=\"translate(\'ADF_WIDGET_RESTORE\')\">Restore</button> <button type=button class=\"btn btn-danger btn-sm\" ng-click=clearSelection() ng-disabled=\"currentSelection.selected.length < 1\" ng-bind=\"translate(\'ADF_WIDGET_CLEAR\')\">Clear</button> </div> </div> <div class=modal-footer> <div class=\"col-xs-12 col-md-2 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.filterTypes && currentSelection.selected.length > 0\"> <button id=applyFilterBy type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-filter pointer\"></i> Filter by <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=applyFilterBy> <li role=menuitem ng-repeat=\"filterType in selectionConfig.filterTypes\"><a href ng-click=applyFilter(filterType) title=\"Selected {{filterType}}\">Selected {{filterType}}</a></li> </ul> </div> </div> <div class=\"col-xs-12 col-md-3 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.operationTypes && currentSelection.selected.length > 0\"> <button id=executeOperation type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-flash pointer\"></i> Exec. Operation <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=executeOperation> <li role=menuitem ng-repeat=\"operationType in selectionConfig.operationTypes\"><a href ng-click=executeOperation(operationType) title={{operationType}}>{{operationType|humanize}}</a></li> </ul> </div> </div> <div class=\"col-xs-12 col-md-7 text-right\"> <button type=submit class=\"btn btn-primary\" ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" ng-value=\"translate(\'ADF_COMMON_APPLY\')\">Apply</button> <button type=button class=\"btn btn-default\" ng-click=closeDialog() ng-bind=\"translate(\'ADF_COMMON_CLOSE\')\">Close</button> </div> </div> </form>");
 $templateCache.put("../src/templates/widget-title.html","<div class=panel-title style=margin:0px;> <span class=pull-left>  <a href ng-if=\"selectedItemsLength > 0\" title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_SELECTION\') }}\" ng-click=manageSelectedItems() style=float:left;> <i class=\"glyphicon glyphicon-check\"></i><small class=ogux-budget>{{ selectedItemsLength }}</small> </a> <h4 ng-if=\"!widget.frameless && definition.title\" style=\"margin:0px 0px 0px 2px;float:left;\">{{definition.title}}</h4> </span> <div class=pull-right> <span ng-if=config.about> <a href uib-popover=\"{{ config.about }}\" popover-trigger=\"\'mouseenter\'\" popover-placement=top ng-click=openAboutScreen()> <i class=\"glyphicon glyphicon-info-sign\"></i></a> <script type=text/ng-template id=widgetAboutModal.html> <div class=\"modal-header\"> <h4 class=\"modal-title\">About</h4> </div> <div class=\"modal-body\">{{ about.info }}</div> <div class=\"modal-footer\"><button class=\"btn btn-primary\" type=\"button\" ng-click=\"ok()\">OK</button></div> </script> </span> <a ng-if=\"!editMode && widget.print\" href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_PRINT\') }}\" ng-click=print()> <i class=\"glyphicon glyphicon-print\"></i> </a> <span ng-if=\"!editMode && config.widgetOnToggleView && config.widgetViews\" uib-popover=\"Change view\" popover-trigger=\"\'mouseenter\'\" popover-placement=top uib-dropdown> <a href id=toggle_{{definition.wid}} uib-dropdown-toggle> <i class=\"glyphicon glyphicon-eye-close\"></i> </a> <ul class=dropdown-menu uib-dropdown-menu aria-labelledby=\"Change view\"> <li ng-repeat=\"choice in config.widgetViews\"> <a ng-click=config.widgetOnToggleView(choice.value)>{{choice.name}}</a> </li> </ul> </span> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REFRESH\') }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_OPERATION\') }}\" ng-if=\"widget.executeOperation && !editMode && isExecuteOperationEnabled()\" ng-click=executeOperation()> <i class=\"glyphicon glyphicon-flash\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FILTER\') }}\" ng-if=\"config.widgetSelectors && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-filter\" ng-class=\"{\'active\': search.json || search.quick ||search.customFilter}\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_SORT\') }}\" ng-if=\"config.sort && !editMode\" ng-click=showFilter()> <i class=\"glyphicon glyphicon-sort\" ng-class=\"{\'active\': (config.sort.value && config.sort.value !== \'\')}\"></i> </a>  <a href title=\"Save picture\" ng-if=\"!editMode && !widgetState.isCollapsed\" ng-click=saveWidgetScreen(definition.wid)> <i class=\"glyphicon glyphicon-picture\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_MOVE\') }}\" class=adf-move ng-if=editMode> <i class=\"glyphicon glyphicon-move\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_COLLAPSE\') }}\" ng-show=\"options.collapsible && !widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-minus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EXPAND\') }}\" ng-show=\"options.collapsible && widgetState.isCollapsed\" ng-click=\"widgetState.isCollapsed = !widgetState.isCollapsed\"> <i class=\"glyphicon glyphicon-plus\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_EDIT\') }}\" ng-click=edit() ng-if=editMode> <i class=\"glyphicon glyphicon-cog\"></i> </a> <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_FULLSCREEN\') }}\" ng-click=openFullScreen() ng-show=options.maximizable> <i class=\"glyphicon glyphicon-fullscreen\"></i> </a>  <a href title=\"{{ translate(\'ADF_WIDGET_TOOLTIP_REMOVE\') }}\" ng-click=remove() ng-if=editMode> <i class=\"glyphicon glyphicon-trash\"></i> </a> </div> </div>");
-$templateCache.put("../src/templates/widget.html","<div adf-id={{definition.wid}} adf-widget-type={{definition.type}} ng-class=\"widgetClasses(widget, definition)\" class=\"widget widget_{{definition.wid}}\"> <a name={{definition.wid}} id={{definition.wid}}></a> <div class=\"panel-heading clearfix bg-primary\" ng-if=\"!widget.frameless || editMode\"> <div ng-include src=definition.titleTemplateUrl></div> </div> <div ng-if=\"!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div ng-if=\"toggleAdvanced === 0\" class=\"col-xs-12 col-md-8\"> <div class=filter mass-autocomplete> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.oql placeholder=\"Enter your advanced filter\" mass-autocomplete-item=autocomplete_options() ng-change=debugQuery()> <label ng-click=launchSearchingAdv() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> <div ng-if=\"!editMode && filter.error\" class=col-xs-12> <alert type=danger class=\"text-center text-danger\"> <span>{{filter.error}}</span> </alert> </div> <div ng-if=\"showFinalFilter && search.json\" class=col-xs-12> <pre>{{ search.json }}</pre> </div> </div> <div ng-if=ifCustomFilter() class=\"col-xs-12 col-md-8\"> <div class=\"filter form-group\"> <a href class=text-danger ng-click=\"options.customFilter.open = !options.customFilter.open\"> <i class=glyphicon ng-class=\"{\'glyphicon-chevron-up\': options.customFilter.open, \'glyphicon-chevron-down\': !options.customFilter.open}\"></i> Pick filter fields </a> <label ng-click=launchCustomFilter() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> <div class=row ng-if=options.customFilter.open> <ui-select multiple=true ng-model=search.fields theme=bootstrap title=\"Choose a filter\" on-select=addCustomFilter($item) on-remove=deleteFilter($item) ng-click=getcustomFilter()> <ui-select-match placeholder=\"Pick filter fields ...\" allow-clear=true> {{$item}} </ui-select-match> <ui-select-choices repeat=\"selector in (customFilter | filter: $select.search) track by $index\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> </div> </div> <div ng-if=\"toggleAdvanced === 1\" class=\"col-xs-12 col-md-8\"> <div class=filter> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.quick placeholder=\"Enter your basic filter here\"> <label ng-click=launchSearchingQuick() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> </div> <div class=\"col-xs-12 col-md-4\" uib-dropdown> <button class=\"btn btn-sm\" uib-dropdown-toggle title=\"Toggle Advanced/Basic filter\"> <i class=\"advanced-filter glyphicon\" ng-class=\"{\'glyphicon-font\' : toggleAdvanced === 0, \'glyphicon-bold\' : toggleAdvanced ===1 , \'glyphicon-filter\' : toggleAdvanced === 2, }\"></i> <span class=caret></span> </button> <ul class=\"dropdown-menu panel\" style=\"border: 1px groove;\" uib-dropdown-menu aria-labelledby=simple-dropdown> <li ng-click=toggleFilter(0)><a href><i class=\"advanced-filter glyphicon glyphicon-font txt-primary\"></i> Advanced filter</a></li> <li ng-click=toggleFilter(1)><a href><i class=\"basic-filter glyphicon glyphicon-bold txt-primary\"></i> Basic filter</a></li> <li ng-if=\"definition.type === \'FullDevicesList\'\" ng-click=toggleFilter(2)><a href><i class=\"custom-filter glyphicon glyphicon-filter txt-primary\"></i> Custom filter</a></li> </ul> </div> </div> <div ng-if=\"customSelectors && config.sort && filterAvailable && toggleAdvanced != 2\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div class=\"sort col-xs-12 col-md-8\"> <ui-select ng-model=config.sort.value theme=bootstrap title=\"Choose a filter\" allow-clear=true append-to-body=true ng-change=launchSearching() ng-click=getCustomSelectors()> <ui-select-match placeholder=\"Sorted by ...\" allow-clear=true>Sort by: {{$select.selected}}</ui-select-match> <ui-select-choices repeat=\"selector in customSelectors | filter: $select.search\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> <div class=\"sortDirection col-xs-4 col-md-4\"> <button class=\"btn btn-sm pointer\" ng-click=changeDirection() ng-disabled=\"config.sort.value === \'\'\" title=\"Toggle sorting direction\"> <i class=glyphicon style=font-size:1.3em; ng-class=\"config.sort.direction===\'ASCENDING\' ? \'glyphicon-sort-by-attributes\': \'glyphicon-sort-by-attributes-alt\'\"></i> </button> </div> </div> <div ng-if=showCustomFields() class=\"col-xs-12 col-md-12\"> <div class=\"col-xs-12 col-md-4\" ng-repeat=\"model in search.customFilter\"> <label>{{model.name}}</label> <input class=form-control id={{model.name}} name={{model.name}} type=text ng-model=search.customFilter[$index].value ng-keypress=enter($event)> </div> </div> <div ng-class=\"{ \'panel-body\':!widget.frameless || editMode}\" uib-collapse=widgetState.isCollapsed style=overflow:hidden;> <adf-widget-content model=definition content=widget editing=editMode> </adf-widget-content></div> </div>");}]);
+$templateCache.put("../src/templates/widget.html","<div adf-id={{definition.wid}} adf-widget-type={{definition.type}} ng-class=\"widgetClasses(widget, definition)\" class=\"widget widget_{{definition.wid}}\"> <a name={{definition.wid}} id={{definition.wid}}></a> <div class=\"panel-heading clearfix bg-primary\" ng-if=\"!widget.frameless || editMode\"> <div ng-include src=definition.titleTemplateUrl></div> </div> <div ng-if=\"!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div ng-if=\"toggleAdvanced === 0\" class=\"col-xs-12 col-md-8\"> <div class=filter mass-autocomplete> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.oql placeholder=\"Enter your advanced filter\" mass-autocomplete-item=autocomplete_options() ng-change=debugQuery()> <label ng-click=launchSearchingAdv() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> <div ng-if=\"!editMode && filter.error\" class=col-xs-12> <alert type=danger class=\"text-center text-danger\"> <span>{{filter.error}}</span> </alert> </div> <div ng-if=\"showFinalFilter && search.json\" class=col-xs-12> <pre>{{ search.json }}</pre> </div> </div> <div ng-if=ifCustomFilter() class=\"col-xs-12 col-md-8\"> <div class=\"filter form-group\"> <a href class=text-danger ng-click=\"options.customFilter.open = !options.customFilter.open\"> <i class=glyphicon ng-class=\"{\'glyphicon-chevron-up\': options.customFilter.open, \'glyphicon-chevron-down\': !options.customFilter.open}\"></i> Pick filter fields </a> <label ng-click=launchCustomFilter() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> <div class=row ng-if=options.customFilter.open> <ui-select multiple=true ng-model=search.fields theme=bootstrap title=\"Choose a filter\" on-select=addCustomFilter($item) on-remove=deleteFilter($item) ng-click=getcustomFilter()> <ui-select-match placeholder=\"Pick filter fields ...\" allow-clear=true> {{$item}} </ui-select-match> <ui-select-choices repeat=\"selector in (customFilter | filter: $select.search) track by $index\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> </div> </div> <div ng-if=\"toggleAdvanced === 1\" class=\"col-xs-12 col-md-8\"> <div class=filter> <input class=form-control style=padding-right:15px; name=filterValue ng-keypress=enter($event) ng-model=search.quick placeholder=\"Enter your basic filter here\"> <label ng-click=launchSearchingQuick() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=\"glyphicon glyphicon-search\"></label> </div> </div> <div class=\"col-xs-12 col-md-4\" uib-dropdown> <button class=\"btn btn-sm\" uib-dropdown-toggle title=\"Toggle Advanced/Basic filter\"> <i class=\"advanced-filter glyphicon\" ng-class=\"{\'glyphicon-font\' : toggleAdvanced === 0, \'glyphicon-bold\' : toggleAdvanced ===1 , \'glyphicon-filter\' : toggleAdvanced === 2, }\"></i> <span class=caret></span> </button> <ul class=\"dropdown-menu panel\" style=\"border: 1px groove;\" uib-dropdown-menu aria-labelledby=simple-dropdown> <li ng-click=toggleFilter(0)> <a href> <i class=\"advanced-filter glyphicon glyphicon-font txt-primary\"></i> Advanced filter</a> </li> <li ng-click=toggleFilter(1)> <a href> <i class=\"basic-filter glyphicon glyphicon-bold txt-primary\"></i> Basic filter</a> </li> <li ng-if=\"definition.type === \'FullDevicesList\'\" ng-click=toggleFilter(2)> <a href> <i class=\"custom-filter glyphicon glyphicon-filter txt-primary\"></i> Custom filter</a> </li> </ul> </div> </div> <div ng-if=\"customSelectors && config.sort && filterAvailable && toggleAdvanced != 2\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div class=\"sort col-xs-12 col-md-8\"> <ui-select ng-model=config.sort.value theme=bootstrap title=\"Choose a filter\" allow-clear=true append-to-body=true ng-change=launchSearching() ng-click=getCustomSelectors()> <ui-select-match placeholder=\"Sorted by ...\" allow-clear=true>Sort by: {{$select.selected}}</ui-select-match> <ui-select-choices repeat=\"selector in customSelectors | filter: $select.search\"> <small ng-bind-html=\"selector | highlight: $select.search\"></small> </ui-select-choices> </ui-select> </div> <div class=\"sortDirection col-xs-4 col-md-4\"> <button class=\"btn btn-sm pointer\" ng-click=changeDirection() ng-disabled=\"config.sort.value === \'\'\" title=\"Toggle sorting direction\"> <i class=glyphicon style=font-size:1.3em; ng-class=\"config.sort.direction===\'ASCENDING\' ? \'glyphicon-sort-by-attributes\': \'glyphicon-sort-by-attributes-alt\'\"></i> </button> </div> </div> <div ng-if=showCustomFields() class=\"col-xs-12 col-md-12\"> <div class=\"col-xs-12 col-md-4\" ng-repeat=\"model in search.customFilter\"> <label>{{model.name}}</label> <input class=form-control id={{model.name}} name={{model.name}} type=text ng-model=search.customFilter[$index].value ng-keypress=enter($event)> </div> </div> <div ng-class=\"{ \'panel-body\':!widget.frameless || editMode}\" uib-collapse=widgetState.isCollapsed style=overflow:hidden;> <adf-widget-content model=definition content=widget editing=editMode> </adf-widget-content></div> </div> ");}]);
 })(window);
