@@ -112,6 +112,10 @@ angular.module('adf')
         function postLink($scope, $element) {
             var definition = $scope.definition;
             if (definition) {
+                if (!$scope.config) {
+                    $scope.config = {};
+                }
+
                 if (!$scope.config.reloadPeriod) {
                     $scope.config.reloadPeriod = "0";
                 }
