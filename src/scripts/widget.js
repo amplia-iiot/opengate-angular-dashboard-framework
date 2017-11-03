@@ -238,7 +238,7 @@ angular.module('adf')
             };
 
             $scope.toggleAdvanced = 1;
-            var filter = config.fiilter;
+            var filter = config.filter;
             if (typeof filter === "object" && filter.oql && filter.oql.length > 2) {
                 $scope.search = {
                     oql: filter.oql,
@@ -281,7 +281,7 @@ angular.module('adf')
                     element: $element
                 };
 
-                $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, config.filter);
+                $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, $scope.config.filter);
                 $scope.reload(true);
             }
             $scope.addCustomFilter = function (key) {
