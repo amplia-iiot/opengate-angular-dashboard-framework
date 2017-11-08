@@ -1,43 +1,45 @@
 <div class="panel-title" style="margin:0px;">
     <span class="pull-left">
         <!-- selected items control -->
-        <a href="" ng-if="selectedItemsLength > 0" title="{{ translate('ADF_WIDGET_TOOLTIP_SELECTION') }}" ng-click="manageSelectedItems()" style="float:left;"> 
-            <i class="glyphicon glyphicon-check"></i><small class="ogux-budget">{{ selectedItemsLength }}</small>
+        <a href="" ng-if="selectedItemsLength > 0" title="{{ translate('ADF_WIDGET_TOOLTIP_SELECTION') }}" ng-click="manageSelectedItems()"
+            style="float:left;">
+            <i class="glyphicon glyphicon-check"></i>
+            <small class="ogux-budget">{{ selectedItemsLength }}</small>
         </a>
         <h4 ng-if="!widget.frameless && definition.title" style="margin:0px 0px 0px 2px;float:left;">{{definition.title}}</h4>
     </span>
     <div class="pull-right">
         <span ng-if="config.about">
-                <a href="" uib-popover="{{ config.about }}" popover-trigger="'mouseenter'" popover-placement="top" ng-click="openAboutScreen()">
-                <i class="glyphicon glyphicon-info-sign"></i></a>
-
-                <script type="text/ng-template" id="widgetAboutModal.html">
+            <a href="" uib-popover="{{ config.about }}" popover-trigger="'mouseenter'" popover-placement="top" ng-click="openAboutScreen()">
+                <i class="glyphicon glyphicon-info-sign"></i>
+            </a>
+            <script type="text/ng-template" id="widgetAboutModal.html">
                 <div class="modal-header">
                     <h4 class="modal-title">About</h4>
                 </div>
                 <div class="modal-body">{{ about.info }}</div>
                 <div class="modal-footer"><button class="btn btn-primary" type="button" ng-click="ok()">OK</button></div>
-                </script>
-            </span>
+                </script> </span>
         <a ng-if="!editMode && widget.print" href="" title="{{ translate('ADF_WIDGET_TOOLTIP_PRINT') }}" ng-click="print()">
             <i class="glyphicon glyphicon-print"></i>
         </a>
-        <span ng-if="!editMode && config.widgetOnToggleView && config.widgetViews" uib-popover="Change view" popover-trigger="'mouseenter'" popover-placement="top" uib-dropdown>
-                <a href id="toggle_{{definition.wid}}" uib-dropdown-toggle>
-                    <i class="glyphicon glyphicon-eye-close"></i>
-                </a>
-                <ul class="dropdown-menu" uib-dropdown-menu aria-labelledby="Change view">
-                    <li ng-repeat="choice in config.widgetViews">
-                        <a ng-click="config.widgetOnToggleView(choice.value)">{{choice.name}}</a>
-                    </li>
-                </ul>
-                </span>
+        <span ng-if="!editMode && config.widgetOnToggleView && config.widgetViews" uib-popover="Change view" popover-trigger="'mouseenter'"
+            popover-placement="top" uib-dropdown>
+            <a href id="toggle_{{definition.wid}}" uib-dropdown-toggle>
+                <i class="glyphicon glyphicon-eye-close"></i>
+            </a>
+            <ul class="dropdown-menu" uib-dropdown-menu aria-labelledby="Change view">
+                <li ng-repeat="choice in config.widgetViews">
+                    <a ng-click="config.widgetOnToggleView(choice.value)">{{choice.name}}</a>
+                </li>
+            </ul>
+        </span>
         <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_REFRESH') }}" ng-if="widget.reload" ng-click="reload()">
             <i class="glyphicon glyphicon-refresh"></i>
         </a>
-
         <!-- execute operation over filter/selected -->
-        <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_OPERATION') }}" ng-if="widget.executeOperation && !editMode && isExecuteOperationEnabled()" ng-click="executeOperation()">
+        <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_OPERATION') }}" ng-if="widget.executeOperation && !editMode && isExecuteOperationEnabled()"
+            ng-click="executeOperation()">
             <i class="glyphicon glyphicon-flash"></i>
         </a>
         <!-- show widget filter -->
@@ -52,16 +54,22 @@
         <a href="" title="Save picture" ng-if="!editMode && !widgetState.isCollapsed" ng-click="saveWidgetScreen(definition.wid)">
             <i class="glyphicon glyphicon-picture"></i>
         </a>
+        <!-- capture widget picture -->
+        <a href="" title="Download csv" ng-if="!editMode && widget.csv" ng-click="downloadCsv()">
+            <i class="glyphicon glyphicon-file"></i>
+        </a>
         <!-- change widget location -->
         <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_MOVE') }}" class="adf-move" ng-if="editMode">
             <i class="glyphicon glyphicon-move"></i>
         </a>
         <!-- collapse -->
-        <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_COLLAPSE') }}" ng-show="options.collapsible && !widgetState.isCollapsed" ng-click="widgetState.isCollapsed = !widgetState.isCollapsed">
+        <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_COLLAPSE') }}" ng-show="options.collapsible && !widgetState.isCollapsed"
+            ng-click="widgetState.isCollapsed = !widgetState.isCollapsed">
             <i class="glyphicon glyphicon-minus"></i>
         </a>
         <!-- expand -->
-        <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_EXPAND') }}" ng-show="options.collapsible && widgetState.isCollapsed" ng-click="widgetState.isCollapsed = !widgetState.isCollapsed">
+        <a href="" title="{{ translate('ADF_WIDGET_TOOLTIP_EXPAND') }}" ng-show="options.collapsible && widgetState.isCollapsed"
+            ng-click="widgetState.isCollapsed = !widgetState.isCollapsed">
             <i class="glyphicon glyphicon-plus"></i>
         </a>
         <!-- open edit mode -->

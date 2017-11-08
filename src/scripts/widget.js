@@ -742,6 +742,70 @@ angular.module('adf')
                     });
                 };
 
+                var onWindowTimeChanged = function (timeObj) {
+                    var filter = { and: [] };
+                    if (timeObj && timeObj.from) {
+                        filter.and.push({
+                            gt: {
+                                operationDate: timeObj.from
+                            }
+                        });
+
+                        if (timeObj.to) {
+                            filter.and.push({
+                                lt: {
+                                    operationDate: timeObj.to
+                                }
+                            });
+                        }
+                    } else {
+                        filter = null;
+                    }
+                    return filter;
+                }
+
+                var createQuickFilter = function (fieldsQuickSearch, filter) {
+                    var _filter = {
+                        or: []
+                    };
+                    var criteria;
+                    fieldsQuickSearch.forEach(function (field) {
+                        criteria = {};
+                        criteria[field.operator] = {};
+                        criteria[field.operator][field.name] = $scope.config.filter;
+                        _filter.or.push(criteria);
+                    });
+                    return _filter;
+                }
+
+                $scope.downloadCsv = function () {
+                    var columns = $scope.config.columns;
+                    var scope_filter = $scope.config.filter;
+                    var extra_filter;
+                    var final_filter = {};
+                    var order = $scope.config.sort ? $scope.config.sort : undefined;
+                    if ($scope.config.windowFilter) {
+                        var window_filter = onWindowTimeChanged($scope.config.windowFilter);
+                        extra_filter = { and: window_filter.and };
+                    }
+                    var filter;
+                    if (scope_filter.value && scope_filter.value.length > 4) {
+                        filter = JSON.parse(scope_filter.value);
+                    } else if (typeof scope_filter === 'string') {
+                        filter = createQuickFilter($scope.config.fieldsQuickSearch, scope_filter);
+                    }
+                    if (extra_filter) {
+                        final_filter = { and: [extra_filter, filter] };
+                    } else {
+                        final_filter = filter;
+                    }
+                    $scope.$emit('downloadCsv', {
+                        'columns': columns,
+                        'filter': final_filter,
+                        'order': order
+                    });
+                }
+
 
                 var addItemToSelection = $scope.$on('addItemToSelection', function (event, item) {
                     if (!$scope.selectedItems[item.key]) {
