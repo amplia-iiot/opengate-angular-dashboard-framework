@@ -329,15 +329,17 @@ angular.module('adf')
 
             $scope.launchSearchingAdv = function() {
                 $scope.search.quick = '';
-                $scope.config.filter = {
-                    oql: $scope.search.oql,
-                    value: $scope.search.json
-                };
-                if ($scope.search.json === '' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0))
+                if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
                     $scope.config.filter = {
                         oql: '',
                         value: ''
                     };
+                } else {
+                    $scope.config.filter = {
+                        oql: $scope.search.oql,
+                        value: $scope.search.json
+                    };
+                }
                 $scope.launchSearching();
 
             }
