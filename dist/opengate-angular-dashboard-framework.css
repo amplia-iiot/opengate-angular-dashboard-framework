@@ -53,6 +53,10 @@
   transition: none !important;
 }
 
+.ogux-row {
+  padding: 5px;
+}
+
 /**
  The MIT License
 
