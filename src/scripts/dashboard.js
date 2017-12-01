@@ -304,7 +304,8 @@ angular.module('adf')
                 adfModel: '=',
                 adfWidgetFilter: '=',
                 categories: '@',
-                hideButtons: '='
+                hideButtons: '=',
+                extraData: '='
             },
             controller: function($scope) {
                 var model = {};
@@ -616,11 +617,20 @@ angular.module('adf')
                     enableConfirmDelete: stringToBoolean($attr.enableConfirmDelete),
                     maximizable: stringToBoolean($attr.maximizable),
                     collapsible: stringToBoolean($attr.collapsible),
-                    categories: stringToBoolean($attr.categories)
+                    categories: stringToBoolean($attr.categories),
+                    extraData: {}
                 };
+
                 if (angular.isDefined($attr.editable)) {
                     options.editable = stringToBoolean($attr.editable);
                 }
+
+                if (angular.isDefined($scope.extraData)) {
+                    options.extraData = $scope.extraData;
+                }
+
+                options.extraData.editing = $scope.editMode;
+
                 $scope.options = options;
             },
             templateUrl: adfTemplatePath + 'dashboard.html'
