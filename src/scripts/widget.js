@@ -788,7 +788,9 @@ angular.module('adf')
                     var order = $scope.config.sort ? $scope.config.sort : undefined;
                     if ($scope.config.windowFilter) {
                         var window_filter = onWindowTimeChanged($scope.config.windowFilter);
-                        extra_filter = { and: window_filter.and };
+                        if (window_filter && window_filter.and) {
+                            extra_filter = { and: window_filter.and };
+                        }
                     }
                     var filter;
                     if (scope_filter.value && scope_filter.value.length > 4) {
@@ -797,17 +799,20 @@ angular.module('adf')
                         filter = createQuickFilter($scope.config.fieldsQuickSearch, scope_filter);
                     }
                     if (extra_filter) {
-                        final_filter = { and: [extra_filter, filter] };
+                        if (filter) {
+                            final_filter = { and: [extra_filter, filter] };
+                        } else {
+                            final_filter = extra_filter;
+                        }
                     } else {
                         final_filter = filter;
                     }
-                    $scope.$emit('downloadCsv', {
+                    $scope.$broadcast('downloadCsv', {
                         'columns': columns,
                         'filter': final_filter,
                         'order': order
                     });
-                }
-
+                };
 
                 var addItemToSelection = $scope.$on('addItemToSelection', function(event, item) {
                     if (!$scope.selectedItems[item.key]) {
