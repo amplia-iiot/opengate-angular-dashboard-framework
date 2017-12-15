@@ -29,7 +29,7 @@ angular.module('adf', ['adf.provider', 'adf.locale', 'ui.bootstrap', 'opengate-a
     .value('adfTemplatePath', '../src/templates/')
     .value('rowTemplate', '<adf-dashboard-row row="row" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="row in column.rows" />')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '3.0.1');
+    .value('adfVersion', '3.1.0');
 /*
  * The MIT License
  *
@@ -2584,7 +2584,7 @@ angular.module('adf')
                     var filter;
                     if (scope_filter.value && scope_filter.value.length > 4) {
                         filter = JSON.parse(scope_filter.value);
-                    } else if (typeof scope_filter === 'string') {
+                    } else if (typeof scope_filter === 'string' && scope_filter.trim() !== '') {
                         filter = createQuickFilter($scope.config.fieldsQuickSearch, scope_filter);
                     }
                     if (extra_filter) {
