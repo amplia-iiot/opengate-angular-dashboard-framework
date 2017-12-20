@@ -54,6 +54,10 @@
         <a href="" title="Save picture" ng-if="!editMode && !widgetState.isCollapsed" ng-click="saveWidgetScreen(definition.wid)">
             <i class="glyphicon glyphicon-picture"></i>
         </a>
+        <!-- Generate QR info -->
+        <a href="" title="Generate QR" ng-if="!editMode && widget.qr" ng-click="generateQR()">
+            <i class="fa fa-qrcode" style="font-size: 1.1em;"></i>
+        </a>
         <!-- capture widget picture -->
         <a href="" title="Download csv" ng-if="!editMode && widget.csv" ng-click="downloadCsv()">
             <i class="glyphicon glyphicon-file"></i>

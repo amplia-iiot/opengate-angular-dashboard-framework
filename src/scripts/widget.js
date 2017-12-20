@@ -814,6 +814,10 @@ angular.module('adf')
                     });
                 };
 
+                $scope.generateQR = function() {
+                    $scope.$broadcast('generateQR');
+                };     
+
                 var addItemToSelection = $scope.$on('addItemToSelection', function(event, item) {
                     if (!$scope.selectedItems[item.key]) {
                         $scope.selectedItems[item.key] = {
