@@ -31,8 +31,8 @@
  *
  * The dashboardProvider can be used to register structures and widgets.
  */
-angular.module('adf.provider', ['adf.locale'])
-    .provider('dashboard', function(adfLocale) {
+angular.module('adf.provider', [])
+    .provider('dashboard', function () {
 
         var widgets = {};
         var widgetsPath = '';
@@ -47,25 +47,9 @@ angular.module('adf.provider', ['adf.locale'])
         var customWidgetTemplatePath = null;
 
         // default apply function of widget.edit.apply
-        var defaultApplyFunction = function() {
+        var defaultApplyFunction = function () {
             return true;
         };
-
-        var activeLocale = adfLocale.defaultLocale;
-        var locales = adfLocale.frameworkLocales;
-
-        function getLocales() {
-            return locales;
-        }
-
-        function getActiveLocale() {
-            return activeLocale;
-        }
-
-        function translate(label) {
-            var translation = locales[activeLocale][label];
-            return translation ? translation : label;
-        }
 
         /**
          * @ngdoc method
@@ -128,8 +112,11 @@ angular.module('adf.provider', ['adf.locale'])
          *
          * @returns {Object} self
          */
-        this.widget = function(name, widget) {
-            var w = angular.extend({ reload: false, frameless: false }, widget);
+        this.widget = function (name, widget) {
+            var w = angular.extend({
+                reload: false,
+                frameless: false
+            }, widget);
             if (w.edit) {
                 var edit = {
                     reload: true,
@@ -161,7 +148,7 @@ angular.module('adf.provider', ['adf.locale'])
          *
          * @returns {Object} self
          */
-        this.widgetsPath = function(path) {
+        this.widgetsPath = function (path) {
             widgetsPath = path;
             return this;
         };
@@ -186,7 +173,7 @@ angular.module('adf.provider', ['adf.locale'])
          *
          * @returns {Object} self
          */
-        this.structure = function(name, structure) {
+        this.structure = function (name, structure) {
             structures[name] = structure;
             return this;
         };
@@ -203,7 +190,7 @@ angular.module('adf.provider', ['adf.locale'])
          *
          * @returns {Object} self
          */
-        this.messageTemplate = function(template) {
+        this.messageTemplate = function (template) {
             messageTemplate = template;
             return this;
         };
@@ -221,7 +208,7 @@ angular.module('adf.provider', ['adf.locale'])
          *
          * @returns {Object} self
          */
-        this.loadingTemplate = function(template) {
+        this.loadingTemplate = function (template) {
             loadingTemplate = template;
             return this;
         };
@@ -238,55 +225,8 @@ angular.module('adf.provider', ['adf.locale'])
          *
          * @returns {Object} self
          */
-        this.customWidgetTemplatePath = function(templatePath) {
+        this.customWidgetTemplatePath = function (templatePath) {
             customWidgetTemplatePath = templatePath;
-            return this;
-        };
-
-        /**
-         * @ngdoc method
-         * @name adf.dashboardProvider#setLocale
-         * @methodOf adf.dashboardProvider
-         * @description
-         *
-         * Changes the locale setting of adf
-         *
-         * @param {string} ISO Language Code
-         *
-         * @returns {Object} self
-         */
-        this.setLocale = function(locale) {
-            if (locales[locale]) {
-                activeLocale = locale;
-            } else {
-                throw new Error('Cannot set locale: ' + locale + '. Locale is not defined.');
-            }
-            return this;
-        };
-
-        /**
-         * @ngdoc method
-         * @name adf.dashboardProvider#addLocale
-         * @methodOf adf.dashboardProvider
-         * @description
-         *
-         * Adds a new locale to adf
-         *
-         * @param {string} ISO Language Code for the new locale
-         * @param {object} translations for the locale.
-         *
-         * @returns {Object} self
-         */
-        this.addLocale = function(locale, translations) {
-            if (!angular.isString(locale)) {
-                throw new Error('locale must be an string');
-            }
-
-            if (!angular.isObject(translations)) {
-                throw new Error('translations must be an object');
-            }
-
-            locales[locale] = translations;
             return this;
         };
 
@@ -302,14 +242,11 @@ angular.module('adf.provider', ['adf.locale'])
          * @property {Array.<Object>} structures Array of registered structures.
          * @property {string} messageTemplate Template for messages.
          * @property {string} loadingTemplate Template for widget loading.
-         * @property {method} sets locale of adf.
-         * @property {Array.<Object>} hold all of the locale translations.
-         * @property {string} the active locale setting.
-         * @property {method} translation function passed to templates.
+         * * @property {string} customWidgetTemplatePath Changes the container template for the widgets
          *
          * @returns {Object} self
          */
-        this.$get = function() {
+        this.$get = function () {
             var cid = 0;
 
             return {
@@ -318,10 +255,6 @@ angular.module('adf.provider', ['adf.locale'])
                 structures: structures,
                 messageTemplate: messageTemplate,
                 loadingTemplate: loadingTemplate,
-                setLocale: this.setLocale,
-                locales: getLocales,
-                activeLocale: getActiveLocale,
-                translate: translate,
                 customWidgetTemplatePath: customWidgetTemplatePath,
 
                 /**
@@ -333,7 +266,7 @@ angular.module('adf.provider', ['adf.locale'])
                  * Creates an ongoing numeric id. The method is used to create ids for
                  * columns and widgets in the dashboard.
                  */
-                id: function() {
+                id: function () {
                     return new Date().getTime() + '-' + (++cid);
                 },
 
@@ -348,7 +281,7 @@ angular.module('adf.provider', ['adf.locale'])
                  * @param {string} id widget or column id
                  * @param {string} other widget or column id
                  */
-                idEquals: function(id, other) {
+                idEquals: function (id, other) {
                     // use toString, because old ids are numbers
                     return ((id) && (other)) && (id.toString() === other.toString());
                 }

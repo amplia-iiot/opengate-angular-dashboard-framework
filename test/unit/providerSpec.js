@@ -24,16 +24,16 @@
 
 'use strict';
 
-describe('Dashboard Provider tests', function() {
+describe('Dashboard Provider tests', function () {
 
   var provider;
 
   // Load the adf module, which contains the provider
-  beforeEach(module('adf.provider', function(dashboardProvider){
+  beforeEach(module('adf.provider', function (dashboardProvider) {
     provider = dashboardProvider;
   }));
 
-  it('should attach default properties to the widget', inject(function(){
+  it('should attach default properties to the widget', inject(function () {
     provider.widget('test', {});
 
     var widget = provider.$get().widgets['test'];
@@ -41,9 +41,11 @@ describe('Dashboard Provider tests', function() {
     expect(widget.frameless).toBe(false);
   }));
 
-  it('should attach default edit properties to the widget', inject(function(){
+  it('should attach default edit properties to the widget', inject(function () {
     provider.widget('test', {});
-    provider.widget('test-2', {edit:{}});
+    provider.widget('test-2', {
+      edit: {}
+    });
 
     var widget = provider.$get().widgets['test'];
     expect(widget.edit).toBeUndefined();
@@ -55,15 +57,19 @@ describe('Dashboard Provider tests', function() {
     expect(widget2.edit.apply()).toBeTruthy();
   }));
 
-  it('should store widget path', inject(function(){
+  it('should store widget path', inject(function () {
     provider.widgetsPath('some-path');
 
     expect(provider.$get().widgetsPath).toBe('some-path');
   }));
 
-  it('should store structure by name', inject(function(){
-    provider.structure('test', { name: 'test' });
-    provider.structure('test-2', { name: 'test-2' });
+  it('should store structure by name', inject(function () {
+    provider.structure('test', {
+      name: 'test'
+    });
+    provider.structure('test-2', {
+      name: 'test-2'
+    });
 
     var dashboard = provider.$get();
 
@@ -74,30 +80,30 @@ describe('Dashboard Provider tests', function() {
     expect(structure.name).toBe('test-2')
   }));
 
-  it('should store message template', inject(function(){
+  it('should store message template', inject(function () {
     provider.messageTemplate('unit-test');
 
     expect(provider.$get().messageTemplate).toBe('unit-test');
   }));
 
-  it('should store loading template', inject(function(){
+  it('should store loading template', inject(function () {
     provider.loadingTemplate('unit-test');
 
     expect(provider.$get().loadingTemplate).toBe('unit-test');
   }));
 
-  it('should increase the id', inject(function(){
+  it('should increase the id', inject(function () {
     var dashboard = provider.$get();
 
     var ids = [];
-    for (var i=0; i<1000; i++){
+    for (var i = 0; i < 1000; i++) {
       var id = dashboard.id();
       expect(ids).not.toContain(id);
       ids[i] = id;
     }
   }));
 
-  it('ids should be equals', inject(function(){
+  it('ids should be equals', inject(function () {
     var dashboard = provider.$get();
     expect(dashboard.idEquals('1', '1')).toBe(true);
     expect(dashboard.idEquals('1', 1)).toBe(true);
@@ -105,71 +111,11 @@ describe('Dashboard Provider tests', function() {
     expect(dashboard.idEquals(1, 1)).toBe(true);
   }));
 
-  it('should set custom widget template url', function() {
+  it('should set custom widget template url', function () {
     var customWidgetTemplatePath = '/app/templates/customWidget.html';
     provider.customWidgetTemplatePath(customWidgetTemplatePath);
     var dashboard = provider.$get();
     expect(dashboard.customWidgetTemplatePath).toBe(customWidgetTemplatePath);
-  });
-
-  describe('locale', function() {
-
-    it('should default to en-GB', function() {
-      var dashboard = provider.$get();
-      expect(dashboard.activeLocale()).toBe('en-GB');
-    });
-
-    it('should change locale', function() {
-      var dashboard = provider.$get();
-      var newLocale = 'sv-SE';
-
-      provider.setLocale(newLocale);
-      expect(dashboard.activeLocale()).toBe(newLocale);
-      expect(dashboard.translate('ADF_COMMON_CLOSE')).toBe('Stäng');
-    });
-
-    it('should throw an exception if locale doesnt exist', function() {
-      var func = function() {
-        provider.setLocale('af-ZA');
-      };
-
-      expect(func).toThrowError('Cannot set locale: af-ZA. Locale is not defined.');
-    });
-
-    it('should add a new locale', function() {
-      var dashboard = provider.$get();
-      var locale = 'af-ZA';
-      var translations = {
-        'ADF_COMMON_CLOSE': 'Naby'
-      };
-
-      provider.addLocale(locale, translations);
-      expect(dashboard.locales()[locale]).toBe(translations);
-
-      provider.setLocale(locale);
-      expect(dashboard.translate('ADF_COMMON_CLOSE')).toBe('Naby');
-    });
-
-    it('should throw an exception when adding locale without a locale code or translation', function() {
-      var dashboard = provider.$get();
-      var call1 = function() {
-          provider.addLocale(null, null);
-      };
-      var call2 = function() {
-          provider.addLocale('af-AZ', null);
-      };
-
-      expect(call1).toThrowError('locale must be an string');
-      expect(call2).toThrowError('translations must be an object');
-    });
-
-    it('should return the label value if translation doesn´t exists', function() {
-      var dashboard = provider.$get();
-      var nonExistenceLabelKey = 'MY_FAKE_LABEL';
-      var translation = dashboard.translate(nonExistenceLabelKey);
-      expect(translation).toBe(nonExistenceLabelKey);
-    });
-
   });
 
 });
