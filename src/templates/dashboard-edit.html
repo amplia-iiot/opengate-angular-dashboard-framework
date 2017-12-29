@@ -1,21 +1,21 @@
 <div class="modal-header ">
     <button type="button" class="close" ng-click="closeDialog()" aria-hidden="true">&times;</button>
-    <h3 class="modal-title" translate>ADF.DASHBOARD.TITLE.EDIT_DASHBOARD</h3>
+    <h3 class="modal-title" translate>ADF.DASHBOARD.TITLE.EDIT.DASHBOARD</h3>
 </div>
 <div class="modal-body ">
     <form role="form" name="form" novalidate>
         <div class="form-group col-xs-12 col-md-6">
             <label for="dashboardTitle" translate>ADF.COMMON.TITLE</label>
             <input type="text" class="form-control text-primary" id="dashboardTitle" ng-model="copy.title"
-                required="true"> </div>
+                required="true" ng-init="copy.title=(copy.title | translate)"> </div>
         <div class="form-group col-xs-12 col-md-6">
             <label for="dashboardDescription" translate>ADF.DASHBOARD.LABEL.DESCRIPTION</label>
             <input type="text" class="form-control text-primary" id="dashboardDescription"
-                ng-model="copy.description"> </div>
+                ng-init="copy.description=(copy.description | translate)" ng-model="copy.description"> </div>
         <div class="form-group col-xs-12 col-md-6">
             <label for="icon" translate>ADF.DASHBOARD.LABEL.ICON</label>
             <ui-select tagging="tagTransform" id="icon" ng-model="copy.icon" theme="bootstrap"
-                allow-clear="false" required="true" on-select="selectIcon($select.selected)" title="Choose icon">
+                allow-clear="false" required="true" on-select="selectIcon($select.selected)" title="{{'ADF.WIDGET.TITLE.CHOOSE_ICON' | translate}}">
                 <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.ICON' | translate}}" allow-clear="false">
                     <i class="fa {{$select.selected}} fa-2x"></i>
                     <span>{{$select.selected}}</span>

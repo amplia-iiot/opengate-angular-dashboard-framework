@@ -339,7 +339,7 @@ angular.module('adf')
 
                         if (model) {
                             if (!model.title) {
-                                model.title = 'Empty Dashboard';
+                                model.title = 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD';
                             }
                             if (!model.titleTemplateUrl) {
                                 model.titleTemplateUrl = adfTemplatePath + 'dashboard-title.html';
@@ -439,7 +439,7 @@ angular.module('adf')
                     // create a copy of the title, to avoid changing the title to
                     // "dashboard" if the field is empty
                     editDashboardScope.copy = {
-                        title: (model.title !== 'Empty Dashboard' ? model.title : ''),
+                        title: (model.title !== 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD' ? model.title : ''),
                         description: model.description,
                         icon: model.icon ? model.icon : 'fa-tachometer'
                     };

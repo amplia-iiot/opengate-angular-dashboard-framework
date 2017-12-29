@@ -564,7 +564,7 @@ angular.module('adf')
 
                         if (model) {
                             if (!model.title) {
-                                model.title = 'Empty Dashboard';
+                                model.title = 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD';
                             }
                             if (!model.titleTemplateUrl) {
                                 model.titleTemplateUrl = adfTemplatePath + 'dashboard-title.html';
@@ -664,7 +664,7 @@ angular.module('adf')
                     // create a copy of the title, to avoid changing the title to
                     // "dashboard" if the field is empty
                     editDashboardScope.copy = {
-                        title: (model.title !== 'Empty Dashboard' ? model.title : ''),
+                        title: (model.title !== 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD' ? model.title : ''),
                         description: model.description,
                         icon: model.icon ? model.icon : 'fa-tachometer'
                     };
@@ -940,7 +940,7 @@ angular.module('adf.provider', [])
         var loadingTemplate = '\
       <div class="progress progress-striped active">\n\
         <div class="progress-bar" role="progressbar" style="width: 100%">\n\
-          <span class="sr-only">loading ...</span>\n\
+          <span class="sr-only" translate>FORM.MSG.LOADING ...</span>\n\
         </div>\n\
       </div>';
         var customWidgetTemplatePath = null;
@@ -1332,8 +1332,8 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", function($log, $q, widgetService,
-        $compile, $controller, $injector, dashboard) {
+    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", "$translate", function ($log, $q, widgetService,
+        $compile, $controller, $injector, dashboard, $translate) {
 
         function renderError($element, msg) {
             $log.warn(msg);
@@ -1348,11 +1348,21 @@ angular.module('adf')
 
             var newScope = currentScope;
             if (!model) {
-                renderError($element, 'model is undefined');
+                $translate('ADF.ERROR.MODEL_IS_UNDEFINED').then(function (translateMessage) {
+                    renderError($element, translateMessage);
+                });
             } else if (!content) {
-                //var msg = 'widget content is undefined, please have a look at your browser log';
-                var msg = 'Widget ' + (model.title ? 'for "' + model.title + '"' : '') + ' has been deprecated. In order to continue you have to delete this one and look for the equivalent one.';
-                renderError($element, msg);
+                if (model.title) {
+                    $translate('ADF.ERROR.WIDGET_FOR_DEPRECTATED', {
+                        title: model.title
+                    }).then(function (translateMessage) {
+                        renderError($element, translateMessage);
+                    });
+                } else {
+                    $translate('ADF.ERROR.WIDGET_DEPRECTATED').then(function (translateMessage) {
+                        renderError($element, translateMessage);
+                    });
+                }
             } else {
                 if (newScope) {
                     var is_menu = newScope.menu !== undefined && newScope.menu !== null;
@@ -1382,7 +1392,7 @@ angular.module('adf')
 
             if (newScope) {
                 if (newScope.config) {
-                    newScope.config.getWindowTime = function() {
+                    newScope.config.getWindowTime = function () {
                         var windowFilter = newScope.config.windowFilter;
                         if (windowFilter && windowFilter.type) {
                             var winTime = _getWindowTime(windowFilter.type);
@@ -1439,7 +1449,7 @@ angular.module('adf')
             var resolvers = {};
             resolvers.$tpl = widgetService.getTemplate(content);
             if (content.resolve) {
-                angular.forEach(content.resolve, function(promise, key) {
+                angular.forEach(content.resolve, function (promise, key) {
                     if (angular.isString(promise)) {
                         resolvers[key] = $injector.get(promise);
                     } else {
@@ -1449,7 +1459,7 @@ angular.module('adf')
             }
 
             // resolve all resolvers
-            $q.all(resolvers).then(function(locals) {
+            $q.all(resolvers).then(function (locals) {
                 angular.extend(locals, base);
 
                 // pass resolve map to template scope as defined in resolveAs
@@ -1468,13 +1478,14 @@ angular.module('adf')
                     $element.children().data('$ngControllerController', templateCtrl);
                 }
                 $compile($element.contents())(templateScope);
-            }, function(reason) {
+            }, function (reason) {
                 // handle promise rejection
-                var msg = 'Could not resolve all promises';
-                if (reason) {
-                    msg += ': ' + reason;
-                }
-                renderError($element, msg);
+                var msg = 'ADF.ERROR.COULD_NOT_RESOLVE_ALL_PROMISSES';
+                $translate(msg, {
+                    reason: (reason ? ": " + reason : reason)
+                }).then(function (translateMessage) {
+                    renderError($element, translateMessage);
+                });
             });
 
             // destroy old scope
@@ -1494,17 +1505,17 @@ angular.module('adf')
                 content: '=',
                 extra: '='
             },
-            link: function($scope, $element) {
+            link: function ($scope, $element) {
                 var currentScope = compileWidget($scope, $element, null);
-                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function() {
+                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function() {
+                var widgetReloadEvt = $scope.$on('widgetReload', function () {
                     currentScope = compileWidget($scope, $element, currentScope, false);
                 });
 
-                $scope.$on('destroy', function() {
+                $scope.$on('destroy', function () {
                     widgetConfigChangedEvt();
                     widgetReloadEvt();
                 });

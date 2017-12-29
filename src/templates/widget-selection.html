@@ -18,8 +18,8 @@
             <div class="form-group selected-entities-control">
                 <label for="currentSelection" translate>ADF.WIDGET.LABEL.CURRENT_SELECTION</label>
                 <ui-select multiple tagging ng-model="currentSelection.selected"
-                    theme="bootstrap" sortable="false" title="Selected items">
-                    <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.NO_SELECTED'}}">
+                    theme="bootstrap" sortable="false" title="{{'ADF.WIDGET.TITLE.SELECTED_ITEMS' | translated}}">
+                    <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.NO_SELECTED' | translate}}">
                         <div class="text-left" style="margin-right: 15px;font-size: 0.9em;max-width:350px;" ng-if="$item.value.visible">
                             <span style="white-space: initial;word-break: break-word;" ng-repeat="(k,v) in $item.value.visible track by $index"
                                 ng-if="v !== undefined">

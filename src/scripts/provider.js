@@ -41,7 +41,7 @@ angular.module('adf.provider', [])
         var loadingTemplate = '\
       <div class="progress progress-striped active">\n\
         <div class="progress-bar" role="progressbar" style="width: 100%">\n\
-          <span class="sr-only">loading ...</span>\n\
+          <span class="sr-only" translate>FORM.MSG.LOADING ...</span>\n\
         </div>\n\
       </div>';
         var customWidgetTemplatePath = null;

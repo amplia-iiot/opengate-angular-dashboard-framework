@@ -14,18 +14,18 @@
             <div class="col-xs-12 col-md-6">
                 <div class="form-group">
                     <label for="widgetTitle" translate>ADF.COMMON.TITLE</label>
-                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-model="definition.title"
-                        placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
+                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-init="definition.title=(definition.title | translate)"
+                        ng-model="definition.title" placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
             </div>
             <div class="col-xs-12 col-md-6">
                 <div class="form-group">
-                    <label for="widgetReloadPeriod" translate translate>ADF.WIDGET.TOOLTIP.REFRESH</label>
+                    <label for="widgetReloadPeriod" translate>ADF.WIDGET.TOOLTIP.REFRESH</label>
                     <select class="form-control" id="widgetReloadPeriod" aria-label="ngSelected demo"
                         ng-model="definition.config.reloadPeriod" required="">
                         <option ng-selected="selected" value="0" translate>ADF.WIDGET.OPTIONS.MANUAL</option>
-                        <option translate value="20">ADF.WIDGET.OPTIONS.20_SECONDS</option>
-                        <option translate value="40">ADF.WIDGET.OPTIONS.40_SECONDS</option>
-                        <option translate value="60">ADF.WIDGET.OPTIONS.EVERY_MINUTE</option>
+                        <option translate value="20" translate>ADF.WIDGET.OPTIONS.20_SECONDS</option>
+                        <option translate value="40" translate>ADF.WIDGET.OPTIONS.40_SECONDS</option>
+                        <option translate value="60" translate>ADF.WIDGET.OPTIONS.EVERY_MINUTE</option>
                     </select>
                 </div>
             </div>
@@ -34,8 +34,8 @@
             <div class="col-xs-12 col-md-12">
                 <div class="form-group">
                     <label for="widgetTitle" translate>ADF.COMMON.TITLE</label>
-                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-model="definition.title"
-                        placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
+                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-init="definition.title=(definition.title | translate)"
+                        ng-model="definition.title" placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
             </div>
         </div>
         <div ng-if="widget.edit" class="row">
@@ -47,7 +47,7 @@
                 <div class="form-group">
                     <label for="widgetAbout" translate="">ADF.COMMON.ABOUT</label>
                     <textarea class="form-control text-primary" id="widgetAbout" ng-model="definition.config.about"
-                        placeholder="{{'ADF.WIDGET.PLACEHOLDER.DESCRIPTION'|translate}}"></textarea>
+                        placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.DESCRIPTION'|translate}}"></textarea>
                 </div>
             </div>
         </div>
