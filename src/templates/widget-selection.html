@@ -9,8 +9,8 @@
 <form name="widgetSelectionForm" novalidate role="form" ng-submit="saveChangesDialog()">
     <div class="modal-header">
         <div class="col-xs-12 col-md-12">
-            <h3 class="modal-title text-left" translate>
-                <i class="fa fa-check-square-o" aria-hidden="true"></i> ADF.WIDGET.TITLE.SELECTED_ITEMS</h3>
+            <h3 class="modal-title text-left">
+                <i class="fa fa-check-square-o" aria-hidden="true"></i> {{'ADF.WIDGET.TITLE.SELECTED_ITEMS' | translate}}</h3>
         </div>
     </div>
     <div class="modal-body">
@@ -44,8 +44,8 @@
     <div class="modal-footer">
         <div class="col-xs-12 col-md-2 text-left">
             <div uib-dropdown ng-if="selectionConfig && selectionConfig.filterTypes && currentSelection.selected.length > 0">
-                <button id="applyFilterBy" type="button" class="btn btn-primary" uib-dropdown-toggle translate>
-                    <i class="glyphicon glyphicon-filter pointer"></i> ADF.WIDGET.BUTTON.FILTER_BY
+                <button id="applyFilterBy" type="button" class="btn btn-primary" uib-dropdown-toggle>
+                    <i class="glyphicon glyphicon-filter pointer"></i> {{'ADF.WIDGET.BUTTON.FILTER_BY' | translate}}
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="applyFilterBy">
@@ -57,8 +57,8 @@
         </div>
         <div class="col-xs-12 col-md-3 text-left">
             <div uib-dropdown ng-if="selectionConfig && selectionConfig.operationTypes  && currentSelection.selected.length > 0">
-                <button id="executeOperation" type="button" class="btn btn-primary" uib-dropdown-toggle translate>
-                    <i class="glyphicon glyphicon-flash pointer"></i> ADF.WIDGET.BUTTON.EXECUTE_OPERATION
+                <button id="executeOperation" type="button" class="btn btn-primary" uib-dropdown-toggle>
+                    <i class="glyphicon glyphicon-flash pointer"></i> {{'ADF.WIDGET.BUTTON.EXECUTE_OPERATION' | translate}}
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="executeOperation">
