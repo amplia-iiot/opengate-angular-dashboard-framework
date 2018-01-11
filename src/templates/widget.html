@@ -24,9 +24,9 @@
         <div ng-if="ifCustomFilter()" class="col-xs-12 col-md-8">
             <div class="filter form-group">
                 <a href class="text-danger" ng-click="options.customFilter.open = !options.customFilter.open">
-                    <i class="glyphicon" ng-class="{'glyphicon-chevron-up': options.customFilter.open, 'glyphicon-chevron-down': !options.customFilter.open}"></i> Pick filter fields </a>
-                <label ng-click='launchCustomFilter()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
-                    class="glyphicon glyphicon-search"></label>
+                    <i class="glyphicon" ng-class="{'glyphicon-chevron-up': options.customFilter.open, 'glyphicon-chevron-down': !options.customFilter.open}"></i> {{'ADF.WIDGET.TITLE.PICK_FILTER_FIELDS' | translate}} </a>
+                <label ng-click='launchCustomFilter()'
+                    style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon glyphicon-search"></label>
                 <div class="row" ng-if="options.customFilter.open">
                     <ui-select multiple="true" ng-model="search.fields" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_FILTER' | translate }}"
                         on-select="addCustomFilter($item)" on-remove="deleteFilter($item)" ng-click="getcustomFilter()">
@@ -54,16 +54,16 @@
             </button>
             <ul class="dropdown-menu panel" style="border: 1px groove;" uib-dropdown-menu aria-labelledby="simple-dropdown">
                 <li ng-click="toggleFilter(0)">
-                    <a href="" translate>
-                        <i class="advanced-filter glyphicon glyphicon-font txt-primary"></i> ADF.WIDGET.TITLE.FILTER.ADVANCED</a>
+                    <a href="">
+                        <i class="advanced-filter glyphicon glyphicon-font txt-primary"></i> {{'ADF.WIDGET.TITLE.FILTER.ADVANCED' | translate}}</a>
                 </li>
                 <li ng-click="toggleFilter(1)">
-                    <a href="" translate>
-                        <i class="basic-filter glyphicon glyphicon-bold  txt-primary"></i> ADF.WIDGET.TITLE.FILTER.BASIC</a>
+                    <a href="">
+                        <i class="basic-filter glyphicon glyphicon-bold  txt-primary"></i> {{'ADF.WIDGET.TITLE.FILTER.BASIC' | translate}}</a>
                 </li>
                 <li ng-if="definition.type === 'FullDevicesList' " ng-click="toggleFilter(2)">
-                    <a href="" translate>
-                        <i class="custom-filter glyphicon glyphicon-filter  txt-primary"></i> ADF.WIDGET.TITLE.FILTER.CUSTOM</a>
+                    <a href="">
+                        <i class="custom-filter glyphicon glyphicon-filter  txt-primary"></i> {{'ADF.WIDGET.TITLE.FILTER.CUSTOM' | translate}}</a>
                 </li>
             </ul>
         </div>
