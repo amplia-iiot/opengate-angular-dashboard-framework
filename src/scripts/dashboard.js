@@ -278,7 +278,7 @@ angular.module('adf')
                 var category = widget.category;
                 // if the widget has no category use a default one
                 if (!category) {
-                    category = 'Miscellaneous';
+                    category = 'ADF.CATEGORY.MISCELANOUS';
                 }
                 // push widget to category array
                 if (angular.isUndefined(categories[category])) {
@@ -287,6 +287,29 @@ angular.module('adf')
                     };
                 }
                 categories[category].widgets[key] = widget;
+            });
+            return categories;
+        }
+
+        function createCategoriesList(widgets) {
+            var categories = [];
+            angular.forEach(widgets, function (widget, key) {
+                if (!widget.category) {
+                    widget.category = 'ADF.CATEGORY.MISCELLANEOUS';
+                }
+
+                if (!widget.categoryTags) {
+                    widget.categoryTags = 'ADF.CATEGORY.TAG.MISCELLANEOUS';
+                }
+                
+                var categoriesTmp = widget.categoryTags.split(',');
+
+                angular.forEach(categoriesTmp, function(category, idx) {
+                    // push widget to category array
+                    if (categories.indexOf(category) === -1) 
+                        categories.push(category)
+                });
+                
             });
             return categories;
         }
@@ -553,9 +576,18 @@ angular.module('adf')
                     }
                     addScope.widgets = widgets;
 
+                    angular.forEach(addScope.widgets, function (widget, type) {
+                        widget.key = type;
+                        if (!widget.category) {
+                            widget.category = 'Miscellaneous';
+                        }
+                    });
+                    
                     // pass createCategories function to scope, if categories option is enabled
                     if ($scope.options.categories) {
-                        $scope.createCategories = createCategories;
+                        addScope.createCategories = createCategories;
+                    } else {
+                        addScope.availableCategories = createCategoriesList(widgets);
                     }
 
                     var adfAddTemplatePath = adfTemplatePath + 'widget-add.html';
@@ -566,10 +598,12 @@ angular.module('adf')
                     var opts = {
                         scope: addScope,
                         templateUrl: adfAddTemplatePath,
-                        backdrop: 'static'
+                        backdrop: 'static',
+                        size: 'lg'
                     };
 
                     var instance = $uibModal.open(opts);
+                    addScope.widgetFilter = {};
                     addScope.addWidget = function (widget) {
                         var w = {
                             type: widget,
@@ -585,6 +619,24 @@ angular.module('adf')
                             openEditMode($scope, w);
                         }
                     };
+
+                    addScope.changeThumbnail = function (widget) {
+                        if ( widget.images) {
+                            if (angular.isUndefined(widget._currThumb)) {
+                                widget._currThumb = 1;
+                            } else {
+                                widget._currThumb+=1;
+                            }
+                            
+                            
+                            if (widget._currThumb >= widget.images.length) {
+                                widget._currThumb = 0;
+                            } 
+    
+                            widget._currImg = widget.images[widget._currThumb];
+                        }                        
+                    };
+
                     addScope.closeDialog = function () {
                         // close and destroy
                         instance.close();

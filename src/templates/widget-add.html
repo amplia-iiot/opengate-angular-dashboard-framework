@@ -17,15 +17,51 @@
         </uib-accordion>
     </div>
     <!-- dashboard categories disabled -->
-    <div style="display: inline-block;" ng-if="!createCategories">
-        <dl class="dl-horizontal">
-            <dt ng-repeat-start="widget in widgets | adfOrderByObjectKey: 'key'">
-                <a href="" ng-click="addWidget(widget.key)" ng-class="{{widget.key}}"> {{widget.title | translate}} </a>
-            </dt>
-            <dd ng-repeat-end ng-if="widget.description"> {{widget.description | translate}} </dd>
-        </dl>
+    <div ng-if="!createCategories">
+        <div class="row">
+            <div class="col-md-4 col-xs-12">
+                <select ng-model="widgetFilter.categoryTags" name="widgetsCategoryFilter" class="form-control">
+                    <option value="" translate>ADF.WIDGET.LABEL.ALL_WIDGETS</option>
+                    <option ng-repeat="category in availableCategories | orderBy" value="{{category}}">{{ category | translate }}</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-xs-12" ng-init="widgetSorting = 'priority'">
+                <select ng-model="widgetSorting" name="widgetsSorting" class="form-control">
+                    <option value="priority" selected translate="ADF.WIDGET.TITLE.SORTED_BY" translate-values="{ item : ('ADF.WIDGET.LABEL.PRIORITY' | translate) }"></option>
+                    <option value="name" selected translate="ADF.WIDGET.TITLE.SORTED_BY" translate-values="{ item : ('ADF.WIDGET.LABEL.NAME' | translate) }"></option>
+                    <option value="category" translate="ADF.WIDGET.TITLE.SORTED_BY" translate-values="{ item : ('ADF.WIDGET.LABEL.CATEGORY' | translate) }"></option>
+                    <option value="description" translate="ADF.WIDGET.TITLE.SORTED_BY" translate-values="{ item : ('ADF.WIDGET.LABEL.DESCRIPTION' | translate) }"></option>
+                </select>
+            </div>
+            <div class="col-md-4 col-xs-12" ng-init="widgetSortingDirection = ''">
+                <select ng-model="widgetSortingDirection" name="widgetSortingDirection" class="form-control">
+                    <option value="" selected translate>BUTTON.TITLE.ASCENDING</option>
+                    <option value="1" translate>BUTTON.TITLE.DESCENDING</option>
+                </select>
+            </div>
+        </div>
+        <!-- <div class="row">
+            <div class="col-xs-12">
+                <input type="text" class="form-control" name="widgetsTitleFilter" autofocus ng-model="widgetFilter.title" placeholder="{{ 'ADF.WIDGET.PLACEHOLDER.TYPE_WIDGET_FILTER'| translate }}">
+            </div>
+        </div> -->
+        <div ng-repeat="widget in widgets | adfOrderByObjectKey: 'title' | filter:widgetFilter:strict | orderBy:widgetSorting:widgetSortingDirection track by $index" ng-class="{ 'widgetPanelBig' : $index ===0 , 'widgetPanelNormal' : $index > 0 }">
+            <div class="pointer widgetInfoParent {{widget.key}}" ng-click="addWidget(widget.key)" title="{{widget.description | translate}}">
+                <div class="widgetInfoImage panel" >
+                    <img ng-if="widget.images" ng-init="widget._currImg = widget.images[0]" src="{{ widget._currImg }}" ng-click="changeThumbnail(widget);$event.stopPropagation();" title="Click to change (if available)">
+                    <i ng-if="!widget.images" class="widgetInfoIcon fa" ng-class="widget.icon ? widget.icon: 'fa-plus-circle'" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i>
+                </div>
+                <div class="widgetInfoContainer" id="widgetKey_{{widget.key}}" ng-class="{ 'bg-primary' :  $index ===0 , 'bg-info' : $index > 0 }">
+                    <i ng-if="widget.images && widget.icon" class="widgetInfoTitle fa" ng-class="widget.icon" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i><br>
+                    <span class="widgetInfoTitle">{{widget.title | translate | humanize}}</span><br>
+                    <span>({{widget.category | translate}})</span>
+                    <span class="widgetInfoDescription">{{widget.description | translate}}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<div class="modal-footer">
+<div class="modal-footer" style="clear:both;">
     <button type="button" class="btn btn-primary" ng-click="closeDialog()" translate>ADF.COMMON.CLOSE</button>
 </div>
+
