@@ -45,7 +45,7 @@
                 <input type="text" class="form-control" name="widgetsTitleFilter" autofocus ng-model="widgetFilter.title" placeholder="{{ 'ADF.WIDGET.PLACEHOLDER.TYPE_WIDGET_FILTER'| translate }}">
             </div>
         </div> -->
-        <div ng-repeat="widget in widgets | adfOrderByObjectKey: 'title' | filter:widgetFilter:strict | orderBy:widgetSorting:widgetSortingDirection track by $index" ng-class="{ 'widgetPanelBig' : $index ===0 , 'widgetPanelNormal' : $index > 0 }">
+        <div ng-repeat="widget in widgets | adfOrderByObjectKey: 'key' | filter:widgetFilter:strict | orderBy:widgetSorting:widgetSortingDirection track by $index" ng-class="{ 'widgetPanelBig' : $index ===0 , 'widgetPanelNormal' : $index > 0 }">
             <div class="pointer widgetInfoParent {{widget.key}}" ng-click="addWidget(widget.key)" title="{{widget.description | translate}}">
                 <div class="widgetInfoImage panel" >
                     <img ng-if="widget.images" ng-init="widget._currImg = widget.images[0]" src="{{ widget._currImg }}" ng-click="changeThumbnail(widget);$event.stopPropagation();" title="Click to change (if available)">
