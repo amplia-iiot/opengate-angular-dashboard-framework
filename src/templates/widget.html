@@ -93,6 +93,6 @@
             <input class="form-control" id="{{model.name}}" name="{{model.name}}" type="text"
                 ng-model="search.customFilter[$index].value" ng-keypress="enter($event)"> </div>
     </div>
-    <div ng-class="{ 'panel-body':!widget.frameless || editMode} " uib-collapse="widgetState.isCollapsed " style="overflow:hidden;padding:0 10px;">
+    <div ng-class="{ 'panel-body':!widget.frameless || editMode} " uib-collapse="widgetState.isCollapsed " style="overflow:hidden;padding:5px 10px 0 10px;">
         <adf-widget-content model="definition" content="widget" extra="options.extraData" /> </div>
 </div>
