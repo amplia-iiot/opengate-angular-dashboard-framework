@@ -281,7 +281,6 @@ angular.module('adf')
             }
 
             $scope.launchCustomFilter = function() {
-                console.log($scope.search);
                 if ($scope.search.customFilter && $scope.search.customFilter.length > 0) {
                     $scope.search.oql = $scope.search.json = '';
 
@@ -416,7 +415,6 @@ angular.module('adf')
             }
 
             $scope.changeDefaultTab = function() {
-                console.log(config);
 
 
                 $scope.reload();
@@ -822,7 +820,6 @@ angular.module('adf')
                     } else {
                         final_filter = filter;
                     }
-                    console.log(final_filter);
                     $scope.$broadcast('downloadCsv', {
                         'columns': columns,
                         'filter': final_filter,
