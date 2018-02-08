@@ -376,12 +376,16 @@ angular.module('adf')
 
             $scope.customSelectors = [];
             $scope.getCustomSelectors = function() {
-                config.widgetSelectors().findFields("").then(function(fields) {
-                    $scope.customSelectors = fields;
-                    $scope.$apply();
-                }).catch(function(err) {
-                    $log.error(err);
-                });
+                if ($scope.config.customSelectors) {
+                    $scope.customSelectors = $scope.config.customSelectors;
+                } else {
+                    config.widgetSelectors().findFields("").then(function(fields) {
+                        $scope.customSelectors = fields;
+                        $scope.$apply();
+                    }).catch(function(err) {
+                        $log.error(err);
+                    });
+                }
 
             }
 
