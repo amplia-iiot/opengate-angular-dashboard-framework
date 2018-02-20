@@ -6,9 +6,9 @@
             <i class="glyphicon glyphicon-check"></i>
             <small class="ogux-budget">{{ selectedItemsLength }}</small>
         </a>
-        <h4 ng-if="!widget.frameless && definition.title" style="margin:0px 0px 0px 2px;float:left;" translate class="text-primary">{{definition.title | translate}}</h4>
+        <h4 ng-if="!widget.frameless && definition.title" style="margin:4px 0px 0px 2px;float:left;" translate class="text-primary">{{definition.title | translate}}</h4>
     </span>
-    <div class="pull-right">
+    <div class="pull-right container-actions bg-primary">
         <span ng-if="config.about">
             <a href="" uib-popover="{{ config.about }}" popover-trigger="'mouseenter'" popover-placement="top" ng-click="openAboutScreen()">
                 <i class="glyphicon glyphicon-info-sign"></i>
