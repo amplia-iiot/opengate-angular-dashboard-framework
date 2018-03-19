@@ -1,5 +1,5 @@
 <div class="row " style="padding:0px;">
-    <div class="col-xs-12" ng-class="hideButtons?'col-md-12':'col-md-5'">
+    <div class="col-xs-12 col-md-5" ng-if="!hideButtons">
         <span ng-if="model.icon" id="idDashboardIcon" class="fa fa-2x" ng-class="model.icon"></span>
         <span id="idDashboardTitle" class="fa-2x text-primary">{{model.title | translate}}</span>
         <span ng-if="model.description" id="idDashboardDescription">{{model.description | translate}}</span>
@@ -7,17 +7,13 @@
     <div class="col-xs-12 col-md-7 text-right" ng-if="!hideButtons">
         <a href="" ng-if="editMode" title="{{ 'ADF.DASHBOARD.TITLE.ADD' | translate }}" ng-click="addWidgetDialog()" class="btn btn-sm pointer no-transition">
             <i class="fa fa-plus" aria-hidden="true"></i> {{'ADF.DASHBOARD.TITLE.ADD' | translate}} </a>
-        <a href="" ng-if="editMode" title="{{ 'ADF.DASHBOARD.TITLE.CONFIGURATION' | translate }}"
-            ng-click="editDashboardDialog()" class="btn btn-sm pointer no-transition">
+        <a href="" ng-if="editMode" title="{{ 'ADF.DASHBOARD.TITLE.CONFIGURATION' | translate }}" ng-click="editDashboardDialog()" class="btn btn-sm pointer no-transition">
             <i class="fa fa-cog"></i> {{'ADF.DASHBOARD.TITLE.CONFIGURATION' | translate}} </a>
-        <a href="" ng-if="editMode" title="{{ 'ADF.DASHBOARD.TITLE.UNDO' | translate }}"
-            ng-click="cancelEditMode()" class="btn btn-warning btn-sm pointer no-transition">
+        <a href="" ng-if="editMode" title="{{ 'ADF.DASHBOARD.TITLE.UNDO' | translate }}" ng-click="cancelEditMode()" class="btn btn-warning btn-sm pointer no-transition">
             <i class="fa fa-close"></i> {{'ADF.DASHBOARD.TITLE.UNDO' | translate}} </a>
-        <a href="" ng-if="options.editable && !editMode && !model.temporal"
-            title="{{'ADF.DASHBOARD.TITLE.EDIT.MODE' | translate }}" ng-click="toggleEditMode()" class="btn btn-sm pointer no-transition">
+        <a href="" ng-if="options.editable && !editMode && !model.temporal" title="{{'ADF.DASHBOARD.TITLE.EDIT.MODE' | translate }}" ng-click="toggleEditMode()" class="btn btn-sm pointer no-transition">
             <i class="fa fa-pencil-square-o"></i> {{'ADF.DASHBOARD.TITLE.EDIT.MODE' | translate}} </a>
-        <a href="" ng-if="options.editable && editMode" title="{{'ADF.DASHBOARD.TITLE.SAVE' | translate)}}"
-            ng-click="toggleEditMode()" class="btn btn-success btn-sm pointer no-transition">
+        <a href="" ng-if="options.editable && editMode" title="{{'ADF.DASHBOARD.TITLE.SAVE' | translate)}}" ng-click="toggleEditMode()" class="btn btn-success btn-sm pointer no-transition">
             <i class="fa fa-save"></i> {{'ADF.DASHBOARD.TITLE.SAVE' | translate}} </a>
     </div>
 </div>
