@@ -61,65 +61,54 @@
 }
 
 .widgetPanelBig {
-    
     @media (min-width: 1000px) {
-        width:50% !important;
+        width: 50% !important;
         padding-top: 50% !important;
-        float:left;
+        float: left;
     }
     @media (max-width: 999px) {
-        width:100% !important;
+        width: 100% !important;
         padding-top: 100% !important;
     }
     position:relative;
-
-    > .widgetInfoParent {
-
-        > .widgetInfoContainer {
+    >.widgetInfoParent {
+        >.widgetInfoContainer {
             position: absolute;
             text-align: center;
             width: 100%;
             word-break: break-all;
             padding: 5px;
-            
             height: 40%;
             bottom: 0;
-
             @media (min-width: 1000px) {
                 > .widgetInfoTitle {
                     font-weight: bold;
                     font-size: 2em;
                 }
-
-                > .widgetInfoDescription {
-                    display:block;
+                >.widgetInfoDescription {
+                    display: block;
                     font-style: italic;
                 }
             }
-
             @media (max-width: 999px) {
-                > .widgetInfoTitle {
+                >.widgetInfoTitle {
                     font-weight: bold;
                     font-size: 0.9em;
                 }
-                
-                > .widgetInfoDescription {
-                    display:none;
+                >.widgetInfoDescription {
+                    display: none;
                 }
             }
         }
-
-        > .widgetInfoImage {
+        >.widgetInfoImage {
             height: 60%;
             width: 100%;
             text-align: center;
-
-            > i.widgetInfoIcon {
+            >i.widgetInfoIcon {
                 font-size: 10em;
                 margin-top: 10%;
             }
-    
-            > img {
+            >img {
                 width: auto;
                 max-width: 90%;
                 max-height: 90%;
@@ -131,18 +120,17 @@
 
 .widgetPanelNormal {
     @media (min-width: 1000px) {
-        width:25% !important;
+        width: 25% !important;
         padding-top: 25% !important;
-        float:left;
+        float: left;
     }
     @media (max-width: 999px) {
-        width:100% !important;
+        width: 100% !important;
         padding-top: 100% !important;
     }
     position:relative;
-
-    > .widgetInfoParent {            
-        > .widgetInfoContainer {
+    >.widgetInfoParent {
+        >.widgetInfoContainer {
             position: absolute;
             text-align: center;
             width: 100%;
@@ -150,54 +138,49 @@
             padding: 5px;
             height: 40%;
             bottom: 0;
-
-            > .widgetInfoTitle {
+            overflow: auto;
+            >.widgetInfoTitle {
                 font-weight: bold;
                 font-size: 0.9em;
             }
-            
-            > .widgetInfoDescription {
-                display:none;
+            >.widgetInfoDescription {
+                display: none;
             }
         }
-
-        > .widgetInfoImage {
+        >.widgetInfoImage {
             height: 60%;
             width: 100%;
             text-align: center;
-
-            > i.widgetInfoIcon {
+            >i.widgetInfoIcon {
                 margin-top: 10%;
                 font-size: 6em;
             }
-        
-            > img {
+            >img {
                 width: auto;
                 max-width: 90%;
                 max-height: 90%;
                 padding-top: 5%;
             }
         }
-
     }
 }
 
 .widgetInfoParent {
-   position: absolute;
-   top: 2px;
-   left: 2px;
-   bottom: 2px;
-   right: 2px;
-   overflow-y: auto;
-   overflow-x: hidden;
-   text-align:center;
-   margin:0 !important;
-   width:auto;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    bottom: 2px;
+    right: 2px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    text-align: center;
+    margin: 0 !important;
+    width: auto;
 }
 
 .widgetInfoParent:hover {
     border: 1px solid;
- }
+}
 
 @import "edit";
 @import "structure-preview";

@@ -152,6 +152,7 @@
   padding: 5px;
   height: 40%;
   bottom: 0;
+  overflow: auto;
 }
 
 .widgetPanelNormal > .widgetInfoParent > .widgetInfoContainer > .widgetInfoTitle {
