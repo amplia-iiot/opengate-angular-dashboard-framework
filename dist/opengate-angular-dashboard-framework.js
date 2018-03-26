@@ -848,10 +848,6 @@ angular.module('adf')
 
                     addScope.widgetFilterCfg = $scope.addScopeCfg;
 
-                    // addScope.widgetFilter = $scope.addScopeCfg.widgetFilter;
-                    // addScope.widgetSortingDirection = $scope.addScopeCfg.widgetSortingDirection;
-                    // addScope.widgetSorting = $scope.addScopeCfg.widgetSorting;
-
                     addScope.addWidget = function(widget) {
                         var w = {
                             type: widget,

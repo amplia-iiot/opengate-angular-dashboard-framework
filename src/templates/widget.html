@@ -4,9 +4,9 @@
         <div ng-include src="definition.titleTemplateUrl"></div>
     </div>
     <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable" class="row form-group" style="margin-top: 5px !important;">
-        <div ng-if=" toggleAdvanced === 0" class="col-xs-12 col-md-8">
+        <div ng-if="toggleAdvanced === 0" class="col-xs-12 col-md-8">
             <div class="filter" mass-autocomplete>
-                <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keypress="enter($event)" ng-model="search.oql" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}" mass-autocomplete-item="autocomplete_options()"
+                <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keypress="enter($event)" ng-model="search.oql" ng-blur="launchSearchingAdv()" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}" mass-autocomplete-item="autocomplete_options()"
                     ng-change="debugQuery() "></input>
                 <label ng-click='launchSearchingAdv()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon glyphicon-search"></label>
             </div>
@@ -36,7 +36,7 @@
         </div>
         <div ng-if="toggleAdvanced === 1" class="col-xs-12 col-md-8">
             <div class="filter">
-                <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keypress="enter($event)" ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
+                <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keypress="enter($event)" ng-blur="launchSearchingQuick()" ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
                 <label ng-click='launchSearchingQuick()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon glyphicon-search"></label>
             </div>
         </div>
