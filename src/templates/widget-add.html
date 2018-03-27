@@ -51,7 +51,7 @@
                     <img ng-if="widget.images" ng-init="widget._currImg = widget.images[0]" src="{{ widget._currImg }}" ng-click="changeThumbnail(widget);$event.stopPropagation();" title="Click to change (if available)">
                     <i ng-if="!widget.images" class="widgetInfoIcon fa" ng-class="widget.icon ? widget.icon: 'fa-plus-circle'" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i>
                 </div>
-                <div class="widgetInfoContainer bg-primary" id="widgetKey_{{widget.key}}" ng-style="$index ===0?{'opacity':1} :{'opacity':0.8}">
+                <div class="widgetInfoContainer" id="widgetKey_{{widget.key}}" ng-class="{ 'bg-contrast' : $index ===0,  'bg-primary': $index !== 0}">
                     <i ng-if="widget.images && widget.icon" class="widgetInfoTitle fa" ng-class="widget.icon" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i><br>
                     <span class="widgetInfoTitle">{{widget.title }}</span><br>
                     <span>({{widget.category}})</span>
