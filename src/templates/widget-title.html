@@ -87,4 +87,12 @@
         </a>
         <h4 ng-if="!widget.frameless && definition.title" style="margin:4px 0px 0px 2px;float:left;" translate class="text-primary">{{definition.title | translate}}</h4>
     </span>
+    <div class="pull-right" ng-if="prevPage && nextPage && hasPrevPage && hasNextPage" style="margin-top:1px">
+        <button class="btn btn-primary btn-xs pointer oux-button-margin" ng-click="prevPage()" ng-disabled="!hasPrevPage()">
+            <i class="glyphicon glyphicon-chevron-left browser-link"></i>{{ 'BUTTON.TITLE.PREVIOUS' | translate }} </button>
+        <button class="btn btn-primary btn-xs pointer oux-button-margin" ng-click="nextPage()" ng-disabled="!hasNextPage()">
+        {{ 'BUTTON.TITLE.NEXT' | translate }}
+            <i class="glyphicon glyphicon-chevron-right browser-link"></i>
+        </button>
+    </div>
 </div>
