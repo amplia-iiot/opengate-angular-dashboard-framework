@@ -29,7 +29,7 @@ angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('rowTemplate', '<adf-dashboard-row row="row" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="row in column.rows" />')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '4.5.0');
+    .value('adfVersion', '4.6.0');
 /*
 * The MIT License
 *
@@ -1403,7 +1403,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", "$translate", function ($log, $q, widgetService,
+    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", "$translate", function($log, $q, widgetService,
         $compile, $controller, $injector, dashboard, $translate) {
 
         function renderError($element, msg) {
@@ -1419,24 +1419,24 @@ angular.module('adf')
 
             var newScope = currentScope;
             if (!model) {
-                $translate('ADF.ERROR.MODEL_IS_UNDEFINED').then(function (translateMessage) {
+                $translate('ADF.ERROR.MODEL_IS_UNDEFINED').then(function(translateMessage) {
                     renderError($element, translateMessage);
                 });
             } else if (!content) {
                 if (model.title) {
                     $translate('ADF.ERROR.WIDGET_FOR_DEPRECTATED', {
                         title: model.title
-                    }).then(function (translateMessage) {
+                    }).then(function(translateMessage) {
                         renderError($element, translateMessage);
                     });
                 } else {
-                    $translate('ADF.ERROR.WIDGET_DEPRECTATED').then(function (translateMessage) {
+                    $translate('ADF.ERROR.WIDGET_DEPRECTATED').then(function(translateMessage) {
                         renderError($element, translateMessage);
                     });
                 }
             } else {
                 if (newScope) {
-                    var is_menu = newScope.menu !== undefined && newScope.menu !== null;
+                    var is_menu = newScope.menu !== undefined && newScope.menu !== null && (!newScope.isPaginationEnable || !newScope.isPaginationEnable());
                     var is_itemsPerPage = newScope.itemsPerPage !== undefined && newScope.itemsPerPage !== null;
                     if (is_menu || is_itemsPerPage || configChanged || !angular.isFunction(newScope.reloadData)) {
                         newScope = renderWidget($scope, $element, currentScope, model, content, extra);
@@ -1463,7 +1463,7 @@ angular.module('adf')
 
             if (newScope) {
                 if (newScope.config) {
-                    newScope.config.getWindowTime = function () {
+                    newScope.config.getWindowTime = function() {
                         var windowFilter = newScope.config.windowFilter;
                         if (windowFilter && windowFilter.type) {
                             var winTime = _getWindowTime(windowFilter.type);
@@ -1520,7 +1520,7 @@ angular.module('adf')
             var resolvers = {};
             resolvers.$tpl = widgetService.getTemplate(content);
             if (content.resolve) {
-                angular.forEach(content.resolve, function (promise, key) {
+                angular.forEach(content.resolve, function(promise, key) {
                     if (angular.isString(promise)) {
                         resolvers[key] = $injector.get(promise);
                     } else {
@@ -1530,7 +1530,7 @@ angular.module('adf')
             }
 
             // resolve all resolvers
-            $q.all(resolvers).then(function (locals) {
+            $q.all(resolvers).then(function(locals) {
                 angular.extend(locals, base);
 
                 // pass resolve map to template scope as defined in resolveAs
@@ -1549,12 +1549,12 @@ angular.module('adf')
                     $element.children().data('$ngControllerController', templateCtrl);
                 }
                 $compile($element.contents())(templateScope);
-            }, function (reason) {
+            }, function(reason) {
                 // handle promise rejection
                 var msg = 'ADF.ERROR.COULD_NOT_RESOLVE_ALL_PROMISSES';
                 $translate(msg, {
                     reason: (reason ? ": " + reason : reason)
-                }).then(function (translateMessage) {
+                }).then(function(translateMessage) {
                     renderError($element, translateMessage);
                 });
             });
@@ -1576,17 +1576,17 @@ angular.module('adf')
                 content: '=',
                 extra: '='
             },
-            link: function ($scope, $element) {
+            link: function($scope, $element) {
                 var currentScope = compileWidget($scope, $element, null);
-                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
+                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function() {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function () {
+                var widgetReloadEvt = $scope.$on('widgetReload', function() {
                     currentScope = compileWidget($scope, $element, currentScope, false);
                 });
 
-                $scope.$on('destroy', function () {
+                $scope.$on('destroy', function() {
                     widgetConfigChangedEvt();
                     widgetReloadEvt();
                 });
