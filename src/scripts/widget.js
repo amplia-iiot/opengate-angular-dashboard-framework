@@ -700,21 +700,29 @@ angular.module('adf')
                 };
 
                 $scope.openFullScreen = function() {
-                    var definition = $scope.definition;
-                    var fullScreenScope = $scope.$new();
-                    var opts = {
-                        scope: fullScreenScope,
-                        templateUrl: adfTemplatePath + 'widget-fullscreen.html',
-                        size: definition.modalSize || 'lg', // 'sm', 'lg'
-                        backdrop: 'static',
-                        windowClass: (definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
-                    };
 
-                    var instance = $uibModal.open(opts);
-                    fullScreenScope.closeDialog = function() {
-                        instance.close();
-                        fullScreenScope.$destroy();
-                    };
+                    $scope.$emit('adfOpenModalWidgetFromOther', $scope.definition.type, $scope.config);
+
+                    // var definition = $scope.definition;
+                    // var fullScreenScope = $scope.$new();
+                    // var opts = {
+                    //     scope: fullScreenScope,
+                    //     templateUrl: adfTemplatePath + 'widget-fullscreen.html',
+                    //     size: definition.modalSize || 'lg', // 'sm', 'lg'
+                    //     backdrop: 'static',
+                    //     windowClass: (definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
+                    // };
+
+                    // var instance = $uibModal.open(opts);
+
+                    // fullScreenScope.reload = function() {
+                    //     fullScreenScope.$broadcast('widgetReload');
+                    // };
+
+                    // fullScreenScope.closeDialog = function() {
+                    //     instance.close();
+                    //     fullScreenScope.$destroy();
+                    // };
                 };
 
                 $scope.openFilter = function() {

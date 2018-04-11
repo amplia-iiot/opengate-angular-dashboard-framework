@@ -29,7 +29,7 @@ angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('rowTemplate', '<adf-dashboard-row row="row" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="row in column.rows" />')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '4.6.0');
+    .value('adfVersion', '4.6.1');
 /*
 * The MIT License
 *
@@ -766,7 +766,7 @@ angular.module('adf')
                     var opts = {
                         scope: fullScreenScope,
                         templateUrl: adfTemplatePath + 'widget-fullscreen.html',
-                        size: fullScreenScope.definition.modalSize || 'lg', // 'sm', 'lg'
+                        size: fullScreenScope.definition.modalSize || 'ticket', // 'sm', 'lg'
                         backdrop: 'static',
                         windowClass: (fullScreenScope.definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
                     };
@@ -2372,21 +2372,29 @@ angular.module('adf')
                 };
 
                 $scope.openFullScreen = function() {
-                    var definition = $scope.definition;
-                    var fullScreenScope = $scope.$new();
-                    var opts = {
-                        scope: fullScreenScope,
-                        templateUrl: adfTemplatePath + 'widget-fullscreen.html',
-                        size: definition.modalSize || 'lg', // 'sm', 'lg'
-                        backdrop: 'static',
-                        windowClass: (definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
-                    };
 
-                    var instance = $uibModal.open(opts);
-                    fullScreenScope.closeDialog = function() {
-                        instance.close();
-                        fullScreenScope.$destroy();
-                    };
+                    $scope.$emit('adfOpenModalWidgetFromOther', $scope.definition.type, $scope.config);
+
+                    // var definition = $scope.definition;
+                    // var fullScreenScope = $scope.$new();
+                    // var opts = {
+                    //     scope: fullScreenScope,
+                    //     templateUrl: adfTemplatePath + 'widget-fullscreen.html',
+                    //     size: definition.modalSize || 'lg', // 'sm', 'lg'
+                    //     backdrop: 'static',
+                    //     windowClass: (definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
+                    // };
+
+                    // var instance = $uibModal.open(opts);
+
+                    // fullScreenScope.reload = function() {
+                    //     fullScreenScope.$broadcast('widgetReload');
+                    // };
+
+                    // fullScreenScope.closeDialog = function() {
+                    //     instance.close();
+                    //     fullScreenScope.$destroy();
+                    // };
                 };
 
                 $scope.openFilter = function() {

@@ -541,7 +541,7 @@ angular.module('adf')
                     var opts = {
                         scope: fullScreenScope,
                         templateUrl: adfTemplatePath + 'widget-fullscreen.html',
-                        size: fullScreenScope.definition.modalSize || 'lg', // 'sm', 'lg'
+                        size: fullScreenScope.definition.modalSize || 'ticket', // 'sm', 'lg'
                         backdrop: 'static',
                         windowClass: (fullScreenScope.definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
                     };

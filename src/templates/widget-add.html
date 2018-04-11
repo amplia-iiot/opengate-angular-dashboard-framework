@@ -48,8 +48,9 @@
         <div ng-repeat="widget in widgets | adfOrderByObjectKey: 'key' | filter:widgetFilterCfg.widgetFilter:strict | orderBy:widgetFilterCfg.widgetSorting:widgetFilterCfg.widgetSortingDirection track by $index" ng-class="{ 'widgetPanelBig' : $index ===0 , 'widgetPanelNormal' : $index > 0 }">
             <div class="pointer panel widgetInfoParent {{widget.key}}" ng-click="addWidget(widget.key)" title="{{widget.description | translate}}">
                 <div class="widgetInfoImage pointer">
-                    <img ng-if="widget.images" ng-init="widget._currImg = widget.images[0]" src="{{ widget._currImg }}" ng-click="changeThumbnail(widget);$event.stopPropagation();" title="Click to change (if available)">
-                    <i ng-if="!widget.images" class="widgetInfoIcon fa" ng-class="widget.icon ? widget.icon: 'fa-plus-circle'" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i>
+                    <div ng-if="widget.svg" class="widget-icon" ng-include="widget.svg"></div>
+                    <img ng-if="widget.images && !widget.svg" ng-init="widget._currImg = widget.images[0]" src="{{ widget._currImg }}" ng-click="changeThumbnail(widget);$event.stopPropagation();" title="Click to change (if available)">
+                    <i ng-if="!widget.images && !widget.svg" class="widgetInfoIcon fa" ng-class="widget.icon ? widget.icon: 'fa-plus-circle'" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i>
                 </div>
                 <div class="widgetInfoContainer" id="widgetKey_{{widget.key}}" ng-class="{ 'bg-contrast' : $index ===0,  'bg-primary': $index !== 0}">
                     <i ng-if="widget.images && widget.icon" class="widgetInfoTitle fa" ng-class="widget.icon" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i><br>
