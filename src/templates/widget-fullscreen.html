@@ -3,7 +3,7 @@
         <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.CLOSE' |translate }}" ng-click="closeDialog()" class="btn btn-xs btn-danger oux-button-margin">
             <i class="glyphicon glyphicon-remove"></i> {{ 'ADF.WIDGET.TOOLTIP.CLOSE' |translate }}
         </a>
-        <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.INSERT' |translate }}" ng-if="persistDashboard" ng-click="persistDashboard()" class="btn btn-xs btn-primary oux-button-margin">
+        <a permission permission-only=" 'manageWorkspace' " href="" title="{{ 'ADF.WIDGET.TOOLTIP.INSERT' |translate }}" ng-if="persistDashboard" ng-click="persistDashboard()" class="btn btn-xs btn-primary oux-button-margin">
             <i class="glyphicon glyphicon-save"></i> {{ 'ADF.WIDGET.TOOLTIP.INSERT' |translate }}
         </a>
     </div>
