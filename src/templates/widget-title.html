@@ -78,9 +78,9 @@
             <i class="glyphicon glyphicon-trash"></i>
         </a>
     </div>
-    <span class="pull-left">
+    <span permission permission-only=" ['viewFilter','executeOperation'] " class="pull-left">
         <!-- selected items control -->
-        <a href="" ng-if="selectedItemsLength > 0" title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()"
+        <a  href="" ng-if="selectedItemsLength > 0" title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()"
             style="float:left;">
             <i class="glyphicon glyphicon-check"></i>
             <small class="ogux-budget">{{ selectedItemsLength }}</small>
