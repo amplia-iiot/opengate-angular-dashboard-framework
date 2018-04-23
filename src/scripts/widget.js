@@ -77,10 +77,6 @@ angular.module('adf')
                         config = {};
                     }
 
-                    if (!config.reloadPeriod) {
-                        config.reloadPeriod = "0";
-                    }
-
                     if (typeof $scope.widget.show_modal_footer === "undefined") {
                         $scope.widget.show_modal_footer = true;
                     }
@@ -187,36 +183,6 @@ angular.module('adf')
                 }
             };
 
-            // bind reload function
-            var stopReloadTimeout;
-
-            function _setReloadTimeout() {
-                if (config && config.reloadPeriod && config.reloadPeriod !== "0") {
-                    if (angular.isDefined(stopReloadTimeout)) {
-                        $interval.cancel(stopReloadTimeout)
-                        stopReloadTimeout = undefined;
-                    };
-                    stopReloadTimeout = $interval($scope.reload, (config.reloadPeriod * 1000));
-                }
-            }
-
-            $scope.reload = function(completeReload) {
-                if (completeReload) {
-                    $scope.$broadcast('widgetReload', completeReload);
-                } else {
-                    $scope.$broadcast('widgetReload');
-                }
-
-                _setReloadTimeout();
-            };
-
-            // verificacion de periodo de refresco
-            _setReloadTimeout();
-
-            $element.on('$destroy', function() {
-                $interval.cancel(stopReloadTimeout);
-            });
-
             $scope.filter = {
                 value: ""
             };
@@ -318,7 +284,6 @@ angular.module('adf')
                     $scope.config.filter = {};
                 }
             };
-
 
             $scope.launchSearchingAdv = function() {
                 if (!$scope.filterApplied) {
@@ -642,6 +607,7 @@ angular.module('adf')
                         editScope.closeDialog();
 
                         if (widget.edit && widget.edit.reload) {
+                            $scope.setReloadTimeout();
                             // reload content after edit dialog is closed
                             $scope.$broadcast('widgetConfigChanged');
                         }
@@ -872,6 +838,36 @@ angular.module('adf')
                     }
                 });
 
+                // bind reload function
+                var stopReloadTimeout;
+
+                $scope.setReloadTimeout = function() {
+                    var config = $scope.config || $scope.definition.config;
+                    var reloadPeriod = config.reloadPeriod;
+                    if (!isNaN(reloadPeriod) && (reloadPeriod * 1) !== 0) {
+                        if (angular.isDefined(stopReloadTimeout)) {
+                            $interval.cancel(stopReloadTimeout)
+                            stopReloadTimeout = undefined;
+                        };
+                        stopReloadTimeout = $interval($scope.reload, (reloadPeriod * 1000));
+                    } else if (stopReloadTimeout) {
+                        $interval.cancel(stopReloadTimeout);
+                    }
+                }
+
+                $scope.reload = function(completeReload) {
+                    if (completeReload) {
+                        $scope.$broadcast('widgetReload', completeReload);
+                    } else {
+                        $scope.$broadcast('widgetReload');
+                    }
+
+                    $scope.setReloadTimeout();
+                };
+
+                // verificacion de periodo de refresco
+                $scope.setReloadTimeout();
+
                 $scope.$on('$destroy', function() {
                     adfDashboardCollapseExpand();
                     adfWidgetEnterEditMode();
@@ -880,6 +876,7 @@ angular.module('adf')
                     adfDashboardEditsCancelled();
                     addItemToSelection();
                     removeItemFromSelection();
+                    $interval.cancel(stopReloadTimeout);
                 });
             },
             compile: function() {
