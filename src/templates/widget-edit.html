@@ -21,8 +21,8 @@
                 <div class="form-group">
                     <label for="widgetReloadPeriod" translate>ADF.WIDGET.TOOLTIP.REFRESH</label>
                     <select class="form-control" id="widgetReloadPeriod" aria-label="ngSelected demo"
-                        ng-model="definition.config.reloadPeriod" required="">
-                        <option ng-selected="selected" value="0" translate>ADF.WIDGET.OPTIONS.MANUAL</option>
+                        ng-model="definition.config.reloadPeriod" required="" ng-init="definition.config.reloadPeriod ? definition.config.reloadPeriod : (definition.config.reloadPeriod = '0')">
+                        <option value="0" translate>ADF.WIDGET.OPTIONS.MANUAL</option>
                         <option value="20" translate>ADF.WIDGET.OPTIONS.20_SECONDS</option>
                         <option value="40" translate>ADF.WIDGET.OPTIONS.40_SECONDS</option>
                         <option value="60" translate>ADF.WIDGET.OPTIONS.EVERY_MINUTE</option>
