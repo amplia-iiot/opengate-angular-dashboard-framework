@@ -1993,20 +1993,22 @@ angular.module('adf')
 
 
             $scope.launchSearchingAdv = function() {
-                $scope.search.quick = '';
-                if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
-                    $scope.config.filter = {
-                        oql: '',
-                        value: ''
-                    };
-                } else {
-                    $scope.config.filter = {
-                        oql: $scope.search.oql,
-                        value: $scope.search.json
-                    };
+                if (!$scope.filterApplied) {
+                    $scope.search.quick = '';
+                    if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
+                        $scope.config.filter = {
+                            oql: '',
+                            value: ''
+                        };
+                    } else {
+                        $scope.config.filter = {
+                            oql: $scope.search.oql,
+                            value: $scope.search.json
+                        };
+                    }
+                    $scope.launchSearching();
+                    $scope.filterApplied = true;
                 }
-                $scope.launchSearching();
-
             }
 
             $scope.applyFilter = function(event) {
@@ -2014,9 +2016,12 @@ angular.module('adf')
             }
 
             $scope.launchSearchingQuick = function() {
-                $scope.search.oql = $scope.search.json = '';
-                $scope.config.filter = $scope.search.quick;
-                $scope.launchSearching();
+                if (!$scope.filterApplied) {
+                    $scope.search.oql = $scope.search.json = '';
+                    $scope.config.filter = $scope.search.quick;
+                    $scope.launchSearching();
+                    $scope.filterApplied = true;
+                }
             }
 
             var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
@@ -2039,9 +2044,10 @@ angular.module('adf')
                     if ($scope.toggleAdvanced === 2)
                         $scope.launchCustomFilter();
 
-                }
-                if (keycode === 19) {
+                } else if (keycode === 19) {
                     $scope.showFinalFilter = $scope.showFinalFilter === false ? true : false;
+                } else {
+                    $scope.filterApplied = false;
                 }
             }
 
@@ -2058,7 +2064,6 @@ angular.module('adf')
                         $log.error(err);
                     });
                 }
-
             }
 
             $scope.customFilter = [];
