@@ -78,13 +78,8 @@
             <i class="glyphicon glyphicon-trash"></i>
         </a>
     </div>
-    <span permission permission-only=" ['viewFilter','executeOperation'] " class="pull-left">
+    <span class="pull-left">
         <!-- selected items control -->
-        <a  href="" ng-if="selectedItemsLength > 0" title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()"
-            style="float:left;">
-            <i class="glyphicon glyphicon-check"></i>
-            <small class="ogux-budget">{{ selectedItemsLength }}</small>
-        </a>
         <h4 ng-if="!widget.frameless && definition.title" style="margin:4px 0px 0px 2px;float:left;" translate class="text-primary">{{definition.title | translate}}</h4>
     </span>
     <div class="pull-right" ng-if="prevPage && nextPage && hasPrevPage && hasNextPage && ( !isPaginationEnable || isPaginationEnable() ) && ( !isNoContent || !isNoContent() )" style="margin-top:1px">
@@ -94,5 +89,11 @@
         {{ 'BUTTON.TITLE.NEXT' | translate }}
             <i class="glyphicon glyphicon-chevron-right browser-link"></i>
         </button>
+    </div>
+    <div permission permission-only=" ['viewFilter','executeOperation'] " class="pull-right" ng-if="selectedItemsLength > 0" style="margin-top:1px">
+        <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()" class="btn btn-primary btn-xs pointer oux-button-margin">
+            <i class="glyphicon glyphicon-check"></i>
+            <small class="ogux-budget">{{ selectedItemsLength }}</small>
+        </a>
     </div>
 </div>
