@@ -14,6 +14,9 @@
                 </div>
             </script>
         </span>
+        <a ng-if="!editMode && widgetActions && widgetActions.length > 0" ng-repeat="customAction in widgetActions" permission permission-only="customAction.permissions" title="{{customAction.title}}" ng-click="customAction.action(choice.value)">
+            <i class="pointer {{customAction.icon}}"></i>
+        </a>
         <a ng-if="!editMode && widget.print" href="" title="{{ 'ADF.WIDGET.TOOLTIP.PRINT' | translate }}" ng-click="print()">
             <i class="glyphicon glyphicon-print"></i>
         </a>
