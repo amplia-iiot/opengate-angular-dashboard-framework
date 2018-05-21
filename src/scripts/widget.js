@@ -843,15 +843,18 @@ angular.module('adf')
 
                 $scope.setReloadTimeout = function() {
                     var config = $scope.config || $scope.definition.config;
-                    var reloadPeriod = config.reloadPeriod;
-                    if (!isNaN(reloadPeriod) && (reloadPeriod * 1) !== 0) {
-                        if (angular.isDefined(stopReloadTimeout)) {
-                            $interval.cancel(stopReloadTimeout)
-                            stopReloadTimeout = undefined;
-                        };
-                        stopReloadTimeout = $interval($scope.reload, (reloadPeriod * 1000));
-                    } else if (stopReloadTimeout) {
-                        $interval.cancel(stopReloadTimeout);
+
+                    if (config) {
+                        var reloadPeriod = config.reloadPeriod;
+                        if (!isNaN(reloadPeriod) && (reloadPeriod * 1) !== 0) {
+                            if (angular.isDefined(stopReloadTimeout)) {
+                                $interval.cancel(stopReloadTimeout)
+                                stopReloadTimeout = undefined;
+                            };
+                            stopReloadTimeout = $interval($scope.reload, (reloadPeriod * 1000));
+                        } else if (stopReloadTimeout) {
+                            $interval.cancel(stopReloadTimeout);
+                        }
                     }
                 }
 

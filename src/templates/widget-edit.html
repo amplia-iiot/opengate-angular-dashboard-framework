@@ -14,14 +14,12 @@
             <div class="col-xs-12 col-md-6">
                 <div class="form-group">
                     <label for="widgetTitle" translate>ADF.COMMON.TITLE</label>
-                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-init="definition.title=(definition.title | translate)"
-                        ng-model="definition.title" placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
+                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-init="definition.title=(definition.title | translate)" ng-model="definition.title" placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
             </div>
             <div class="col-xs-12 col-md-6">
                 <div class="form-group">
                     <label for="widgetReloadPeriod" translate>ADF.WIDGET.TOOLTIP.REFRESH</label>
-                    <select class="form-control" id="widgetReloadPeriod" aria-label="ngSelected demo"
-                        ng-model="definition.config.reloadPeriod" required="" ng-init="definition.config.reloadPeriod ? definition.config.reloadPeriod : (definition.config.reloadPeriod = '0')">
+                    <select class="form-control" id="widgetReloadPeriod" aria-label="ngSelected demo" ng-model="definition.config.reloadPeriod" required="" ng-init="definition.config.reloadPeriod ? definition.config.reloadPeriod : (definition.config.reloadPeriod = '0')">
                         <option value="0" translate>ADF.WIDGET.OPTIONS.MANUAL</option>
                         <option value="20" translate>ADF.WIDGET.OPTIONS.20_SECONDS</option>
                         <option value="40" translate>ADF.WIDGET.OPTIONS.40_SECONDS</option>
@@ -34,8 +32,7 @@
             <div class="col-xs-12 col-md-12">
                 <div class="form-group">
                     <label for="widgetTitle" translate>ADF.COMMON.TITLE</label>
-                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-init="definition.title=(definition.title | translate)"
-                        ng-model="definition.title" placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
+                    <input type="text" class="form-control text-primary" id="widgetTitle" ng-init="definition.title=(definition.title | translate)" ng-model="definition.title" placeholder="{{'ADF.WIDGET.PLACEHOLDER.TITLE' | translate}}"> </div>
             </div>
         </div>
         <div ng-if="widget.edit" class="row">
@@ -46,15 +43,13 @@
             <div class="col-xs-12">
                 <div class="form-group">
                     <label for="widgetAbout" translate="">ADF.COMMON.ABOUT</label>
-                    <textarea class="form-control text-primary" id="widgetAbout" ng-model="definition.config.about"
-                        placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.DESCRIPTION'|translate}}"></textarea>
+                    <textarea class="form-control text-primary" id="widgetAbout" ng-model="definition.config.about" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.DESCRIPTION'|translate}}"></textarea>
                 </div>
             </div>
         </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" ng-click="closeDialog()" translate>ADF.WIDGET.BUTTON.CANCEL</button>
-        <button type="submit" class="btn btn-primary" ng-disabled="widgetEditForm.$invalid"
-            value="{{'ADF.WIDGET.BUTTON.APPLY' | translate }}" translate>ADF.WIDGET.BUTTON.APPLY</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="widgetEditForm.$invalid" value="{{'ADF.WIDGET.BUTTON.APPLY' | translate }}" translate>ADF.WIDGET.BUTTON.APPLY</button>
     </div>
 </form>

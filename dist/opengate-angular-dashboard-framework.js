@@ -29,7 +29,7 @@ angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('rowTemplate', '<adf-dashboard-row row="row" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="row in column.rows" />')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '4.7.0');
+    .value('adfVersion', '4.8.0');
 /*
 * The MIT License
 *
@@ -2515,15 +2515,18 @@ angular.module('adf')
 
                 $scope.setReloadTimeout = function() {
                     var config = $scope.config || $scope.definition.config;
-                    var reloadPeriod = config.reloadPeriod;
-                    if (!isNaN(reloadPeriod) && (reloadPeriod * 1) !== 0) {
-                        if (angular.isDefined(stopReloadTimeout)) {
-                            $interval.cancel(stopReloadTimeout)
-                            stopReloadTimeout = undefined;
-                        };
-                        stopReloadTimeout = $interval($scope.reload, (reloadPeriod * 1000));
-                    } else if (stopReloadTimeout) {
-                        $interval.cancel(stopReloadTimeout);
+
+                    if (config) {
+                        var reloadPeriod = config.reloadPeriod;
+                        if (!isNaN(reloadPeriod) && (reloadPeriod * 1) !== 0) {
+                            if (angular.isDefined(stopReloadTimeout)) {
+                                $interval.cancel(stopReloadTimeout)
+                                stopReloadTimeout = undefined;
+                            };
+                            stopReloadTimeout = $interval($scope.reload, (reloadPeriod * 1000));
+                        } else if (stopReloadTimeout) {
+                            $interval.cancel(stopReloadTimeout);
+                        }
                     }
                 }
 
