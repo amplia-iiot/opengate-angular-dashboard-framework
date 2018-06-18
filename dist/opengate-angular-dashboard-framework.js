@@ -27,202 +27,58 @@
 
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
-    .value('rowTemplate', '<adf-dashboard-row row="row" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="row in column.rows" />')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '4.8.1');
+    .value('adfVersion', '4.9.0');
 /*
-* The MIT License
-*
-* Copyright (c) 2015, Sebastian Sdorra
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-* SOFTWARE.
-*/
+ * The MIT License
+ *
+ * Copyright (c) 2015, Sebastian Sdorra
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 
 /* global angular */
 angular.module('adf')
-  .directive('adfDashboardColumn', ["$log", "$compile", "$rootScope", "adfTemplatePath", "rowTemplate", "dashboard", function ($log, $compile, $rootScope, adfTemplatePath, rowTemplate, dashboard) {
-    
+    .directive('adfDashboardColumn', ["$log", "$compile", "$rootScope", "adfTemplatePath", "dashboard", function($log, $compile, $rootScope, adfTemplatePath, dashboard) {
+        
 
-    /**
-     * moves a widget in between a column
-     */
-    function moveWidgetInColumn($scope, column, evt){
-      var widgets = column.widgets;
-      // move widget and apply to scope
-      $scope.$apply(function(){
-        widgets.splice(evt.newIndex, 0, widgets.splice(evt.oldIndex, 1)[0]);
-        $rootScope.$broadcast('adfWidgetMovedInColumn');
-      });
-    }
-
-    /**
-     * finds a widget by its id in the column
-     */
-    function findWidget(column, index){
-      var widget = null;
-      for (var i=0; i<column.widgets.length; i++){
-        var w = column.widgets[i];
-        if (dashboard.idEquals(w.wid,index)){
-          widget = w;
-          break;
-        }
-      }
-      return widget;
-    }
-
-    /**
-     * finds a column by its id in the model
-     */
-    function findColumn(model, index){
-      var column = null;
-      for (var i=0; i<model.rows.length; i++){
-        var r = model.rows[i];
-        for (var j=0; j<r.columns.length; j++){
-          var c = r.columns[j];
-          if (dashboard.idEquals(c.cid, index)){
-            column = c;
-            break;
-          } else if (c.rows){
-            column = findColumn(c, index);
-          }
-        }
-        if (column){
-          break;
-        }
-      }
-      return column;
-    }
-
-    /**
-     * get the adf id from an html element
-     */
-    function getId(el){
-      var id = el.getAttribute('adf-id');
-      return id ? id : '-1';
-    }
-
-    /**
-     * adds a widget to a column
-     */
-    function addWidgetToColumn($scope, model, targetColumn, evt){
-      // find source column
-      var cid = getId(evt.from);
-      var sourceColumn = findColumn(model, cid);
-
-      if (sourceColumn){
-        // find moved widget
-        var wid = getId(evt.item);
-        var widget = findWidget(sourceColumn, wid);
-
-        if (widget){
-          // add new item and apply to scope
-          $scope.$apply(function(){
-            if (!targetColumn.widgets) {
-              targetColumn.widgets = [];
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {
+                column: '=',
+                editMode: '=',
+                continuousEditMode: '=',
+                adfModel: '=',
+                options: '='
+            },
+            templateUrl: adfTemplatePath + 'dashboard-column.html',
+            link: function($scope, $element) {
+                // set id
+                var col = $scope.column;
+                if (!col.cid) {
+                    col.cid = dashboard.id();
+                }
             }
-            targetColumn.widgets.splice(evt.newIndex, 0, widget);
-
-            $rootScope.$broadcast('adfWidgetAddedToColumn');
-          });
-        } else {
-          $log.warn('could not find widget with id ' + wid);
-        }
-      } else {
-        $log.warn('could not find column with id ' + cid);
-      }
-    }
-
-    /**
-     * removes a widget from a column
-     */
-    function removeWidgetFromColumn($scope, column, evt){
-      // remove old item and apply to scope
-      $scope.$apply(function(){
-        column.widgets.splice(evt.oldIndex, 1);
-        $rootScope.$broadcast('adfWidgetRemovedFromColumn');
-      });
-    }
-
-    /**
-     * enable sortable
-     */
-    function applySortable($scope, $element, model, column){
-      // enable drag and drop
-      var el = $element[0];
-      var sortable = Sortable.create(el, {
-        group: 'widgets',
-        handle: '.adf-move',
-        ghostClass: 'placeholder',
-        animation: 150,
-        onAdd: function(evt){
-          addWidgetToColumn($scope, model, column, evt);
-        },
-        onRemove: function(evt){
-          removeWidgetFromColumn($scope, column, evt);
-        },
-        onUpdate: function(evt){
-          moveWidgetInColumn($scope, column, evt);
-        }
-      });
-
-      // destroy sortable on column destroy event
-      $element.on('$destroy', function () {
-        // check sortable element, before calling destroy
-        // see https://github.com/sdorra/angular-dashboard-framework/issues/118
-        if (sortable.el){
-          sortable.destroy();
-        }
-      });
-    }
-
-    return {
-      restrict: 'E',
-      replace: true,
-      scope: {
-        column: '=',
-        editMode: '=',
-        continuousEditMode: '=',
-        adfModel: '=',
-        options: '='
-      },
-      templateUrl: adfTemplatePath + 'dashboard-column.html',
-      link: function ($scope, $element) {
-        // set id
-        var col = $scope.column;
-        if (!col.cid){
-          col.cid = dashboard.id();
-        }
-
-        if (angular.isDefined(col.rows) && angular.isArray(col.rows)) {
-          // be sure to tell Angular about the injected directive and push the new row directive to the column
-          $compile(rowTemplate)($scope, function(cloned) {
-            $element.append(cloned);
-          });
-        } else {
-          // enable drag and drop for widget only columns
-          applySortable($scope, $element, $scope.adfModel, col);
-        }
-      }
-    };
-  }]);
-
+        };
+    }]);
 /*
  * The MIT License
  *
@@ -264,7 +120,6 @@ angular.module('adf')
  * @param {boolean=} collapsible true to make widgets collapsible on the dashboard.
  * @param {boolean=} maximizable true to add a button for open widgets in a large modal panel.
  * @param {boolean=} enableConfirmDelete true to ask before remove an widget from the dashboard.
- * @param {string=} structure the default structure of the dashboard.
  * @param {object=} adfModel model object of the dashboard.
  * @param {function=} adfWidgetFilter function to filter widgets on the add dialog.
  * @param {boolean=} continuousEditMode enable continuous edit mode, to fire add/change/remove
@@ -302,73 +157,6 @@ angular.module('adf')
             }
         }
 
-        /**
-         * Copy widget from old columns to the new model
-         * @param object root the model
-         * @param array of columns
-         * @param counter
-         */
-        function fillStructure(root, columns, counter) {
-            counter = counter || 0;
-
-            if (angular.isDefined(root.rows)) {
-                angular.forEach(root.rows, function(row) {
-                    angular.forEach(row.columns, function(column) {
-                        // if the widgets prop doesn't exist, create a new array for it.
-                        // this allows ui.sortable to do it's thing without error
-                        if (!column.widgets) {
-                            column.widgets = [];
-                        }
-
-                        // if a column exist at the counter index, copy over the column
-                        if (angular.isDefined(columns[counter])) {
-                            // do not add widgets to a column, which uses nested rows
-                            if (angular.isUndefined(column.rows)) {
-                                copyWidgets(columns[counter], column);
-                                counter++;
-                            }
-                        }
-
-                        // run fillStructure again for any sub rows/columns
-                        counter = fillStructure(column, columns, counter);
-                    });
-                });
-            }
-            return counter;
-        }
-
-        /**
-         * Read Columns: recursively searches an object for the 'columns' property
-         * @param object model
-         * @param array  an array of existing columns; used when recursion happens
-         */
-        function readColumns(root, columns) {
-            columns = columns || [];
-
-            if (angular.isDefined(root.rows)) {
-                angular.forEach(root.rows, function(row) {
-                    angular.forEach(row.columns, function(col) {
-                        columns.push(col);
-                        // keep reading columns until we can't any more
-                        readColumns(col, columns);
-                    });
-                });
-            }
-
-            return columns;
-        }
-
-        function changeStructure(model, structure) {
-            var columns = readColumns(model);
-            var counter = 0;
-
-            model.rows = angular.copy(structure.rows);
-
-            while (counter < columns.length) {
-                counter = fillStructure(model, columns, counter);
-            }
-        }
-
         function createConfiguration(type) {
             var cfg = {};
             var config = dashboard.widgets[type].config;
@@ -388,35 +176,6 @@ angular.module('adf')
         }
 
         /**
-         * Find first widget column in model.
-         *
-         * @param dashboard model
-         */
-        function findFirstWidgetColumn(model) {
-            var column = null;
-            if (!angular.isArray(model.rows)) {
-                $log.error('model does not have any rows');
-                return null;
-            }
-            for (var i = 0; i < model.rows.length; i++) {
-                var row = model.rows[i];
-                if (angular.isArray(row.columns)) {
-                    for (var j = 0; j < row.columns.length; j++) {
-                        var col = row.columns[j];
-                        if (!col.rows) {
-                            column = col;
-                            break;
-                        }
-                    }
-                }
-                if (column) {
-                    break;
-                }
-            }
-            return column;
-        }
-
-        /**
          * Adds the widget to first column of the model.
          *
          * @param dashboard model
@@ -425,21 +184,23 @@ angular.module('adf')
          */
         function addNewWidgetToModel(model, widget, name, forceToSave) {
             if (model) {
-                var column = findFirstWidgetColumn(model);
-                if (column) {
-                    if (!column.widgets) {
-                        column.widgets = [];
-                    }
-                    column.widgets.unshift(widget);
+                if (!model.grid) {
+                    model.grid = [];
+                }
 
-                    // broadcast added event
-                    $rootScope.$broadcast('adfWidgetAdded', name, model, widget);
+                var newWidget = {
+                    width: 2,
+                    height: 1,
+                    x: 0,
+                    y: 0,
+                    definition: widget
+                };
+                model.grid.push(newWidget);
 
-                    if (forceToSave) {
-                        $rootScope.$broadcast('adfDashboardChanged', name, model);
-                    }
-                } else {
-                    $log.error('could not find first widget column');
+                $rootScope.$broadcast('adfWidgetAdded', name, model, widget);
+
+                if (forceToSave) {
+                    $rootScope.$broadcast('adfDashboardChanged', name, model);
                 }
             } else {
                 $log.error('model is undefined');
@@ -555,7 +316,6 @@ angular.module('adf')
             restrict: 'EA',
             transclude: false,
             scope: {
-                structure: '@',
                 name: '@',
                 collapsible: '@',
                 editable: '@',
@@ -570,9 +330,7 @@ angular.module('adf')
             },
             controller: ["$scope", function($scope) {
                 var model = {};
-                var structure = {};
                 var widgetFilter = null;
-                var structureName = {};
                 var name = $scope.name;
 
                 // Watching for changes on adfModel
@@ -581,20 +339,6 @@ angular.module('adf')
                     if (newVal !== null || (oldVal === null && newVal === null)) {
                         model = $scope.adfModel;
                         widgetFilter = $scope.adfWidgetFilter;
-                        if (!model || !model.rows) {
-                            structureName = $scope.structure;
-                            structure = dashboard.structures[structureName];
-                            if (structure) {
-                                if (model) {
-                                    model.rows = angular.copy(structure).rows;
-                                } else {
-                                    model = angular.copy(structure);
-                                }
-                                model.structure = structureName;
-                            } else {
-                                $log.error('could not find structure ' + structureName);
-                            }
-                        }
 
                         if (model) {
                             if (!model.title) {
@@ -665,6 +409,20 @@ angular.module('adf')
                     }
                 });
 
+                var adfWidgetRemoved = $scope.$on('adfWidgetRemovedFromGrid', function(event, widget) {
+                    var index = null;
+                    angular.forEach($scope.adfModel.grid, function(widgetTmp, idx) {
+                        if (widgetTmp.definition.wid === widget.wid) {
+                            index = idx;
+                        }
+                    });
+
+                    if (index >= 0) {
+                        $scope.adfModel.grid.splice(index, 1);
+                        //$scope.gsHandler.commit();
+                    }
+                })
+
                 $scope.collapseAll = function(collapseExpandStatus) {
                     $rootScope.$broadcast('adfDashboardCollapseExpand', {
                         collapseExpandStatus: collapseExpandStatus
@@ -706,12 +464,6 @@ angular.module('adf')
                     // pass icon list
                     editDashboardScope.availableIcons = $faIcons.list();
 
-                    // pass dashboard structure to scope
-                    editDashboardScope.structures = dashboard.structures;
-
-                    // pass split function to scope, to be able to display structures in multiple columns
-                    editDashboardScope.split = split;
-
                     var adfEditTemplatePath = adfTemplatePath + 'dashboard-edit.html';
                     if (model.editTemplateUrl) {
                         adfEditTemplatePath = model.editTemplateUrl;
@@ -724,13 +476,7 @@ angular.module('adf')
                         size: 'lg'
                     });
 
-                    editDashboardScope.changeStructure = function(name, structure) {
-                        $log.info('change structure to ' + name);
-                        changeStructure(model, structure);
-                        if (model.structure !== name) {
-                            model.structure = name;
-                        }
-                    };
+
                     editDashboardScope.closeDialog = function() {
                         // copy the new title back to the model
                         model.title = editDashboardScope.copy.title;
@@ -899,6 +645,7 @@ angular.module('adf')
                     adfCancelEditMode();
                     adfAddWidgetDialog();
                     adfEditDashboardDialog();
+                    adfWidgetRemoved();
                 });
             }],
             link: function($scope, $element, $attr) {
@@ -926,6 +673,140 @@ angular.module('adf')
                 $scope.options = options;
             },
             templateUrl: adfTemplatePath + 'dashboard.html'
+        };
+    }]);
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2015, Sebastian Sdorra
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+
+/* global angular */
+angular.module('adf')
+    .directive('adfDashboardGrid', ["adfTemplatePath", function(adfTemplatePath) {
+        
+
+        function preLink($scope) {
+            $scope.gridOptions = {
+                cellHeight: 146,
+                verticalMargin: 10,
+                animate: true,
+                float: false,
+                //alwaysShowResizeHandle: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+                alwaysShowResizeHandle: true,
+                minWidth: 768,
+                auto: true,
+                resizable: {
+                    handles: 'e, se, s, sw, w'
+                },
+                disableDrag: !$scope.editMode,
+                disableResize: !$scope.editMode
+            };
+
+            $scope.gsHandler = null;
+        }
+
+        return {
+            restrict: 'E',
+            scope: {
+                adfModel: '=',
+                editMode: '=',
+                continuousEditMode: '=',
+                options: '='
+            },
+            templateUrl: adfTemplatePath + 'dashboard-grid.html',
+            compile: function() {
+                return {
+                    pre: preLink,
+                };
+            },
+            controller: ["$scope", "$timeout", function($scope, $timeout) {
+                var dashEvents = [];
+                dashEvents.push($scope.$on('adfIsEditMode', function() {
+                    $timeout(function() {
+                        $scope.gsHandler.enable();
+                    }, 100);
+                }));
+
+                dashEvents.push($scope.$on('adfDashboardChanged', function() {
+                    $timeout(function() {
+                        $scope.gsHandler.disable();
+                    }, 100);
+                }));
+
+                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function() {
+                    $timeout(function() {
+                        $scope.gsHandler.disable();
+                    }, 100);
+                }));
+
+                dashEvents.push($scope.$on('adfCancelEditMode', function() {
+                    $timeout(function() {
+                        $scope.gsHandler.disable();
+                    }, 100);
+                }));
+
+                dashEvents.push($scope.$on('adfWidgetAdded', function(event, name, model, widget) {
+                    $timeout(function() {
+                        $scope.gsHandler.enable();
+                    }, 100);
+                }));
+
+                $scope.onChange = function(event, items) {
+                    console.log("onChange event: " + event + " items:" + items);
+                };
+
+                $scope.onDragStart = function(event, ui) {
+                    console.log("onDragStart event: " + event + " ui:" + ui);
+                };
+
+                $scope.onDragStop = function(event, ui) {
+                    console.log("onDragStop event: " + event + " ui:" + ui);
+                    $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
+                };
+
+                $scope.onResizeStart = function(event, ui) {
+                    console.log("onResizeStart event: " + event + " ui:" + ui);
+                };
+
+                $scope.onResizeStop = function(event, ui) {
+                    console.log("onResizeStop event: " + event + " ui:" + ui);
+                    $scope.$broadcast('OnResizeWidget')
+                };
+
+                $scope.onItemAdded = function(item) {
+                    console.log("onItemAdded item: " + item);
+                };
+
+                $scope.onItemRemoved = function(item) {
+                    console.log("onItemRemoved item: " + item);
+                };
+
+                $scope.$on('destroy', function() {
+                    dashEvents.forEach(function(dashEvt) {
+                        dashEvt();
+                    });
+                });
+            }]
         };
     }]);
 /*
@@ -999,14 +880,13 @@ angular.module('adf')
  * @name adf.dashboardProvider
  * @description
  *
- * The dashboardProvider can be used to register structures and widgets.
+ * The dashboardProvider can be used to register widgets.
  */
 angular.module('adf.provider', [])
-    .provider('dashboard', function () {
+    .provider('dashboard', function() {
 
         var widgets = {};
         var widgetsPath = '';
-        var structures = {};
         var messageTemplate = '<div class="alert alert-primary">{}</div>';
         var loadingTemplate = '\
       <div class="progress progress-striped active">\n\
@@ -1017,7 +897,7 @@ angular.module('adf.provider', [])
         var customWidgetTemplatePath = null;
 
         // default apply function of widget.edit.apply
-        var defaultApplyFunction = function () {
+        var defaultApplyFunction = function() {
             return true;
         };
 
@@ -1082,7 +962,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.widget = function (name, widget) {
+        this.widget = function(name, widget) {
             var w = angular.extend({
                 reload: false,
                 frameless: false
@@ -1118,33 +998,8 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.widgetsPath = function (path) {
+        this.widgetsPath = function(path) {
             widgetsPath = path;
-            return this;
-        };
-
-        /**
-         * @ngdoc method
-         * @name adf.dashboardProvider#structure
-         * @methodOf adf.dashboardProvider
-         * @description
-         *
-         * Registers a new structure.
-         *
-         * @param {string} name of the structure
-         * @param {object} structure to be registered.
-         *
-         *   Object properties:
-         *
-         *   - `rows` - `{Array.<Object>}` - Rows of the dashboard structure.
-         *     - `styleClass` - `{string}` - CSS Class of the row.
-         *     - `columns` - `{Array.<Object>}` - Columns of the row.
-         *       - `styleClass` - `{string}` - CSS Class of the column.
-         *
-         * @returns {Object} self
-         */
-        this.structure = function (name, structure) {
-            structures[name] = structure;
             return this;
         };
 
@@ -1160,7 +1015,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.messageTemplate = function (template) {
+        this.messageTemplate = function(template) {
             messageTemplate = template;
             return this;
         };
@@ -1178,7 +1033,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.loadingTemplate = function (template) {
+        this.loadingTemplate = function(template) {
             loadingTemplate = template;
             return this;
         };
@@ -1195,7 +1050,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.customWidgetTemplatePath = function (templatePath) {
+        this.customWidgetTemplatePath = function(templatePath) {
             customWidgetTemplatePath = templatePath;
             return this;
         };
@@ -1205,24 +1060,22 @@ angular.module('adf.provider', [])
          * @name adf.dashboard
          * @description
          *
-         * The dashboard holds all options, structures and widgets.
+         * The dashboard holds all options and  widgets.
          *
          * @property {Array.<Object>} widgets Array of registered widgets.
          * @property {string} widgetsPath Default path for widgets.
-         * @property {Array.<Object>} structures Array of registered structures.
          * @property {string} messageTemplate Template for messages.
          * @property {string} loadingTemplate Template for widget loading.
          * * @property {string} customWidgetTemplatePath Changes the container template for the widgets
          *
          * @returns {Object} self
          */
-        this.$get = function () {
+        this.$get = function() {
             var cid = 0;
 
             return {
                 widgets: widgets,
                 widgetsPath: widgetsPath,
-                structures: structures,
                 messageTemplate: messageTemplate,
                 loadingTemplate: loadingTemplate,
                 customWidgetTemplatePath: customWidgetTemplatePath,
@@ -1236,7 +1089,7 @@ angular.module('adf.provider', [])
                  * Creates an ongoing numeric id. The method is used to create ids for
                  * columns and widgets in the dashboard.
                  */
-                id: function () {
+                id: function() {
                     return new Date().getTime() + '-' + (++cid);
                 },
 
@@ -1251,7 +1104,7 @@ angular.module('adf.provider', [])
                  * @param {string} id widget or column id
                  * @param {string} other widget or column id
                  */
-                idEquals: function (id, other) {
+                idEquals: function(id, other) {
                     // use toString, because old ids are numbers
                     return ((id) && (other)) && (id.toString() === other.toString());
                 }
@@ -1259,123 +1112,6 @@ angular.module('adf.provider', [])
         };
 
     });
-/*
-* The MIT License
-*
-* Copyright (c) 2015, Sebastian Sdorra
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-* SOFTWARE.
-*/
-
-
-/* global angular */
-angular.module('adf')
-  .directive('adfDashboardRow', ["$compile", "adfTemplatePath", "columnTemplate", function ($compile, adfTemplatePath, columnTemplate) {
-    
-
-    return {
-      restrict: 'E',
-      replace: true,
-      scope: {
-        row: '=',
-        adfModel: '=',
-        editMode: '=',
-        continuousEditMode: '=',
-        options: '='
-      },
-      templateUrl: adfTemplatePath + 'dashboard-row.html',
-      link: function($scope, $element) {
-        if (angular.isDefined($scope.row.columns) && angular.isArray($scope.row.columns)) {
-          $compile(columnTemplate)($scope, function(cloned) {
-            $element.append(cloned);
-          });
-        }
-      }
-    };
-  }]);
-
-/*
- * The MIT License
- *
- * Copyright (c) 2015, Sebastian Sdorra
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-
-
-/* global angular */
-angular.module('adf')
-  .directive('adfStructurePreview', ["adfTemplatePath", function(adfTemplatePath) {
-
-    function adjustRowHeight(container){
-      if (container.rows && container.rows.length > 0){
-        var height = 100 / container.rows.length;
-        angular.forEach(container.rows, function(row){
-          row.style = {
-            height: height + '%'
-          }
-
-          if (row.columns){
-            angular.forEach(row.columns, function(column){
-              adjustRowHeight(column);
-            });
-          }
-        });
-      }
-    }
-
-    function prepareStructure($scope){
-      var structure = angular.copy($scope.structure);
-      adjustRowHeight(structure);
-      $scope.preview = structure;
-    }
-
-    return {
-      restrict: 'E',
-      replace: true,
-      scope: {
-        name: '=',
-        structure: '=',
-        selected: '='
-      },
-      templateUrl: adfTemplatePath + 'structure-preview.html',
-      link: prepareStructure
-    };
-  }]);
-
 /*
  * The MIT License
  *
@@ -1438,12 +1174,24 @@ angular.module('adf')
                 if (newScope) {
                     var is_menu = newScope.menu !== undefined && newScope.menu !== null && (!newScope.isPaginationEnable || !newScope.isPaginationEnable());
                     var is_itemsPerPage = newScope.itemsPerPage !== undefined && newScope.itemsPerPage !== null;
-                    if (is_menu || is_itemsPerPage || configChanged || !angular.isFunction(newScope.reloadData)) {
+                    if (is_menu || configChanged || !angular.isFunction(newScope.reloadData)) {
+                        if ($scope.navOptionsHandler) {
+                            $scope.navOptionsHandler.firstLoad = true;
+                        }
+
                         newScope = renderWidget($scope, $element, currentScope, model, content, extra);
                     } else {
+                        if (is_itemsPerPage || newScope.page) {
+                            newScope.page = 1;
+                        }
+
                         newScope.reloadData();
                     }
                 } else {
+                    if ($scope.navOptionsHandler) {
+                        $scope.navOptionsHandler.firstLoad = true;
+                    }
+
                     newScope = renderWidget($scope, $element, currentScope, model, content, extra);
                 }
             }
@@ -1574,7 +1322,10 @@ angular.module('adf')
             scope: {
                 model: '=',
                 content: '=',
-                extra: '='
+                extra: '=',
+                navOptionsHandler: '=?',
+                filterHandler: '=?',
+                widgetActionsHandler: '=?'
             },
             link: function($scope, $element) {
                 var currentScope = compileWidget($scope, $element, null);
@@ -1592,6 +1343,930 @@ angular.module('adf')
                 });
             }
         };
+    }]);
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2015, Sebastian Sdorra
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+
+
+angular.module('adf')
+    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter) {
+        function preLink($scope) {
+            var definition = $scope.definition;
+
+            if (definition) {
+                var w = dashboard.widgets[definition.type];
+                if (w) {
+                    // pass title
+                    if (!definition.title) {
+                        definition.title = w.title;
+                    }
+
+                    definition.titleTemplateUrl = adfTemplatePath + 'widget-grid-title.html';
+
+                    if (!definition.editTemplateUrl) {
+                        definition.editTemplateUrl = adfTemplatePath + 'widget-edit.html';
+                        if (w.editTemplateUrl) {
+                            definition.editTemplateUrl = w.editTemplateUrl;
+                        }
+                    }
+
+                    if (!definition.titleTemplateUrl) {
+                        definition.frameless = w.frameless;
+                    }
+
+                    if (!definition.styleClass) {
+                        definition.styleClass = w.styleClass;
+                    }
+
+                    // set id for sortable
+                    if (!definition.wid) {
+                        definition.wid = dashboard.id();
+                    }
+
+                    // pass copy of widget to scope
+                    $scope.widget = angular.copy(w);
+
+                    // create config object
+                    var config = definition.config;
+                    if (config) {
+                        if (angular.isString(config)) {
+                            config = angular.fromJson(config);
+                        }
+                    } else {
+                        config = {};
+                    }
+
+                    if (typeof $scope.widget.show_modal_footer === "undefined") {
+                        $scope.widget.show_modal_footer = true;
+                    }
+
+                    if (typeof $scope.widget.show_reload_config === "undefined") {
+                        $scope.widget.show_reload_config = true;
+                    }
+
+                    // pass config to scope
+                    $scope.config = config;
+
+                    // collapse exposed $scope.widgetState property
+                    if (!$scope.widgetState) {
+                        $scope.widgetState = {};
+                        $scope.widgetState.isCollapsed = (w.collapsed === true) ? w.collapsed : false;
+                    }
+
+                } else {
+                    $log.warn('could not find widget ' + definition.type);
+                }
+            } else {
+                $log.debug('definition not specified, widget was probably removed');
+            }
+        }
+
+        function postLink($scope, $element) {
+            var definition = $scope.definition;
+            if (!definition) {
+                $log.debug('widget not found');
+                return;
+            }
+            if (!$scope.config) {
+                $scope.config = {};
+            }
+
+            var config = $scope.config;
+
+            // bind close function
+            var deleteWidget = function() {
+                $element.remove();
+                $rootScope.$broadcast('adfWidgetRemovedFromGrid', definition);
+            };
+
+            $scope.remove = function() {
+                if ($scope.options.enableConfirmDelete) {
+                    var deleteScope = $scope.$new();
+
+                    var deleteTemplateUrl = adfTemplatePath + 'widget-delete.html';
+                    if (definition.deleteTemplateUrl) {
+                        deleteTemplateUrl = definition.deleteTemplateUrl;
+                    }
+                    var opts = {
+                        scope: deleteScope,
+                        templateUrl: deleteTemplateUrl,
+                        backdrop: 'static'
+                    };
+                    var instance = $uibModal.open(opts);
+
+                    deleteScope.closeDialog = function() {
+                        instance.close();
+                        deleteScope.$destroy();
+                    };
+                    deleteScope.deleteDialog = function() {
+                        deleteWidget();
+                        deleteScope.closeDialog();
+                    };
+                } else {
+                    deleteWidget();
+                }
+            };
+
+
+            $scope.print = function() {
+                if (!$scope.editMode) {
+                    $scope.$broadcast('widgetPrint');
+                }
+            }
+
+            $scope.isExecuteOperationEnabled = function() {
+
+                if (config.entityKey)
+                    return true;
+                var filter = config.filter;
+                if (typeof filter === "string") {
+                    return filter.length > 0;
+                }
+                if (typeof filter === "object") {
+                    return filter.value.length > 2 && filter.oql;
+                }
+                return false;
+            }
+
+            $scope.executeOperation = function() {
+                if (!$scope.editMode) {
+
+                    $scope.$parent.$broadcast('widgetExecuteOperation');
+                }
+            };
+
+            $scope.filter = {
+                value: ""
+            };
+            $scope.sort = {
+                value: "",
+                direction: ""
+            };
+
+            $scope.toggleAdvanced = 1;
+            var filter = config.filter;
+            if (typeof filter === "object" && filter.oql && filter.oql.length > 2) {
+                $scope.search = {
+                    oql: filter.oql,
+                    json: filter.value
+                };
+                $scope.toggleAdvanced = 0;
+            } else if (typeof filter === "string") {
+                $scope.search = {
+                    quick: filter
+                };
+                $scope.toggleAdvanced = 1;
+            } else if (typeof filter === "object" && filter.fields) {
+                $scope.search = {
+                    customFilter: filter.fields
+                };
+                $scope.search.fields = [];
+                angular.forEach(filter.fields, function(v, key) {
+                    $scope.search.fields.push(v.name);
+                });
+                $scope.toggleAdvanced = 2;
+            } else {
+                $scope.search = {
+                    quick: filter = ""
+                };
+            }
+
+            $scope.toggleFilter = function(advanced) {
+                $scope.toggleAdvanced = advanced;
+            };
+            $scope.filterAvailable = false;
+            $scope.showFilter = function() {
+                $scope.filterAvailable = $scope.filterAvailable === true ? false : true;
+            };
+
+            $scope.showFinalFilter = false;
+
+            $scope.launchSearching = function() {
+                var widget = {
+                    definition: definition,
+                    element: $element
+                };
+
+                $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, $scope.config.filter);
+                $scope.reload(true);
+            }
+            $scope.addCustomFilter = function(key) {
+                $scope.search.customFilter = $scope.search.customFilter ? $scope.search.customFilter : [];
+                $scope.search.customFilter.push({
+                    name: key,
+                    value: ''
+                });
+            }
+
+            $scope.launchCustomFilter = function() {
+                if ($scope.search.customFilter && $scope.search.customFilter.length > 0) {
+                    $scope.search.oql = $scope.search.json = '';
+
+                    $scope.config.filter = {
+                        value: {
+                            and: []
+                        },
+                        fields: $scope.search.customFilter
+                    }
+                    angular.forEach($scope.search.customFilter, function(v, key) {
+                        if (v.value) {
+                            var like = {};
+                            like[v.name] = v.value;
+                            $scope.config.filter.value.and.push({
+                                'like': like
+                            });
+                        }
+
+                    });
+                    $scope.config.filter.value = JSON.stringify($scope.config.filter.value);
+                }
+
+                $scope.launchSearching();
+            }
+
+
+
+            $scope.deleteFilter = function(value, model) {
+                angular.forEach($scope.search.customFilter, function(v, key) {
+                    if (v.name === value) {
+                        $scope.search.customFilter.splice(key, 1);
+                    }
+                });
+                if ($scope.search.customFilter.length === 0) {
+                    $scope.config.filter = {};
+                }
+            };
+
+            $scope.launchSearchingAdv = function() {
+                if (!$scope.filterApplied) {
+                    $scope.search.quick = '';
+                    if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
+                        $scope.config.filter = {
+                            oql: '',
+                            value: ''
+                        };
+                    } else {
+                        $scope.config.filter = {
+                            oql: $scope.search.oql,
+                            value: $scope.search.json
+                        };
+                    }
+                    $scope.launchSearching();
+                    $scope.filterApplied = true;
+                }
+            }
+
+            $scope.applyFilter = function(event) {
+                $scope.launchSearching();
+            }
+
+            $scope.launchSearchingQuick = function() {
+                if (!$scope.filterApplied) {
+                    $scope.search.oql = $scope.search.json = '';
+                    $scope.config.filter = $scope.search.quick;
+                    $scope.launchSearching();
+                    $scope.filterApplied = true;
+                }
+            }
+
+            var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
+                $scope.config.windowFilter = timeObj ? timeObj : (config.windowFilter ? {} : timeObj);
+                var widget = {
+                    definition: definition,
+                    element: $element
+                }
+                $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
+                $scope.reload();
+            });
+
+            $scope.enter = function(event) {
+                var keycode = (event.keyCode ? event.keyCode : event.which);
+                if (keycode === 13) {
+                    if ($scope.toggleAdvanced === 0)
+                        $scope.launchSearchingAdv();
+                    if ($scope.toggleAdvanced === 1)
+                        $scope.launchSearchingQuick();
+                    if ($scope.toggleAdvanced === 2)
+                        $scope.launchCustomFilter();
+
+                } else if (keycode === 19) {
+                    $scope.showFinalFilter = $scope.showFinalFilter === false ? true : false;
+                } else {
+                    $scope.filterApplied = false;
+                }
+            }
+
+
+            $scope.customSelectors = [];
+            $scope.getCustomSelectors = function() {
+                if ($scope.config.customSelectors) {
+                    $scope.customSelectors = $scope.config.customSelectors;
+                } else {
+                    config.widgetSelectors().findFields("").then(function(fields) {
+                        $scope.customSelectors = fields;
+                        $scope.$apply();
+                    }).catch(function(err) {
+                        $log.error(err);
+                    });
+                }
+            }
+
+            $scope.customFilter = [];
+            $scope.getcustomFilter = function() {
+                config.widgetSelectors().findFields("").then(function(fields) {
+                    $scope.customFilter = fields;
+                    $scope.$apply();
+                }).catch(function(err) {
+                    $log.error(err);
+                });
+
+            }
+
+            $scope.ifCustomFilter = function() {
+                return $scope.customSelectors && config.sort && $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2;
+            }
+
+            $scope.showCustomFields = function() {
+                return $scope.definition.type === 'FullDevicesList' && $scope.toggleAdvanced === 2 && $scope.search.customFilter && $scope.filterAvailable && !$scope.editMode;
+            }
+
+            $scope.changeDirection = function() {
+                var direction = config.sort.direction;
+                if (direction === 'DESCENDING') {
+                    $scope.config.sort.direction = 'ASCENDING'
+                } else if (direction === 'ASCENDING') {
+                    $scope.config.sort.direction = 'DESCENDING'
+                }
+                $scope.reload();
+            }
+
+            $scope.changeDefaultTab = function() {
+
+
+                $scope.reload();
+            }
+
+            $scope.debugQuery = function() {
+                Filter.parseQuery($scope.search.oql || '')
+                    .then(function(data) {
+                        //$scope.elementos = data;
+                        $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                        $scope.unknownWords = '';
+                        $scope.filter.error = null;
+                    })
+                    .catch(function(err) {
+                        $scope.filter.error = err;
+                        // Tratar el error
+                    });
+
+            }
+
+            $scope.autocomplete_options = function() {
+                var autocomplete_options = {
+                    suggest: Filter.suggest_field_delimited,
+                    customSelectors: config.widgetSelectors()
+                };
+
+                return autocomplete_options;
+
+            };
+
+            // Multiple selection
+            $scope.selectedItems = {};
+
+            // Gestor de seleccion
+            $scope.selectionManager = {
+                currentSelection: $scope.selectedItems,
+                isSelected: function(key, obj) {
+                    if ($scope.selectedItems[key] && !angular.isUndefined(obj)) {
+                        $scope.selectedItems[key].data = obj;
+                    }
+
+                    return $scope.selectedItems[key] ? true : false;
+                },
+                totalSelected: function() {
+                    return Object.keys($scope.selectedItems).length;
+                }
+            };
+
+            $scope.manageSelectedItems = function() {
+                var selectionScope = $scope.$new();
+
+                selectionScope.selectionConfig = config.selectionConfig;
+
+                selectionScope.selectedItems = [];
+                angular.forEach($scope.selectedItems, function(value, key) {
+                    selectionScope.selectedItems.push({
+                        key: key,
+                        value: value
+                    });
+                });
+
+                selectionScope.currentSelection = {
+                    selected: selectionScope.selectedItems
+                };
+
+                var manageItemsSelectedTemplate = adfTemplatePath + 'widget-selection.html';
+                var opts = {
+                    scope: selectionScope,
+                    templateUrl: manageItemsSelectedTemplate,
+                    backdrop: 'static',
+                    size: 'lg',
+                    animation: true
+                };
+
+                var instance = $uibModal.open(opts);
+
+                selectionScope.restoreSelection = function() {
+                    selectionScope.currentSelection = {
+                        selected: selectionScope.selectedItems
+                    };
+                };
+
+                selectionScope.clearSelection = function() {
+                    selectionScope.currentSelection.selected = [];
+                };
+
+                // Cierra sy guarda los datos de nueva selección
+                selectionScope.applyFilter = function(type) {
+                    var customOql = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
+
+                    if (!angular.isUndefined(customOql) && customOql !== null) {
+                        $scope.toggleAdvanced = 0;
+                        Filter.parseQuery(customOql).then(function(data) {
+                            $scope.search.oql = customOql;
+                            $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                            $scope.unknownWords = '';
+                            $scope.filter.error = null;
+
+                            $scope.launchSearchingAdv();
+                        }).catch(function(err) {
+                            $scope.filter.error = err;
+                        });
+                    }
+                };
+
+                selectionScope.executeOperation = function(operationType) {
+                    if (!$scope.editMode) {
+                        $scope.$parent.$broadcast('widgetExecuteOperation', {
+                            'selectedItems': selectionScope.currentSelection.selected,
+                            'type': operationType
+                        });
+                    }
+                };
+
+                // Cierra sy guarda los datos de nueva selección
+                selectionScope.saveChangesDialog = function() {
+                    var finalSelection = {};
+                    angular.forEach(selectionScope.currentSelection.selected, function(data, idx) {
+                        finalSelection[data.key] = {
+                            data: data.value.data,
+                            visible: data.value.visible
+                        };
+                    });
+
+                    $scope.selectedItems = angular.copy(finalSelection);
+                    $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+
+                    $scope.selectionManager.lastItem = {};
+                    $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
+
+                    instance.close();
+                    selectionScope.$destroy();
+                };
+
+                // Cierra sin realizar ninguna acción
+                selectionScope.closeDialog = function() {
+                    instance.close();
+                    selectionScope.$destroy();
+                };
+            };
+
+
+            // bind edit function
+            $scope.edit = function() {
+                var editScope = $scope.$new();
+                editScope.definition = angular.copy(definition);
+
+                var adfEditTemplatePath = adfTemplatePath + 'widget-edit.html';
+                if (definition.editTemplateUrl) {
+                    adfEditTemplatePath = definition.editTemplateUrl;
+                }
+
+                var opts = {
+                    scope: editScope,
+                    templateUrl: adfEditTemplatePath,
+                    backdrop: 'static',
+                    size: 'lg'
+                };
+
+                var instance = $uibModal.open(opts);
+
+                editScope.closeDialog = function() {
+                    instance.close();
+                    editScope.$destroy();
+                };
+
+                // TODO create util method
+                function createApplyPromise(result) {
+                    var promise;
+                    if (typeof result === 'boolean') {
+                        var deferred = $q.defer();
+                        if (result) {
+                            deferred.resolve();
+                        } else {
+                            deferred.reject();
+                        }
+                        promise = deferred.promise;
+                    } else {
+                        promise = $q.when(result);
+                    }
+                    return promise;
+                }
+
+                editScope.saveDialog = function() {
+                    // clear validation error
+                    editScope.validationError = null;
+
+                    // build injection locals
+                    var widget = $scope.widget;
+
+                    // create a default apply method for widgets
+                    // without edit mode
+                    // see issue https://goo.gl/KHPQLZ
+                    var applyFn;
+                    if (widget.edit) {
+                        applyFn = widget.edit.apply;
+                    } else {
+                        applyFn = function() {
+                            return true;
+                        };
+                    }
+
+                    // injection locals
+                    var locals = {
+                        widget: widget,
+                        definition: editScope.definition,
+                        config: editScope.definition.config
+                    };
+
+                    // invoke apply function and apply if success
+                    var result = $injector.invoke(applyFn, applyFn, locals);
+                    createApplyPromise(result).then(function() {
+                        definition.title = editScope.definition.title;
+                        angular.extend(definition.config, editScope.definition.config);
+
+                        editScope.closeDialog();
+
+                        if (widget.edit && widget.edit.reload) {
+                            $scope.setReloadTimeout();
+                            // reload content after edit dialog is closed
+                            $scope.$broadcast('widgetConfigChanged');
+                        }
+                    }, function(err) {
+                        if (err) {
+                            editScope.validationError = err;
+                        } else {
+                            editScope.validationError = 'VALIDATION_DURING_APPLY_FAILED';
+                        }
+                    });
+                };
+
+            };
+
+
+        }
+
+        return {
+            replace: true,
+            restrict: 'EA',
+            transclude: false,
+            templateUrl: adfTemplatePath + 'widget-grid.html',
+            scope: {
+                definition: '=',
+                editMode: '=',
+                options: '=',
+                widgetState: '='
+            },
+            controller: ["$scope", function($scope) {
+                // Controlador de la barra inferior de los widgets
+                $scope.navOptionsHandler = {
+                    firstLoad: true,
+                    loadingData: false,
+                    startLoading: function() {
+                        $scope.navOptionsHandler.loadingData = true;
+                    },
+                    stopLoading: function() {
+                        $scope.navOptionsHandler.firstLoad = false;
+                        $scope.navOptionsHandler.loadingData = false;
+                        $scope.navOptionsHandler.lastMessageTime = new Date();
+                    },
+                    setStatusMessage: function(message) {
+                        $scope.navOptionsHandler.statusMessage = message;
+                        $scope.navOptionsHandler.lastMessageTime = new Date();
+                    }
+                };
+
+                // Controlador de los parámetros del filtro
+                $scope.filterHandler = {
+                    changeFilter: function(filter, search, toggleAdvanced) {
+                        $scope.filter = filter;
+                        $scope.search = search;
+                        $scope.toggleAdvanced = toggleAdvanced;
+                    }
+                };
+
+                // Controlador de las custom actions del widget
+                $scope.widgetActionsHandler = {
+                    actions: [],
+                    setActions: function(actions) {
+                        $scope.widgetActionsHandler.actions = actions;
+                    }
+                };
+                $scope.showActionsMenu = false;
+                $scope.toggleActionsMenu = function() {
+                    $scope.showActionsMenu = !$scope.showActionsMenu;
+                };
+
+                var adfDashboardCollapseExpand = $scope.$on('adfDashboardCollapseExpand', function(event, args) {
+                    $scope.widgetState.isCollapsed = args.collapseExpandStatus;
+                });
+
+                var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function(event, widget) {
+                    if (dashboard.idEquals($scope.definition.wid, widget.wid)) {
+                        $scope.edit();
+                    }
+                });
+
+                var adfIsEditMode = $scope.$on('adfIsEditMode', function(event, widget) {
+                    $scope.editing = true;
+                });
+
+                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function(event, widget) {
+                    $scope.editing = false;
+                });
+
+                var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function(event, widget) {
+                    $scope.editing = false;
+                });
+
+                $scope.widgetClasses = function(w, definition) {
+                    var classes = definition.styleClass || '';
+                    // w is undefined, if the type of the widget is unknown
+                    // see issue #216
+                    // if (!w || !w.frameless || $scope.editMode) {
+                    //     classes += ' panel panel-default';
+                    // }
+                    return classes;
+                };
+
+                $scope.openFullScreen = function() {
+
+                    $scope.$emit('adfOpenModalWidgetFromOther', $scope.definition.type, $scope.config);
+
+                    // var definition = $scope.definition;
+                    // var fullScreenScope = $scope.$new();
+                    // var opts = {
+                    //     scope: fullScreenScope,
+                    //     templateUrl: adfTemplatePath + 'widget-fullscreen.html',
+                    //     size: definition.modalSize || 'lg', // 'sm', 'lg'
+                    //     backdrop: 'static',
+                    //     windowClass: (definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
+                    // };
+
+                    // var instance = $uibModal.open(opts);
+
+                    // fullScreenScope.reload = function() {
+                    //     fullScreenScope.$broadcast('widgetReload');
+                    // };
+
+                    // fullScreenScope.closeDialog = function() {
+                    //     instance.close();
+                    //     fullScreenScope.$destroy();
+                    // };
+                };
+
+                $scope.openFilter = function() {
+
+                }
+
+                $scope.openAboutScreen = function(size) {
+                    size = 'md';
+                    var modalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'widgetAboutModal.html',
+                        controller: ["$scope", "$uibModalInstance", "information", function($scope, $uibModalInstance, information) {
+                            $scope.about = {};
+                            $scope.about.info = information;
+                            $scope.ok = function() {
+                                $uibModalInstance.close();
+                            };
+                        }],
+                        'size': size,
+                        resolve: {
+                            information: function() {
+                                return $scope.config.about;
+                            }
+                        }
+                    });
+
+                    modalInstance.result.then(function(selectedItem) {
+                        $scope.selected = selectedItem;
+                    }, function() {
+                        $log.info('Modal dismissed at: ' + new Date());
+                    });
+                };
+
+                $scope.saveWidgetScreen = function(wId) {
+                    $scope.$emit('generateSnapshot', {
+                        'objectSelector': '.widget_' + wId,
+                        'fileName': 'capture_' + new Date().getTime()
+                    });
+                };
+
+                var onWindowTimeChanged = function(timeObj) {
+                    var filter = {
+                        and: []
+                    };
+                    if (timeObj && timeObj.from) {
+                        filter.and.push({
+                            gt: {
+                                operationDate: timeObj.from
+                            }
+                        });
+
+                        if (timeObj.to) {
+                            filter.and.push({
+                                lt: {
+                                    operationDate: timeObj.to
+                                }
+                            });
+                        }
+                    } else {
+                        filter = null;
+                    }
+                    return filter;
+                }
+
+                var createQuickFilter = function(fieldsQuickSearch, filter) {
+                    var _filter = {
+                        or: []
+                    };
+                    var criteria;
+                    fieldsQuickSearch.forEach(function(field) {
+                        criteria = {};
+                        criteria[field.operator] = {};
+                        criteria[field.operator][field.name] = $scope.config.filter;
+                        _filter.or.push(criteria);
+                    });
+                    return _filter;
+                }
+
+                $scope.downloadCsv = function() {
+                    var columns = $scope.config.columns;
+                    var scope_filter = $scope.config.filter;
+                    var extra_filter;
+                    var final_filter = {};
+                    var order = $scope.config.sort ? $scope.config.sort : undefined;
+                    if ($scope.config.windowFilter) {
+                        var window_filter = $scope.config.onWindowTimeChanged($scope.config.windowFilter);
+                        if (window_filter && window_filter.and) {
+                            extra_filter = {
+                                and: window_filter.and
+                            };
+                        }
+                    }
+                    var filter;
+                    if (scope_filter.value && scope_filter.value.length > 4) {
+                        filter = JSON.parse(scope_filter.value);
+                    } else if (typeof scope_filter === 'string' && scope_filter.trim() !== '') {
+                        filter = createQuickFilter($scope.config.fieldsQuickSearch, scope_filter);
+                    }
+                    if (extra_filter) {
+                        if (filter) {
+                            final_filter = {
+                                and: [extra_filter, filter]
+                            };
+                        } else {
+                            final_filter = extra_filter;
+                        }
+                    } else {
+                        final_filter = filter;
+                    }
+                    $scope.$broadcast('downloadCsv', {
+                        'columns': columns,
+                        'filter': final_filter,
+                        'order': order
+                    });
+                };
+
+                $scope.generateQR = function() {
+                    $scope.$broadcast('generateQR');
+                };
+
+                var addItemToSelection = $scope.$on('addItemToSelection', function(event, item) {
+                    if (!$scope.selectedItems[item.key]) {
+                        $scope.selectedItems[item.key] = {
+                            data: item.data,
+                            visible: item.visible
+                        };
+                        $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        item.isSelected = true;
+                        $scope.selectionManager.lastItem = item;
+                        $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
+                    }
+
+                });
+
+                var removeItemFromSelection = $scope.$on('removeItemFromSelection', function(event, item) {
+                    if ($scope.selectedItems[item.key]) {
+                        delete $scope.selectedItems[item.key];
+                        $scope.selectedItemsLength = Object.keys($scope.selectedItems).length;
+                        item.isSelected = false;
+                        $scope.selectionManager.lastItem = item;
+                        $scope.$broadcast('widgetSelectionChanged', $scope.selectionManager);
+                    }
+                });
+
+                // bind reload function
+                var stopReloadTimeout;
+
+                $scope.setReloadTimeout = function() {
+                    var config = $scope.config || $scope.definition.config;
+
+                    if (config) {
+                        var reloadPeriod = config.reloadPeriod;
+                        if (!isNaN(reloadPeriod) && (reloadPeriod * 1) !== 0) {
+                            if (angular.isDefined(stopReloadTimeout)) {
+                                $interval.cancel(stopReloadTimeout)
+                                stopReloadTimeout = undefined;
+                            };
+                            stopReloadTimeout = $interval($scope.reload, (reloadPeriod * 1000));
+                        } else if (stopReloadTimeout) {
+                            $interval.cancel(stopReloadTimeout);
+                        }
+                    }
+                }
+
+                $scope.reload = function(completeReload) {
+                    if (completeReload) {
+                        $scope.$broadcast('widgetReload', completeReload);
+                    } else {
+                        $scope.$broadcast('widgetReload');
+                    }
+
+                    $scope.setReloadTimeout();
+                };
+
+                // verificacion de periodo de refresco
+                $scope.setReloadTimeout();
+
+                $scope.$on('$destroy', function() {
+                    adfDashboardCollapseExpand();
+                    adfWidgetEnterEditMode();
+                    adfIsEditMode();
+                    adfDashboardChanged();
+                    adfDashboardEditsCancelled();
+                    addItemToSelection();
+                    removeItemFromSelection();
+                    $interval.cancel(stopReloadTimeout);
+                });
+            }],
+            compile: function() {
+
+                /**
+                 * use pre link, because link of widget-content
+                 * is executed before post link widget
+                 */
+                return {
+                    pre: preLink,
+                    post: postLink
+                };
+            }
+        };
+
     }]);
 
 /*

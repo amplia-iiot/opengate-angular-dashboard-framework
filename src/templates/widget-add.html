@@ -49,11 +49,11 @@
             <div class="pointer panel widgetInfoParent {{widget.key}}" ng-click="addWidget(widget.key)" title="{{widget.description | translate}}">
                 <div class="widgetInfoImage pointer">
                     <div ng-if="widget.svg" class="widget-icon" ng-include="widget.svg"></div>
-                    <img ng-if="widget.images && !widget.svg" ng-init="widget._currImg = widget.images[0]" src="{{ widget._currImg }}" ng-click="changeThumbnail(widget);$event.stopPropagation();" title="Click to change (if available)">
+                    <img ng-if="widget.images && !widget.svg" ng-init="widget._currImg = widget.images[0]" src="{{ widget._currImg }}" ng-click="addWidget(widget.key)" title="Click to change (if available)">
                     <i ng-if="!widget.images && !widget.svg" class="widgetInfoIcon fa" ng-class="widget.icon ? widget.icon: 'fa-plus-circle'" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i>
                 </div>
                 <div class="widgetInfoContainer" id="widgetKey_{{widget.key}}" ng-class="{ 'bg-contrast' : $index ===0,  'bg-primary': $index !== 0}">
-                    <i ng-if="widget.images && widget.icon" class="widgetInfoTitle fa" ng-class="widget.icon" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i><br>
+                    <!-- <i ng-if="widget.images && widget.icon" class="widgetInfoTitle fa" ng-class="widget.icon" ng-style="widget.color?{'color':widget.color}:''" aria-hidden="true"></i><br> -->
                     <span class="widgetInfoTitle">{{widget.title }}</span><br>
                     <span>({{widget.category}})</span>
                     <span class="widgetInfoDescription">{{widget.description}}</span>

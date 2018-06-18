@@ -29,14 +29,13 @@
  * @name adf.dashboardProvider
  * @description
  *
- * The dashboardProvider can be used to register structures and widgets.
+ * The dashboardProvider can be used to register widgets.
  */
 angular.module('adf.provider', [])
-    .provider('dashboard', function () {
+    .provider('dashboard', function() {
 
         var widgets = {};
         var widgetsPath = '';
-        var structures = {};
         var messageTemplate = '<div class="alert alert-primary">{}</div>';
         var loadingTemplate = '\
       <div class="progress progress-striped active">\n\
@@ -47,7 +46,7 @@ angular.module('adf.provider', [])
         var customWidgetTemplatePath = null;
 
         // default apply function of widget.edit.apply
-        var defaultApplyFunction = function () {
+        var defaultApplyFunction = function() {
             return true;
         };
 
@@ -112,7 +111,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.widget = function (name, widget) {
+        this.widget = function(name, widget) {
             var w = angular.extend({
                 reload: false,
                 frameless: false
@@ -148,33 +147,8 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.widgetsPath = function (path) {
+        this.widgetsPath = function(path) {
             widgetsPath = path;
-            return this;
-        };
-
-        /**
-         * @ngdoc method
-         * @name adf.dashboardProvider#structure
-         * @methodOf adf.dashboardProvider
-         * @description
-         *
-         * Registers a new structure.
-         *
-         * @param {string} name of the structure
-         * @param {object} structure to be registered.
-         *
-         *   Object properties:
-         *
-         *   - `rows` - `{Array.<Object>}` - Rows of the dashboard structure.
-         *     - `styleClass` - `{string}` - CSS Class of the row.
-         *     - `columns` - `{Array.<Object>}` - Columns of the row.
-         *       - `styleClass` - `{string}` - CSS Class of the column.
-         *
-         * @returns {Object} self
-         */
-        this.structure = function (name, structure) {
-            structures[name] = structure;
             return this;
         };
 
@@ -190,7 +164,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.messageTemplate = function (template) {
+        this.messageTemplate = function(template) {
             messageTemplate = template;
             return this;
         };
@@ -208,7 +182,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.loadingTemplate = function (template) {
+        this.loadingTemplate = function(template) {
             loadingTemplate = template;
             return this;
         };
@@ -225,7 +199,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.customWidgetTemplatePath = function (templatePath) {
+        this.customWidgetTemplatePath = function(templatePath) {
             customWidgetTemplatePath = templatePath;
             return this;
         };
@@ -235,24 +209,22 @@ angular.module('adf.provider', [])
          * @name adf.dashboard
          * @description
          *
-         * The dashboard holds all options, structures and widgets.
+         * The dashboard holds all options and  widgets.
          *
          * @property {Array.<Object>} widgets Array of registered widgets.
          * @property {string} widgetsPath Default path for widgets.
-         * @property {Array.<Object>} structures Array of registered structures.
          * @property {string} messageTemplate Template for messages.
          * @property {string} loadingTemplate Template for widget loading.
          * * @property {string} customWidgetTemplatePath Changes the container template for the widgets
          *
          * @returns {Object} self
          */
-        this.$get = function () {
+        this.$get = function() {
             var cid = 0;
 
             return {
                 widgets: widgets,
                 widgetsPath: widgetsPath,
-                structures: structures,
                 messageTemplate: messageTemplate,
                 loadingTemplate: loadingTemplate,
                 customWidgetTemplatePath: customWidgetTemplatePath,
@@ -266,7 +238,7 @@ angular.module('adf.provider', [])
                  * Creates an ongoing numeric id. The method is used to create ids for
                  * columns and widgets in the dashboard.
                  */
-                id: function () {
+                id: function() {
                     return new Date().getTime() + '-' + (++cid);
                 },
 
@@ -281,7 +253,7 @@ angular.module('adf.provider', [])
                  * @param {string} id widget or column id
                  * @param {string} other widget or column id
                  */
-                idEquals: function (id, other) {
+                idEquals: function(id, other) {
                     // use toString, because old ids are numbers
                     return ((id) && (other)) && (id.toString() === other.toString());
                 }

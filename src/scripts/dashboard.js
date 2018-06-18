@@ -39,7 +39,6 @@
  * @param {boolean=} collapsible true to make widgets collapsible on the dashboard.
  * @param {boolean=} maximizable true to add a button for open widgets in a large modal panel.
  * @param {boolean=} enableConfirmDelete true to ask before remove an widget from the dashboard.
- * @param {string=} structure the default structure of the dashboard.
  * @param {object=} adfModel model object of the dashboard.
  * @param {function=} adfWidgetFilter function to filter widgets on the add dialog.
  * @param {boolean=} continuousEditMode enable continuous edit mode, to fire add/change/remove
@@ -77,73 +76,6 @@ angular.module('adf')
             }
         }
 
-        /**
-         * Copy widget from old columns to the new model
-         * @param object root the model
-         * @param array of columns
-         * @param counter
-         */
-        function fillStructure(root, columns, counter) {
-            counter = counter || 0;
-
-            if (angular.isDefined(root.rows)) {
-                angular.forEach(root.rows, function(row) {
-                    angular.forEach(row.columns, function(column) {
-                        // if the widgets prop doesn't exist, create a new array for it.
-                        // this allows ui.sortable to do it's thing without error
-                        if (!column.widgets) {
-                            column.widgets = [];
-                        }
-
-                        // if a column exist at the counter index, copy over the column
-                        if (angular.isDefined(columns[counter])) {
-                            // do not add widgets to a column, which uses nested rows
-                            if (angular.isUndefined(column.rows)) {
-                                copyWidgets(columns[counter], column);
-                                counter++;
-                            }
-                        }
-
-                        // run fillStructure again for any sub rows/columns
-                        counter = fillStructure(column, columns, counter);
-                    });
-                });
-            }
-            return counter;
-        }
-
-        /**
-         * Read Columns: recursively searches an object for the 'columns' property
-         * @param object model
-         * @param array  an array of existing columns; used when recursion happens
-         */
-        function readColumns(root, columns) {
-            columns = columns || [];
-
-            if (angular.isDefined(root.rows)) {
-                angular.forEach(root.rows, function(row) {
-                    angular.forEach(row.columns, function(col) {
-                        columns.push(col);
-                        // keep reading columns until we can't any more
-                        readColumns(col, columns);
-                    });
-                });
-            }
-
-            return columns;
-        }
-
-        function changeStructure(model, structure) {
-            var columns = readColumns(model);
-            var counter = 0;
-
-            model.rows = angular.copy(structure.rows);
-
-            while (counter < columns.length) {
-                counter = fillStructure(model, columns, counter);
-            }
-        }
-
         function createConfiguration(type) {
             var cfg = {};
             var config = dashboard.widgets[type].config;
@@ -163,35 +95,6 @@ angular.module('adf')
         }
 
         /**
-         * Find first widget column in model.
-         *
-         * @param dashboard model
-         */
-        function findFirstWidgetColumn(model) {
-            var column = null;
-            if (!angular.isArray(model.rows)) {
-                $log.error('model does not have any rows');
-                return null;
-            }
-            for (var i = 0; i < model.rows.length; i++) {
-                var row = model.rows[i];
-                if (angular.isArray(row.columns)) {
-                    for (var j = 0; j < row.columns.length; j++) {
-                        var col = row.columns[j];
-                        if (!col.rows) {
-                            column = col;
-                            break;
-                        }
-                    }
-                }
-                if (column) {
-                    break;
-                }
-            }
-            return column;
-        }
-
-        /**
          * Adds the widget to first column of the model.
          *
          * @param dashboard model
@@ -200,21 +103,23 @@ angular.module('adf')
          */
         function addNewWidgetToModel(model, widget, name, forceToSave) {
             if (model) {
-                var column = findFirstWidgetColumn(model);
-                if (column) {
-                    if (!column.widgets) {
-                        column.widgets = [];
-                    }
-                    column.widgets.unshift(widget);
+                if (!model.grid) {
+                    model.grid = [];
+                }
 
-                    // broadcast added event
-                    $rootScope.$broadcast('adfWidgetAdded', name, model, widget);
+                var newWidget = {
+                    width: 2,
+                    height: 1,
+                    x: 0,
+                    y: 0,
+                    definition: widget
+                };
+                model.grid.push(newWidget);
 
-                    if (forceToSave) {
-                        $rootScope.$broadcast('adfDashboardChanged', name, model);
-                    }
-                } else {
-                    $log.error('could not find first widget column');
+                $rootScope.$broadcast('adfWidgetAdded', name, model, widget);
+
+                if (forceToSave) {
+                    $rootScope.$broadcast('adfDashboardChanged', name, model);
                 }
             } else {
                 $log.error('model is undefined');
@@ -330,7 +235,6 @@ angular.module('adf')
             restrict: 'EA',
             transclude: false,
             scope: {
-                structure: '@',
                 name: '@',
                 collapsible: '@',
                 editable: '@',
@@ -345,9 +249,7 @@ angular.module('adf')
             },
             controller: function($scope) {
                 var model = {};
-                var structure = {};
                 var widgetFilter = null;
-                var structureName = {};
                 var name = $scope.name;
 
                 // Watching for changes on adfModel
@@ -356,20 +258,6 @@ angular.module('adf')
                     if (newVal !== null || (oldVal === null && newVal === null)) {
                         model = $scope.adfModel;
                         widgetFilter = $scope.adfWidgetFilter;
-                        if (!model || !model.rows) {
-                            structureName = $scope.structure;
-                            structure = dashboard.structures[structureName];
-                            if (structure) {
-                                if (model) {
-                                    model.rows = angular.copy(structure).rows;
-                                } else {
-                                    model = angular.copy(structure);
-                                }
-                                model.structure = structureName;
-                            } else {
-                                $log.error('could not find structure ' + structureName);
-                            }
-                        }
 
                         if (model) {
                             if (!model.title) {
@@ -440,6 +328,20 @@ angular.module('adf')
                     }
                 });
 
+                var adfWidgetRemoved = $scope.$on('adfWidgetRemovedFromGrid', function(event, widget) {
+                    var index = null;
+                    angular.forEach($scope.adfModel.grid, function(widgetTmp, idx) {
+                        if (widgetTmp.definition.wid === widget.wid) {
+                            index = idx;
+                        }
+                    });
+
+                    if (index >= 0) {
+                        $scope.adfModel.grid.splice(index, 1);
+                        //$scope.gsHandler.commit();
+                    }
+                })
+
                 $scope.collapseAll = function(collapseExpandStatus) {
                     $rootScope.$broadcast('adfDashboardCollapseExpand', {
                         collapseExpandStatus: collapseExpandStatus
@@ -481,12 +383,6 @@ angular.module('adf')
                     // pass icon list
                     editDashboardScope.availableIcons = $faIcons.list();
 
-                    // pass dashboard structure to scope
-                    editDashboardScope.structures = dashboard.structures;
-
-                    // pass split function to scope, to be able to display structures in multiple columns
-                    editDashboardScope.split = split;
-
                     var adfEditTemplatePath = adfTemplatePath + 'dashboard-edit.html';
                     if (model.editTemplateUrl) {
                         adfEditTemplatePath = model.editTemplateUrl;
@@ -499,13 +395,7 @@ angular.module('adf')
                         size: 'lg'
                     });
 
-                    editDashboardScope.changeStructure = function(name, structure) {
-                        $log.info('change structure to ' + name);
-                        changeStructure(model, structure);
-                        if (model.structure !== name) {
-                            model.structure = name;
-                        }
-                    };
+
                     editDashboardScope.closeDialog = function() {
                         // copy the new title back to the model
                         model.title = editDashboardScope.copy.title;
@@ -674,6 +564,7 @@ angular.module('adf')
                     adfCancelEditMode();
                     adfAddWidgetDialog();
                     adfEditDashboardDialog();
+                    adfWidgetRemoved();
                 });
             },
             link: function($scope, $element, $attr) {

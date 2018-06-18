@@ -60,12 +60,24 @@ angular.module('adf')
                 if (newScope) {
                     var is_menu = newScope.menu !== undefined && newScope.menu !== null && (!newScope.isPaginationEnable || !newScope.isPaginationEnable());
                     var is_itemsPerPage = newScope.itemsPerPage !== undefined && newScope.itemsPerPage !== null;
-                    if (is_menu || is_itemsPerPage || configChanged || !angular.isFunction(newScope.reloadData)) {
+                    if (is_menu || configChanged || !angular.isFunction(newScope.reloadData)) {
+                        if ($scope.navOptionsHandler) {
+                            $scope.navOptionsHandler.firstLoad = true;
+                        }
+
                         newScope = renderWidget($scope, $element, currentScope, model, content, extra);
                     } else {
+                        if (is_itemsPerPage || newScope.page) {
+                            newScope.page = 1;
+                        }
+
                         newScope.reloadData();
                     }
                 } else {
+                    if ($scope.navOptionsHandler) {
+                        $scope.navOptionsHandler.firstLoad = true;
+                    }
+
                     newScope = renderWidget($scope, $element, currentScope, model, content, extra);
                 }
             }
@@ -196,7 +208,10 @@ angular.module('adf')
             scope: {
                 model: '=',
                 content: '=',
-                extra: '='
+                extra: '=',
+                navOptionsHandler: '=?',
+                filterHandler: '=?',
+                widgetActionsHandler: '=?'
             },
             link: function($scope, $element) {
                 var currentScope = compileWidget($scope, $element, null);
