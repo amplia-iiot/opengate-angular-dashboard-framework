@@ -90,12 +90,14 @@ angular.module('adf')
 
                 dashEvents.push($scope.$on('adfWidgetAdded', function(event, name, model, widget) {
                     $timeout(function() {
+                        $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                         $scope.gsHandler.enable();
                     }, 100);
                 }));
 
                 $scope.onChange = function(event, items) {
                     console.log("onChange event: " + event + " items:" + items);
+                    $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
                 $scope.onDragStart = function(event, ui) {
@@ -113,6 +115,7 @@ angular.module('adf')
 
                 $scope.onResizeStop = function(event, ui) {
                     console.log("onResizeStop event: " + event + " ui:" + ui);
+                    $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                     $scope.$broadcast('OnResizeWidget')
                 };
 
