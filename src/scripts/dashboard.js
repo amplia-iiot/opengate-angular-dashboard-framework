@@ -108,8 +108,8 @@ angular.module('adf')
                 }
 
                 var newWidget = {
-                    width: 2,
-                    height: 1,
+                    width: 3,
+                    height: 2,
                     x: 0,
                     y: 0,
                     definition: widget
