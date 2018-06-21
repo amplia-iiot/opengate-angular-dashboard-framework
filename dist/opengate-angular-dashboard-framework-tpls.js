@@ -517,9 +517,11 @@ angular.module('adf')
                         windowClass: (fullScreenScope.definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
                     };
 
-                    fullScreenScope.persistDashboard = function() {
-                        $rootScope.$broadcast('adfOpenWidgetFromOther', this.$parent.widget.type, this.$parent.widget.config);
-                        this.closeDialog();
+                    if ($scope.model && !$scope.model.temporal) {
+                        fullScreenScope.persistDashboard = function() {
+                            $rootScope.$broadcast('adfOpenWidgetFromOther', this.$parent.widget.type, this.$parent.widget.config);
+                            this.closeDialog();
+                        }
                     }
 
                     var instance = $uibModal.open(opts);
