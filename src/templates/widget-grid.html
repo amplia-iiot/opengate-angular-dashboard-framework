@@ -3,17 +3,13 @@
     <div class="panel-heading clearfix" ng-if="!widget.frameless || editMode">
         <div ng-include src="definition.titleTemplateUrl"></div>
     </div>
-    <div ng-class="{ 'panel-body':!widget.frameless || editMode, 'widget-blur-loading': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }"
-        uib-collapse="widgetState.isCollapsed">
-        <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable" class="row form-group"
-            style="margin-top: 5px !important;">
+    <div ng-class="{ 'panel-body':!widget.frameless || editMode, 'widget-blur-loading': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }" uib-collapse="widgetState.isCollapsed">
+        <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filterAvailable" class="row form-group" style="margin-top: 5px !important;">
             <div ng-if="toggleAdvanced === 0" class="col-xs-12 col-md-8">
                 <div class="filter" mass-autocomplete>
-                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-model="search.oql"
-                        ng-blur="launchSearchingAdv()" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}"
-                        mass-autocomplete-item="autocomplete_options()" ng-change="debugQuery() "></input>
-                    <label ng-click='launchSearchingAdv()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
-                        class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-model="search.oql" ng-blur="launchSearchingAdv()" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}" mass-autocomplete-item="autocomplete_options()"
+                        ng-change="debugQuery() "></input>
+                    <label ng-click='launchSearchingAdv()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
                 </div>
                 <div ng-if="!editMode && filter.error" class="col-xs-12">
                     <alert type="danger" class="text-center text-danger">
@@ -27,13 +23,11 @@
                 <div class="filter form-group">
                     <a href class="text-danger" ng-click="options.customFilter.open = !options.customFilter.open">
                         <i class="glyphicon" ng-class="{'glyphicon-chevron-up': options.customFilter.open, 'glyphicon-chevron-down': !options.customFilter.open}"></i> {{'ADF.WIDGET.TITLE.PICK_FILTER_FIELDS' | translate}} </a>
-                    <label ng-click='launchCustomFilter()'
-                        style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon glyphicon-search"></label>
+                    <label ng-click='launchCustomFilter()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon glyphicon-search"></label>
                     <div class="row" ng-if="options.customFilter.open">
-                        <ui-select multiple="true" ng-model="search.fields" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_FILTER' | translate }}"
-                            on-select="addCustomFilter($item)" on-remove="deleteFilter($item)" ng-click="getcustomFilter()">
+                        <ui-select multiple="true" ng-model="search.fields" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_FILTER' | translate }}" on-select="addCustomFilter($item)" on-remove="deleteFilter($item)" ng-click="getcustomFilter()">
                             <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.PICK_FILTER_FIELDS' | translate }}" allow-clear="true">
-                            {{$item}} </ui-select-match>
+                                {{$item}} </ui-select-match>
                             <ui-select-choices repeat="selector in (customFilter | filter: $select.search)  track by $index">
                                 <small ng-bind-html="selector | highlight: $select.search"></small>
                             </ui-select-choices>
@@ -43,10 +37,8 @@
             </div>
             <div ng-if="toggleAdvanced === 1" class="col-xs-12 col-md-8">
                 <div class="filter">
-                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-blur="launchSearchingQuick()"
-                        ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
-                    <label ng-click='launchSearchingQuick()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
-                        class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-blur="launchSearchingQuick()" ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
+                    <label ng-click='launchSearchingQuick()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
                 </div>
             </div>
             <div class="col-xs-12 col-md-4" uib-dropdown>
@@ -68,15 +60,13 @@
         </div>
         <div ng-if="customSelectors && config.sort && filterAvailable && toggleAdvanced != 2" class="row form-group" style="margin-top: 5px !important;">
             <div class="sort col-xs-12 col-md-8">
-                <ui-select ng-model="config.sort.value" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_ORDER' | translate}}"
-                    allow-clear="true" append-to-body="true" ng-change="launchSearching()" ng-click="getCustomSelectors()">
+                <ui-select ng-model="config.sort.value" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_ORDER' | translate}}" allow-clear="true" append-to-body="true" ng-change="launchSearching()" ng-click="getCustomSelectors()">
                     <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.SHORTED_BY' | translate}}" allow-clear="true">{{ 'ADF.WIDGET.TITLE.SORTED_BY' | translate:{item: $select.selected} }}</ui-select-match>
-                    <ui-select-choices
-                        repeat="selector in customSelectors | filter: $select.search track by $index">
+                    <ui-select-choices repeat="selector in customSelectors | filter: $select.search track by $index">
                         <small>
                             <span ng-bind-html="selector | highlight: $select.search"></span>
                         </small>
-                        </ui-select-choices>
+                    </ui-select-choices>
                 </ui-select>
             </div>
             <div class="sortDirection col-xs-4 col-md-4">
@@ -88,14 +78,12 @@
         <div ng-if="showCustomFields()" class="col-xs-12 col-md-12">
             <div class="col-xs-12 col-md-4" ng-repeat="model in search.customFilter">
                 <label>{{model.name | translate}}</label>
-                <input class="form-control" id="{{model.name}}" name="{{model.name}}"
-                    type="text" ng-model="search.customFilter[$index].value" ng-keydown="enter($event)"> </div>
+                <input class="form-control" id="{{model.name}}" name="{{model.name}}" type="text" ng-model="search.customFilter[$index].value" ng-keydown="enter($event)"> </div>
         </div>
-        <adf-widget-content ng-if="definition" model="definition" content="widget" extra="options.extraData" nav-options-handler="navOptionsHandler"
-            filter-handler="filterHandler" widget-actions-handler="widgetActionsHandler" /> </div>
+        <adf-widget-content ng-if="definition" model="definition" content="widget" extra="options.extraData" nav-options-handler="navOptionsHandler" filter-handler="filterHandler" widget-actions-handler="widgetActionsHandler" /> </div>
     <div class="loaderContainer" ng-if="navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData">
         <img class="loaderImage" src="{{widget.images[0]}}"> </div>
-    <div class="row" ng-if="sendEntities">
+    <div class="row" ng-if="config.showSaveButton && sendEntities">
         <div class="col-xs-12 ">
             <button type="button" class="btn btn-xs btn-primary pull-right oux-button-margin" ng-click="sendEntities()" translate>ADF.COMMON.SAVE</button>
         </div>
