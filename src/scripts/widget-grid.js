@@ -300,7 +300,10 @@ angular.module('adf')
             $scope.launchSearchingQuick = function() {
                 if (!$scope.filterApplied) {
                     $scope.search.oql = $scope.search.json = '';
-                    $scope.config.filter.value = $scope.search.quick;
+                    $scope.config.filter = {
+                        type: 'basic',
+                        value: $scope.search.quick,
+                    }
                     $scope.launchSearching();
                     $scope.filterApplied = true;
                 }
