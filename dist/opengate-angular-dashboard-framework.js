@@ -1455,10 +1455,10 @@ angular.module('adf')
                 if (config.entityKey)
                     return true;
                 var filter = config.filter;
-                if (typeof filter === "string") {
+                if (filter.type === "basic") {
                     return filter.length > 0;
                 }
-                if (typeof filter === "object") {
+                if (filter.type === "advanced") {
                     return filter.value.length > 2 && filter.oql;
                 }
                 return false;
@@ -1481,15 +1481,15 @@ angular.module('adf')
 
             $scope.toggleAdvanced = 1;
             var filter = config.filter;
-            if (typeof filter === "object" && filter.oql && filter.oql.length > 2) {
+            if (filter.type === 'advanced' && filter.oql && filter.oql.length > 2) {
                 $scope.search = {
                     oql: filter.oql,
                     json: filter.value
                 };
                 $scope.toggleAdvanced = 0;
-            } else if (typeof filter === "string") {
+            } else if (filter.type === 'basic') {
                 $scope.search = {
-                    quick: filter
+                    quick: filter.value
                 };
                 $scope.toggleAdvanced = 1;
             } else if (typeof filter === "object" && filter.fields) {
@@ -1583,6 +1583,7 @@ angular.module('adf')
                         };
                     } else {
                         $scope.config.filter = {
+                            type: 'advanced',
                             oql: $scope.search.oql,
                             value: $scope.search.json
                         };
@@ -1599,7 +1600,7 @@ angular.module('adf')
             $scope.launchSearchingQuick = function() {
                 if (!$scope.filterApplied) {
                     $scope.search.oql = $scope.search.json = '';
-                    $scope.config.filter = $scope.search.quick;
+                    $scope.config.filter.value = $scope.search.quick;
                     $scope.launchSearching();
                     $scope.filterApplied = true;
                 }
@@ -2100,7 +2101,7 @@ angular.module('adf')
                     fieldsQuickSearch.forEach(function(field) {
                         criteria = {};
                         criteria[field.operator] = {};
-                        criteria[field.operator][field.name] = $scope.config.filter;
+                        criteria[field.operator][field.name] = $scope.config.filter.value;
                         _filter.or.push(criteria);
                     });
                     return _filter;
