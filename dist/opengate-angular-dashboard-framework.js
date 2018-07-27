@@ -2125,10 +2125,10 @@ angular.module('adf')
                         }
                     }
                     var filter;
-                    if (scope_filter.value && scope_filter.value.length > 4) {
+                    if (scope_filter.type === 'advanced' && scope_filter.value.length > 4) {
                         filter = JSON.parse(scope_filter.value);
-                    } else if (typeof scope_filter === 'string' && scope_filter.trim() !== '') {
-                        filter = createQuickFilter($scope.config.fieldsQuickSearch, scope_filter);
+                    } else if (scope_filter.type === 'basic' && scope_filter.value.trim() !== '') {
+                        filter = createQuickFilter($scope.config.fieldsQuickSearch, scope_filter.value);
                     }
                     if (extra_filter) {
                         if (filter) {
