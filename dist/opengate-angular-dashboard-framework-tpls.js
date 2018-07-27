@@ -1455,10 +1455,10 @@ angular.module('adf')
                 if (config.entityKey)
                     return true;
                 var filter = config.filter;
-                if (filter.type === "basic") {
+                if (filter && filter.type === "basic") {
                     return filter.length > 0;
                 }
-                if (filter.type === "advanced") {
+                if (filter && filter.type === "advanced") {
                     return filter.value.length > 2 && filter.oql;
                 }
                 return false;
@@ -1481,13 +1481,13 @@ angular.module('adf')
 
             $scope.toggleAdvanced = 1;
             var filter = config.filter;
-            if (filter.type === 'advanced' && filter.oql && filter.oql.length > 2) {
+            if (filter && filter.type === 'advanced' && filter.oql && filter.oql.length > 2) {
                 $scope.search = {
                     oql: filter.oql,
                     json: filter.value
                 };
                 $scope.toggleAdvanced = 0;
-            } else if (filter.type === 'basic') {
+            } else if (filter && filter.type === 'basic') {
                 $scope.search = {
                     quick: filter.value
                 };
@@ -2125,9 +2125,9 @@ angular.module('adf')
                         }
                     }
                     var filter;
-                    if (scope_filter.type === 'advanced' && scope_filter.value.length > 4) {
+                    if (scope_filter.type && scope_filter.type === 'advanced' && scope_filter.value.length > 4) {
                         filter = JSON.parse(scope_filter.value);
-                    } else if (scope_filter.type === 'basic' && scope_filter.value.trim() !== '') {
+                    } else if (scope_filter.type && scope_filter.type === 'basic' && scope_filter.value.trim() !== '') {
                         filter = createQuickFilter($scope.config.fieldsQuickSearch, scope_filter.value);
                     }
                     if (extra_filter) {
