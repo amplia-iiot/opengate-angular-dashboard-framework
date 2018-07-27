@@ -1,0 +1,9 @@
+.selected-entities-control {
+    .ui-select-container {
+        >div:first-child {
+            max-height: 300px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+    }
+}

@@ -35,59 +35,55 @@ angular.module('adf')
 
         function compileWidget($scope, $element, currentScope, configChanged) {
             var model = $scope.model;
-            var content = $scope.content;
-
-            var extra = $scope.extra;
-
-            var newScope = currentScope;
             if (!model) {
                 $translate('ADF.ERROR.MODEL_IS_UNDEFINED').then(function (translateMessage) {
                     renderError($element, translateMessage);
                 });
-            } else if (!content) {
-                if (model.title) {
-                    $translate('ADF.ERROR.WIDGET_FOR_DEPRECTATED', {
-                        title: model.title
-                    }).then(function (translateMessage) {
-                        renderError($element, translateMessage);
-                    });
-                } else {
-                    $translate('ADF.ERROR.WIDGET_DEPRECTATED').then(function (translateMessage) {
-                        renderError($element, translateMessage);
-                    });
-                }
-            } else {
-                if (newScope) {
-                    var is_menu = newScope.menu !== undefined && newScope.menu !== null && (!newScope.isPaginationEnable || !newScope.isPaginationEnable());
-                    var is_itemsPerPage = newScope.itemsPerPage !== undefined && newScope.itemsPerPage !== null;
-                    if (is_menu || configChanged || !angular.isFunction(newScope.reloadData)) {
-                        if ($scope.navOptionsHandler) {
-                            $scope.navOptionsHandler.firstLoad = true;
-                        }
+                return currentScope;
+            }
 
-                        newScope = renderWidget($scope, $element, currentScope, model, content, extra);
-                    } else {
-                        if (is_itemsPerPage || newScope.page) {
-                            newScope.page = 1;
-                        }
+            var content = $scope.content;
 
-                        newScope.reloadData();
-                    }
-                } else {
+            if (!content) {
+                $translate('ADF.ERROR.WIDGET_FOR_DEPRECTATED', {
+                    title: model.title
+                }).then(function (translateMessage) {
+                    renderError($element, translateMessage);
+                });
+                return currentScope;
+            }
+
+            var extra = $scope.extra;
+            var newScope = currentScope;
+
+            if (newScope) {
+                var is_menu = newScope.menu !== undefined && newScope.menu !== null && (!newScope.isPaginationEnable || !newScope.isPaginationEnable());
+                if (is_menu || configChanged || !angular.isFunction(newScope.reloadData)) {
                     if ($scope.navOptionsHandler) {
                         $scope.navOptionsHandler.firstLoad = true;
                     }
-
                     newScope = renderWidget($scope, $element, currentScope, model, content, extra);
+                } else {
+                    var is_itemsPerPage = newScope.itemsPerPage !== undefined && newScope.itemsPerPage !== null;
+                    if (is_itemsPerPage || newScope.page) {
+                        newScope.page = 1;
+                    }
+                    newScope.reloadData();
                 }
+            } else {
+                if ($scope.navOptionsHandler) {
+                    $scope.navOptionsHandler.firstLoad = true;
+                }
+
+                newScope = renderWidget($scope, $element, currentScope, model, content, extra);
             }
 
             function _getWindowTime(type) {
-                if (type === "custom") {
+                if (type === 'custom') {
                     return {
                         from: newScope.config.windowFilter.from,
                         to: newScope.config.windowFilter.to
-                    }
+                    };
                 }
                 var from = window.moment().subtract(1, type);
                 return {
@@ -95,30 +91,30 @@ angular.module('adf')
                 };
             }
 
-            if (newScope) {
-                if (newScope.config) {
-                    newScope.config.getWindowTime = function () {
-                        var windowFilter = newScope.config.windowFilter;
-                        if (windowFilter && windowFilter.type) {
-                            var winTime = _getWindowTime(windowFilter.type);
-                            /* jshint ignore:start */
-                            if (!window.eval(newScope.config.windowFilter.rawdate)) {
-                                for (var key in winTime) {
-                                    winTime[key] = window.moment(winTime[key]).format();
-                                }
-                                winTime['rawdate'] = true;
-                            }
-                            /* jshint ignore:end */
-                            return winTime;
-                        }
-                    }
-                }
 
-                if (extra) {
-                    newScope.editing = extra.editing ? true : false;
-                    newScope.extraData = extra;
-                }
+            if (newScope.config) {
+                newScope.config.getWindowTime = function () {
+                    var windowFilter = newScope.config.windowFilter;
+                    if (windowFilter && windowFilter.type) {
+                        var winTime = _getWindowTime(windowFilter.type);
+                        /* jshint ignore:start */
+                        if (!window.eval(newScope.config.windowFilter.rawdate)) {
+                            for (var key in winTime) {
+                                winTime[key] = window.moment(winTime[key]).format();
+                            }
+                            winTime['rawdate'] = true;
+                        }
+                        /* jshint ignore:end */
+                        return winTime;
+                    }
+                };
             }
+
+            if (extra) {
+                newScope.editing = extra.editing ? true : false;
+                newScope.extraData = extra;
+            }
+
             return newScope;
         }
 
@@ -188,7 +184,7 @@ angular.module('adf')
                 // handle promise rejection
                 var msg = 'ADF.ERROR.COULD_NOT_RESOLVE_ALL_PROMISSES';
                 $translate(msg, {
-                    reason: (reason ? ": " + reason : reason)
+                    reason: (reason ? ': ' + reason : reason)
                 }).then(function (translateMessage) {
                     renderError($element, translateMessage);
                 });
@@ -206,6 +202,7 @@ angular.module('adf')
             replace: true,
             restrict: 'EA',
             transclude: false,
+            require: '^^adfWidgetGrid',
             scope: {
                 model: '=',
                 content: '=',
@@ -214,14 +211,24 @@ angular.module('adf')
                 filterHandler: '=?',
                 widgetActionsHandler: '=?'
             },
-            link: function ($scope, $element) {
+            link: function ($scope, $element, attrs, adfWidgetGridCtrl) {
+
+
                 var currentScope = compileWidget($scope, $element, null);
+                adfWidgetGridCtrl.updateWidgetFilters();
                 var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function () {
-                    currentScope = compileWidget($scope, $element, currentScope, false);
+                var widgetReloadEvt = $scope.$on('widgetReload', function (reloadWidgets) {
+                    var reloadWidget = true;
+                    if (reloadWidgets && reloadWidgets.length > 0) {
+                        reloadWidget = reloadWidgets.indexOf($scope.model.wid) !== -1;
+                    }
+                    if (reloadWidget) {
+                        currentScope = compileWidget($scope, $element, currentScope, false);
+                        adfWidgetGridCtrl.updateWidgetFilters();
+                    }
                 });
 
                 $scope.$on('destroy', function () {

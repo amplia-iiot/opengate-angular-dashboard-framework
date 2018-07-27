@@ -43,7 +43,6 @@
     padding-bottom: 5px;
 }
 
-
 /*
  modal dialog in fullscreen
 */
@@ -201,8 +200,7 @@
     text-align: left;
     div {
         height: 30px;
-        padding: 5px 5px 0px 5px;
-        //opacity: 1;
+        padding: 5px 5px 0px 5px; //opacity: 1;
         -webkit-transition: 1s;
         /* Safari */
         transition: 1s;
@@ -224,7 +222,6 @@
 
 .dashboard-container {
     .grid-stack-item {
-        .grid-widget {}
         .grid-stack-item-content {
             .panel-heading {
                 height: 20px;
@@ -342,7 +339,6 @@
         padding: 5px 0;
     }
     .grid-stack-item {
-        .grid-widget {}
         .grid-stack-item-content {
             img.loaderImage {
                 width: 300%;
@@ -364,3 +360,4 @@
 
 @import "edit";
 @import "structure-preview";
+@import "selection";

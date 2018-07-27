@@ -47,7 +47,7 @@
  */
 
 angular.module('adf')
-    .directive('adfDashboard', function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate) {
+    .directive('adfDashboard', function ($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate) {
         'use strict';
 
         function stringToBoolean(string) {
@@ -65,7 +65,6 @@ angular.module('adf')
                     return Boolean(string);
             }
         }
-
 
         function createConfiguration(type) {
             var cfg = {};
@@ -135,30 +134,9 @@ angular.module('adf')
          */
         function openEditMode($scope, widget) {
             // wait some time before fire enter edit mode event
-            $timeout(function() {
+            $timeout(function () {
                 $scope.$broadcast('adfWidgetEnterEditMode', widget);
             }, 200);
-        }
-
-        /**
-         * Splits an object into an array multiple objects inside.
-         *
-         * @param object source object
-         * @param size size of array
-         *
-         * @return array of splitted objects
-         */
-        function split(object, size) {
-            var arr = [];
-            var i = 0;
-            angular.forEach(object, function(value, key) {
-                var index = i++ % size;
-                if (!arr[index]) {
-                    arr[index] = {};
-                }
-                arr[index][key] = value;
-            });
-            return arr;
         }
 
         /**
@@ -170,7 +148,7 @@ angular.module('adf')
          */
         function createCategories(widgets) {
             var categories = {};
-            angular.forEach(widgets, function(widget, key) {
+            angular.forEach(widgets, function (widget, key) {
                 var category = widget.category;
                 // if the widget has no category use a default one
                 if (!category) {
@@ -195,7 +173,7 @@ angular.module('adf')
 
         function createCategoriesList(widgets) {
             var categories = [];
-            angular.forEach(widgets, function(widget, key) {
+            angular.forEach(widgets, function (widget, key) {
                 if (!widget.category) {
                     widget.category = 'ADF.CATEGORY.MISCELLANEOUS';
                 }
@@ -210,7 +188,7 @@ angular.module('adf')
 
                 var categoriesTmp = widget.categoryTags.split(',');
 
-                angular.forEach(categoriesTmp, function(category, idx) {
+                angular.forEach(categoriesTmp, function (category, idx) {
                     // push widget to category array
                     var translatedCat = $translate.instant(category);
                     if (categories.indexOf(translatedCat) === -1)
@@ -238,19 +216,42 @@ angular.module('adf')
                 hideButtons: '=',
                 extraData: '='
             },
-            controller: function($scope) {
+            controller: function ($scope) {
                 var model = {};
                 var widgetFilter = null;
                 var name = $scope.name;
 
+                var updateWidgetFilters = function (model) {
+                    var widgetFilters = [];
+                    var grid = model.grid;
+                    if (grid && grid.length > 0) {
+                        grid.forEach(function (element) {
+                            var definition = element.definition;
+                            var config = definition.config;
+                            widgetFilters.push({
+                                wid: definition.wid,
+                                title: definition.title,
+                                filter: config.filter,
+                                Ftype: definition.Ftype
+                            });
+                        });
+                    }
+                    if (!$scope.options) {
+                        $scope.options = {
+                            extraData: {}
+                        };
+                    }
+                    $scope.options.extraData.widgetFilters = widgetFilters;
+                };
                 // Watching for changes on adfModel
-                $scope.$watch('adfModel', function(oldVal, newVal) {
+                $scope.$watch('adfModel', function (oldVal, newVal) {
                     // has model changed or is the model attribute not set
                     if (newVal !== null || (oldVal === null && newVal === null)) {
                         model = $scope.adfModel;
                         widgetFilter = $scope.adfWidgetFilter;
 
                         if (model) {
+                            updateWidgetFilters(model);
                             if (!model.title) {
                                 model.title = $translate.instant('ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD');
                             }
@@ -266,23 +267,13 @@ angular.module('adf')
 
                 // edit mode
                 $scope.editMode = false;
-                $scope.editClass = '';
 
                 function getNewModalScope() {
                     var scope = $scope.$new();
                     return scope;
                 }
 
-                $scope.deleteDashboard = function() {
-                    var dashData = {
-                        id: model.id,
-                        name: model.title
-                    };
-
-                    $rootScope.$broadcast('dashboardDelete', dashData);
-                };
-
-                $scope.toggleEditMode = function(openConfigWindow) {
+                $scope.toggleEditMode = function (openConfigWindow) {
                     $scope.editMode = !$scope.editMode;
                     if ($scope.editMode) {
                         if (!$scope.continuousEditMode) {
@@ -300,12 +291,7 @@ angular.module('adf')
                     }
                 };
 
-                $scope.saveTemporalDashboard = function() {
-                    delete model.temporal;
-                    $rootScope.$broadcast('adfDashboardChanged', name, model);
-                };
-
-                var adfToggleEditMode = $scope.$on('adfToggleEditMode', function(event, isNewDashboard) {
+                var adfToggleEditMode = $scope.$on('adfToggleEditMode', function (event, isNewDashboard) {
                     if (isNewDashboard) {
                         $scope.toggleEditMode(true);
                     } else {
@@ -313,15 +299,15 @@ angular.module('adf')
                     }
                 });
 
-                var adfCancelEditMode = $scope.$on('adfCancelEditMode', function(event, isNewDashboard) {
+                var adfCancelEditMode = $scope.$on('adfCancelEditMode', function (event) {
                     if ($scope.editMode) {
                         $scope.cancelEditMode();
                     }
                 });
 
-                var adfWidgetRemoved = $scope.$on('adfWidgetRemovedFromGrid', function(event, widget) {
+                var adfWidgetRemoved = $scope.$on('adfWidgetRemovedFromGrid', function (event, widget) {
                     var index = null;
-                    angular.forEach($scope.adfModel.grid, function(widgetTmp, idx) {
+                    angular.forEach($scope.adfModel.grid, function (widgetTmp, idx) {
                         if (widgetTmp.definition.wid === widget.wid) {
                             index = idx;
                         }
@@ -331,15 +317,9 @@ angular.module('adf')
                         $scope.adfModel.grid.splice(index, 1);
                         //$scope.gsHandler.commit();
                     }
-                })
+                });
 
-                $scope.collapseAll = function(collapseExpandStatus) {
-                    $rootScope.$broadcast('adfDashboardCollapseExpand', {
-                        collapseExpandStatus: collapseExpandStatus
-                    });
-                };
-
-                $scope.cancelEditMode = function() {
+                $scope.cancelEditMode = function () {
                     $scope.editMode = false;
                     if (!$scope.continuousEditMode && ($scope.modelCopy !== $scope.adfModel)) {
                         $scope.modelCopy = angular.copy($scope.modelCopy, $scope.adfModel);
@@ -347,21 +327,37 @@ angular.module('adf')
                     $rootScope.$broadcast('adfDashboardEditsCancelled');
                 };
 
-                var adfEditDashboardDialog = $scope.$on('adfEditDashboardDialog', function(event, isNewDashboard) {
+                var adfEditDashboardDialog = $scope.$on('adfEditDashboardDialog', function (event) {
                     if ($scope.editMode) {
                         $scope.editDashboardDialog();
                     }
                 });
 
-                var adfLaunchSearchingFromWidget = $scope.$on('adfLaunchSearchingFromWidget', function(event, widget, configFilter) {
-                    $rootScope.$broadcast('adfFilterChanged', name, model);
+                var adfLaunchSearchingFromWidget = $scope.$on('adfLaunchSearchingFromWidget', function (event, widget) {
+                    var reloadWidgets = [];
+                    if (widget) {
+                        var id = widget.definition.wid;
+                        var config = widget.definition.config;
+                        if (config) {
+                            var filter = config.filter;
+                            model.grid.forEach(function (w) {
+                                var f = w.definition.config.filter;
+                                if (f && f.id && f.id === id) {
+                                    w.definition.config.filter = filter;
+                                    w.definition.config.filter.id = id;
+                                    reloadWidgets.push(w.definition.wid);
+                                }
+                            });
+                        }
+                    }
+                    $rootScope.$broadcast('adfFilterChanged', name, model, reloadWidgets);
                 });
-                var adfWindowTimeChangedFromWidget = $scope.$on('adfWindowTimeChangedFromWidget', function(event, widget, windowFilter) {
+                var adfWindowTimeChangedFromWidget = $scope.$on('adfWindowTimeChangedFromWidget', function (event) {
                     $rootScope.$broadcast('adfFilterChanged', name, model);
                 });
 
                 // edit dashboard settings
-                $scope.editDashboardDialog = function() {
+                $scope.editDashboardDialog = function () {
                     var editDashboardScope = getNewModalScope();
                     // create a copy of the title, to avoid changing the title to
                     // "dashboard" if the field is empty
@@ -387,7 +383,7 @@ angular.module('adf')
                     });
 
 
-                    editDashboardScope.closeDialog = function() {
+                    editDashboardScope.closeDialog = function () {
                         // copy the new title back to the model
                         model.title = editDashboardScope.copy.title;
                         model.description = editDashboardScope.copy.description;
@@ -399,7 +395,7 @@ angular.module('adf')
                     };
                 };
 
-                var adfOpenWidgetFromOther = $scope.$on('adfOpenWidgetFromOther', function(event, widget, config) {
+                var adfOpenWidgetFromOther = $scope.$on('adfOpenWidgetFromOther', function (event, widget, config) {
 
                     var internal_config = createConfiguration(widget);
                     var _config = angular.merge({}, internal_config, config);
@@ -411,7 +407,7 @@ angular.module('adf')
                     addNewWidgetToModel(model, w, name, !$scope.editMode);
                 });
 
-                var adfOpenModalWidgetFromOther = $scope.$on('adfOpenModalWidgetFromOther', function(event, widgetType, config) {
+                var adfOpenModalWidgetFromOther = $scope.$on('adfOpenModalWidgetFromOther', function (event, widgetType, config) {
                     var templateUrl = adfTemplatePath + 'widget-fullscreen.html';
                     if (config.sendSelection) {
                         templateUrl = adfTemplatePath + 'widget-fullscreen-selection.html';
@@ -427,20 +423,20 @@ angular.module('adf')
                     var opts = {
                         scope: fullScreenScope,
                         templateUrl: templateUrl,
-                        size: fullScreenScope.definition.modalSize || 'el', // 'sm', 'lg'
+                        size: fullScreenScope.definition.modalSize || 'el',
                         backdrop: 'static',
                         windowClass: (fullScreenScope.definition.fullScreen) ? 'dashboard-modal widget-fullscreen' : 'dashboard-modal'
                     };
 
                     if ($scope.model && !$scope.model.temporal) {
-                        fullScreenScope.persistDashboard = function() {
+                        fullScreenScope.persistDashboard = function () {
                             $rootScope.$broadcast('adfOpenWidgetFromOther', this.$parent.widget.type, this.$parent.widget.config);
                             this.closeDialog();
-                        }
+                        };
                     }
 
                     var instance = $uibModal.open(opts);
-                    fullScreenScope.closeDialog = function() {
+                    fullScreenScope.closeDialog = function () {
                         instance.close();
                         fullScreenScope.$destroy();
                     };
@@ -448,7 +444,7 @@ angular.module('adf')
 
                 });
 
-                var adfAddWidgetDialog = $scope.$on('adfAddWidgetDialog', function(event, isNewDashboard) {
+                var adfAddWidgetDialog = $scope.$on('adfAddWidgetDialog', function (event) {
                     if (!model.temporal && model.editable) {
                         if (!$scope.editMode) {
                             $scope.editMode = true;
@@ -467,12 +463,12 @@ angular.module('adf')
                     widgetSorting: 'priority'
                 };
 
-                $scope.addWidgetDialog = function() {
+                $scope.addWidgetDialog = function () {
                     var addScope = getNewModalScope();
                     var widgets;
                     if (angular.isFunction(widgetFilter)) {
                         widgets = {};
-                        angular.forEach(dashboard.widgets, function(widget, type) {
+                        angular.forEach(dashboard.widgets, function (widget, type) {
                             if (widgetFilter(widget, type, model)) {
                                 widgets[type] = widget;
                             }
@@ -482,7 +478,7 @@ angular.module('adf')
                     }
                     addScope.widgets = widgets;
 
-                    angular.forEach(addScope.widgets, function(widget, type) {
+                    angular.forEach(addScope.widgets, function (widget, type) {
                         widget.key = type;
                         if (!widget.category) {
                             widget.category = 'Miscellaneous';
@@ -512,7 +508,7 @@ angular.module('adf')
 
                     addScope.widgetFilterCfg = $scope.addScopeCfg;
 
-                    addScope.addWidget = function(widget) {
+                    addScope.addWidget = function (widget) {
                         var w = {
                             type: widget,
                             Ftype: dashboard.widgets[widget].Ftype || null,
@@ -529,7 +525,7 @@ angular.module('adf')
                         }
                     };
 
-                    addScope.changeThumbnail = function(widget) {
+                    addScope.changeThumbnail = function (widget) {
                         if (widget.images) {
                             if (angular.isUndefined(widget._currThumb)) {
                                 widget._currThumb = 1;
@@ -546,7 +542,7 @@ angular.module('adf')
                         }
                     };
 
-                    addScope.closeDialog = function() {
+                    addScope.closeDialog = function () {
                         // close and destroy
                         instance.close();
                         addScope.$destroy();
@@ -555,7 +551,7 @@ angular.module('adf')
 
                 $scope.addNewWidgetToModel = addNewWidgetToModel;
 
-                $scope.$on('destroy', function() {
+                $scope.$on('destroy', function () {
                     adfLaunchSearchingFromWidget();
                     adfWindowTimeChangedFromWidget();
                     adfToggleEditMode();
@@ -567,7 +563,7 @@ angular.module('adf')
                     adfWidgetRemoved();
                 });
             },
-            link: function($scope, $element, $attr) {
+            link: function ($scope, $element, $attr) {
                 // pass options to scope
                 var options = {
                     name: $attr.name,

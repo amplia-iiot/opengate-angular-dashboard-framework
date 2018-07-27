@@ -491,3 +491,9 @@ pre.edit {
 .structure-preview.selected h4 {
   color: #337ab7;
 }
+
+.selected-entities-control .ui-select-container > div:first-child {
+  max-height: 300px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
