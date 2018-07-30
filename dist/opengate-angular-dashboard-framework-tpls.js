@@ -1265,7 +1265,7 @@ angular.module('adf')
             replace: true,
             restrict: 'EA',
             transclude: false,
-            require: '^^adfWidgetGrid',
+            require: '?^^adfWidgetGrid',
             scope: {
                 model: '=',
                 content: '=',
@@ -1278,7 +1278,8 @@ angular.module('adf')
 
 
                 var currentScope = compileWidget($scope, $element, null);
-                adfWidgetGridCtrl.updateWidgetFilters();
+                if (adfWidgetGridCtrl)
+                    adfWidgetGridCtrl.updateWidgetFilters();
                 var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
@@ -1290,7 +1291,8 @@ angular.module('adf')
                     }
                     if (reloadWidget) {
                         currentScope = compileWidget($scope, $element, currentScope, false);
-                        adfWidgetGridCtrl.updateWidgetFilters();
+                        if (adfWidgetGridCtrl)
+                            adfWidgetGridCtrl.updateWidgetFilters();
                     }
                 });
 
