@@ -215,21 +215,24 @@ angular.module('adf')
 
 
                 var currentScope = compileWidget($scope, $element, null);
-                if (adfWidgetGridCtrl)
-                    adfWidgetGridCtrl.updateWidgetFilters();
+                if (adfWidgetGridCtrl) {
+                    $scope.search = $scope.search || {};
+                    adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id);
+                }
                 var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function (reloadWidgets) {
+                var widgetReloadEvt = $scope.$on('widgetReload', function (event, reloadWidgets) {
                     var reloadWidget = true;
                     if (reloadWidgets && reloadWidgets.length > 0) {
                         reloadWidget = reloadWidgets.indexOf($scope.model.wid) !== -1;
                     }
                     if (reloadWidget) {
                         currentScope = compileWidget($scope, $element, currentScope, false);
-                        if (adfWidgetGridCtrl)
-                            adfWidgetGridCtrl.updateWidgetFilters();
+                        if (adfWidgetGridCtrl) {
+                            adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id);
+                        }
                     }
                 });
 

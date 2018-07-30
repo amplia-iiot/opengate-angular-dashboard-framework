@@ -177,31 +177,28 @@ angular.module('adf')
                 showFinalFilter: false
             };
 
-            var filter = config.filter;
-            if (filter && filter.type === 'advanced' && filter.oql && filter.oql.length > 2) {
-                $scope.search = {
-                    oql: filter.oql,
-                    json: filter.value
-                };
-                $scope.toggleAdvanced = 0;
-            } else if (filter && filter.type === 'basic') {
-                $scope.search = {
-                    quick: filter.value
-                };
-                $scope.toggleAdvanced = 1;
-            } else if (typeof filter === "object" && filter.fields) {
-                $scope.search = {
-                    customFilter: filter.fields
-                };
-                $scope.search.fields = [];
-                angular.forEach(filter.fields, function (v, key) {
-                    $scope.search.fields.push(v.name);
-                });
-                $scope.toggleAdvanced = 2;
-            } else {
-                $scope.search = {
-                    quick: filter = ''
-                };
+            var filter = config.filter = config.filter ? config.filter : {};
+            switch (filter.type) {
+                case 'advanced':
+                    $scope.search = {
+                        oql: filter.oql,
+                        json: filter.value,
+                        id: filter.id
+                    };
+                    $scope.filter.typeFilter = filter.id ? 2 : 0;
+                    break;
+                case 'basic':
+                    $scope.search = {
+                        quick: filter.value,
+                        id: filter.id
+                    };
+                    $scope.filter.typeFilter = filter.id ? 2 : 1;
+                    break;
+                default:
+                    $scope.search = {
+                        quick: filter = ''
+                    };
+                    break;
             }
 
             $scope.launchSearching = function () {
@@ -351,7 +348,7 @@ angular.module('adf')
                 currentSelection: $scope.selectedItems,
                 isSelected: function (key, obj) {
                     if ($scope.selectedItems[key] && !angular.isUndefined(obj)) {
-                        selectedItems[key].data = obj;
+                        $scope.selectedItems[key].data = obj;
                     }
 
                     return $scope.selectedItems[key] ? true : false;
@@ -585,15 +582,18 @@ angular.module('adf')
             },
             controller: function ($scope) {
 
-                var sharedFilters = $scope.sharedFilters = [];
-
-                this.updateWidgetFilters = function () {
+                this.updateWidgetFilters = function (filterId) {
                     var _widgetFilters = $scope.options.extraData.widgetFilters;
                     var model = $scope.definition;
+                    var selectFilter;
                     var sharedFilters = _widgetFilters.filter(function (widgetFilter) {
-                        return widgetFilter.wid !== model.wid && widgetFilter.Ftype === model.Ftype;
+                        var shared = widgetFilter.wid !== model.wid && widgetFilter.Ftype === model.Ftype && !widgetFilter.filter.id;
+                        if (shared && (filterId === widgetFilter.wid))
+                            selectFilter = widgetFilter;
+                        return shared;
                     });
                     $scope.sharedFilters = angular.copy(sharedFilters);
+                    $scope.search.id = selectFilter;
                 };
 
                 var definition = $scope.definition;

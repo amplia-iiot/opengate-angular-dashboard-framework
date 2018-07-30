@@ -367,12 +367,17 @@ angular.module('adf')
                 var adfLaunchSearchingFromWidget = $scope.$on('adfLaunchSearchingFromWidget', function (event, widget) {
                     var reloadWidgets = [];
                     if (widget) {
-                        var id = widget.definition.wid;
-                        var config = widget.definition.config;
+                        var definition = angular.copy(widget.definition);
+                        var id = definition.wid;
+                        var config = definition.config;
                         if (config) {
                             var filter = config.filter;
                             model.grid.forEach(function (w) {
                                 var f = w.definition.config.filter;
+                                //solo recargamos y actualizamos los widgets:
+                                // - que tengan filtro
+                                // y que el id tenga filtro
+                                // y que el id del filtro coincida con el wid del widget que ha modificado el fitro
                                 if (f && f.id && f.id === id) {
                                     w.definition.config.filter = filter;
                                     w.definition.config.filter.id = id;
@@ -1278,21 +1283,24 @@ angular.module('adf')
 
 
                 var currentScope = compileWidget($scope, $element, null);
-                if (adfWidgetGridCtrl)
-                    adfWidgetGridCtrl.updateWidgetFilters();
+                if (adfWidgetGridCtrl) {
+                    $scope.search = $scope.search || {};
+                    adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id);
+                }
                 var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
                     currentScope = compileWidget($scope, $element, currentScope, true);
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function (reloadWidgets) {
+                var widgetReloadEvt = $scope.$on('widgetReload', function (event, reloadWidgets) {
                     var reloadWidget = true;
                     if (reloadWidgets && reloadWidgets.length > 0) {
                         reloadWidget = reloadWidgets.indexOf($scope.model.wid) !== -1;
                     }
                     if (reloadWidget) {
                         currentScope = compileWidget($scope, $element, currentScope, false);
-                        if (adfWidgetGridCtrl)
-                            adfWidgetGridCtrl.updateWidgetFilters();
+                        if (adfWidgetGridCtrl) {
+                            adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id);
+                        }
                     }
                 });
 
@@ -1482,31 +1490,28 @@ angular.module('adf')
                 showFinalFilter: false
             };
 
-            var filter = config.filter;
-            if (filter && filter.type === 'advanced' && filter.oql && filter.oql.length > 2) {
-                $scope.search = {
-                    oql: filter.oql,
-                    json: filter.value
-                };
-                $scope.toggleAdvanced = 0;
-            } else if (filter && filter.type === 'basic') {
-                $scope.search = {
-                    quick: filter.value
-                };
-                $scope.toggleAdvanced = 1;
-            } else if (typeof filter === "object" && filter.fields) {
-                $scope.search = {
-                    customFilter: filter.fields
-                };
-                $scope.search.fields = [];
-                angular.forEach(filter.fields, function (v, key) {
-                    $scope.search.fields.push(v.name);
-                });
-                $scope.toggleAdvanced = 2;
-            } else {
-                $scope.search = {
-                    quick: filter = ''
-                };
+            var filter = config.filter = config.filter ? config.filter : {};
+            switch (filter.type) {
+                case 'advanced':
+                    $scope.search = {
+                        oql: filter.oql,
+                        json: filter.value,
+                        id: filter.id
+                    };
+                    $scope.filter.typeFilter = filter.id ? 2 : 0;
+                    break;
+                case 'basic':
+                    $scope.search = {
+                        quick: filter.value,
+                        id: filter.id
+                    };
+                    $scope.filter.typeFilter = filter.id ? 2 : 1;
+                    break;
+                default:
+                    $scope.search = {
+                        quick: filter = ''
+                    };
+                    break;
             }
 
             $scope.launchSearching = function () {
@@ -1656,7 +1661,7 @@ angular.module('adf')
                 currentSelection: $scope.selectedItems,
                 isSelected: function (key, obj) {
                     if ($scope.selectedItems[key] && !angular.isUndefined(obj)) {
-                        selectedItems[key].data = obj;
+                        $scope.selectedItems[key].data = obj;
                     }
 
                     return $scope.selectedItems[key] ? true : false;
@@ -1890,15 +1895,18 @@ angular.module('adf')
             },
             controller: ["$scope", function ($scope) {
 
-                var sharedFilters = $scope.sharedFilters = [];
-
-                this.updateWidgetFilters = function () {
+                this.updateWidgetFilters = function (filterId) {
                     var _widgetFilters = $scope.options.extraData.widgetFilters;
                     var model = $scope.definition;
+                    var selectFilter;
                     var sharedFilters = _widgetFilters.filter(function (widgetFilter) {
-                        return widgetFilter.wid !== model.wid && widgetFilter.Ftype === model.Ftype;
+                        var shared = widgetFilter.wid !== model.wid && widgetFilter.Ftype === model.Ftype && !widgetFilter.filter.id;
+                        if (shared && (filterId === widgetFilter.wid))
+                            selectFilter = widgetFilter;
+                        return shared;
                     });
                     $scope.sharedFilters = angular.copy(sharedFilters);
+                    $scope.search.id = selectFilter;
                 };
 
                 var definition = $scope.definition;

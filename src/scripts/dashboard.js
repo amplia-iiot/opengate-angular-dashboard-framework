@@ -336,12 +336,17 @@ angular.module('adf')
                 var adfLaunchSearchingFromWidget = $scope.$on('adfLaunchSearchingFromWidget', function (event, widget) {
                     var reloadWidgets = [];
                     if (widget) {
-                        var id = widget.definition.wid;
-                        var config = widget.definition.config;
+                        var definition = angular.copy(widget.definition);
+                        var id = definition.wid;
+                        var config = definition.config;
                         if (config) {
                             var filter = config.filter;
                             model.grid.forEach(function (w) {
                                 var f = w.definition.config.filter;
+                                //solo recargamos y actualizamos los widgets:
+                                // - que tengan filtro
+                                // y que el id tenga filtro
+                                // y que el id del filtro coincida con el wid del widget que ha modificado el fitro
                                 if (f && f.id && f.id === id) {
                                     w.definition.config.filter = filter;
                                     w.definition.config.filter.id = id;

@@ -32,26 +32,30 @@
                 </div>
             </div>
             <div ng-if="filter.typeFilter === 2" class="col-xs-12 col-md-8">
-                <div class="filter">
-                    <ui-select id="sharedFilter" ng-model="search.id" theme="bootstrap" allow-clear="true" title="Choose shared filter"
-                        on-select="filterSharedSelect($item, $model)" on-remove="filterSharedRemove($item, $model)">
-                        <ui-select-match placeholder="{{ 'FORM.PLACEHOLDER.SHARED_FILTER' | translate }} " allow-clear="false">{{$select.selected.title}} </ui-select-match>
-                        <ui-select-choices repeat="sharedFilter in sharedFilters | filter: $select.search">
-                            <div>
-                                <span ng-bind-html="sharedFilter.title | highlight: $select.search">
-                            </div>
-                            <small>
-                                <div ng-if="sharedFilter.filter.type === 'advanced'">{{ 'FORM.LABEL.ADVANCED' | translate }}
-                                    <span ng-bind-html="''+sharedFilter.filter.oql | highlight: $select.search"></span>
+                <div class="filter row">
+                    <div class="col-xs-11 col-md-11">
+                        <ui-select id="sharedFilter" ng-model="search.id" theme="bootstrap" title="{{ 'FORM.TITLE.SHARED_FILTER' | translate }}"
+                            on-select="filterSharedSelect($item, $model)" on-remove="filterSharedRemove($item, $model)">
+                            <ui-select-match placeholder="{{ 'FORM.PLACEHOLDER.SHARED_FILTER' | translate }} " allow-clear="true">{{$select.selected.title}} </ui-select-match>
+                            <ui-select-choices repeat="sharedFilter in sharedFilters | filter: $select.search">
+                                <div>
+                                    <span ng-bind-html="sharedFilter.title | highlight: $select.search">
                                 </div>
-                                <div ng-if="sharedFilter.filter.type === 'basic'">{{ 'FORM.LABEL.BASIC' | translate }}
-                                    <span ng-bind-html="''+sharedFilter.filter.value | highlight: $select.search"></span>
-                                </div>
-                            </small>
-                        </ui-select-choices>
-                    </ui-select>
-                    <label ng-click='launchSearchingShared()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
-                        class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                                <small>
+                                    <div ng-if="sharedFilter.filter.type === 'advanced'">{{ 'FORM.LABEL.ADVANCED' | translate }}
+                                        <span ng-bind-html="''+sharedFilter.filter.oql | highlight: $select.search"></span>
+                                    </div>
+                                    <div ng-if="sharedFilter.filter.type === 'basic'">{{ 'FORM.LABEL.BASIC' | translate }}
+                                        <span ng-bind-html="''+sharedFilter.filter.value | highlight: $select.search"></span>
+                                    </div>
+                                </small>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                    <div class="col-xs-1 col-md-1">
+                        <label ng-click='launchSearchingShared()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
+                            class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    </div>
                 </div>
             </div>
             <div class="col-xs-12 col-md-4" uib-dropdown>
