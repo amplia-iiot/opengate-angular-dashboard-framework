@@ -221,6 +221,38 @@ angular.module('adf')
                 var widgetFilter = null;
                 var name = $scope.name;
 
+                var _getReloadWidgets = function (widget) {
+                    var reloadWidgets = {
+                        configChange: [],
+                        reload: []
+                    };
+                    if (widget) {
+                        var definition = angular.copy(widget.definition);
+                        var ftype = definition.Ftype;
+                        var id = definition.wid;
+                        var config = definition.config;
+                        if (config) {
+                            var filter = config.filter;
+                            model.grid.forEach(function (w) {
+                                var f = w.definition.config.filter;
+                                var ft = w.definition.Ftype;
+                                //solo recargamos y actualizamos los widgets:
+                                // - que tengan filtro
+                                // y que el id tenga filtro
+                                // y que el id del filtro coincida con el wid del widget que ha modificado el fitro
+                                if (f && f.id && f.id === id) {
+                                    w.definition.config.filter = filter;
+                                    w.definition.config.filter.id = id;
+                                    reloadWidgets.reload.push(w.definition.wid);
+                                } else if (ftype === ft) {
+                                    reloadWidgets.configChange.push(w.definition.wid);
+                                }
+                            });
+                        }
+                    }
+                    return reloadWidgets;
+                };
+
                 var updateWidgetFilters = function (model) {
                     var widgetFilters = [];
                     var grid = model.grid;
@@ -315,7 +347,6 @@ angular.module('adf')
 
                     if (index >= 0) {
                         $scope.adfModel.grid.splice(index, 1);
-                        //$scope.gsHandler.commit();
                     }
                 });
 
@@ -333,28 +364,9 @@ angular.module('adf')
                     }
                 });
 
+
                 var adfLaunchSearchingFromWidget = $scope.$on('adfLaunchSearchingFromWidget', function (event, widget) {
-                    var reloadWidgets = [];
-                    if (widget) {
-                        var definition = angular.copy(widget.definition);
-                        var id = definition.wid;
-                        var config = definition.config;
-                        if (config) {
-                            var filter = config.filter;
-                            model.grid.forEach(function (w) {
-                                var f = w.definition.config.filter;
-                                //solo recargamos y actualizamos los widgets:
-                                // - que tengan filtro
-                                // y que el id tenga filtro
-                                // y que el id del filtro coincida con el wid del widget que ha modificado el fitro
-                                if (f && f.id && f.id === id) {
-                                    w.definition.config.filter = filter;
-                                    w.definition.config.filter.id = id;
-                                    reloadWidgets.push(w.definition.wid);
-                                }
-                            });
-                        }
-                    }
+                    var reloadWidgets = _getReloadWidgets(widget);
                     $rootScope.$broadcast('adfFilterChanged', name, model, reloadWidgets);
                 });
                 var adfWindowTimeChangedFromWidget = $scope.$on('adfWindowTimeChangedFromWidget', function (event) {

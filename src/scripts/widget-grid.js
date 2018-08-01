@@ -177,30 +177,6 @@ angular.module('adf')
                 showFinalFilter: false
             };
 
-            var filter = config.filter = config.filter ? config.filter : {};
-            switch (filter.type) {
-                case 'advanced':
-                    $scope.search = {
-                        oql: filter.oql,
-                        json: filter.value,
-                        id: filter.id
-                    };
-                    $scope.filter.typeFilter = filter.id ? 2 : 0;
-                    break;
-                case 'basic':
-                    $scope.search = {
-                        quick: filter.value,
-                        id: filter.id
-                    };
-                    $scope.filter.typeFilter = filter.id ? 2 : 1;
-                    break;
-                default:
-                    $scope.search = {
-                        quick: filter = ''
-                    };
-                    break;
-            }
-
             $scope.launchSearching = function () {
                 var widget = {
                     definition: definition,
@@ -208,7 +184,7 @@ angular.module('adf')
                 };
 
                 $rootScope.$broadcast('adfLaunchSearchingFromWidget', widget, $scope.config.filter);
-                $scope.reload(true);
+                $scope.reload();
             };
 
 
@@ -581,19 +557,54 @@ angular.module('adf')
                 widgetState: '='
             },
             controller: function ($scope) {
+                var _setFilterType = function (selectFilter) {
+                    var config = $scope.config;
+                    var filter = config.filter = config.filter ? config.filter : {};
+                    var id = filter.id = selectFilter && filter.id;
+                    switch (filter.type) {
+                        case 'advanced':
+                            $scope.filter.typeFilter = id ? 2 : 0;
+                            $scope.search = {
+                                oql: filter.oql,
+                                json: filter.value
+                            };
+                            break;
+                        case 'basic':
+                            $scope.filter.typeFilter = id ? 2 : 1;
+                            $scope.search = {
+                                quick: filter.value
+                            };
 
-                this.updateWidgetFilters = function (filterId) {
+                            break;
+                        default:
+                            $scope.filter.typeFilter = id ? 2 : 1;
+                            $scope.search = {
+                                quick: filter = ''
+                            };
+                            break;
+                    }
+                    $scope.search.id = selectFilter;
+                };
+
+                this.updateWidgetFilters = function (filterId, configChange) {
+
                     var _widgetFilters = $scope.options.extraData.widgetFilters;
                     var model = $scope.definition;
                     var selectFilter;
                     var sharedFilters = _widgetFilters.filter(function (widgetFilter) {
-                        var shared = widgetFilter.wid !== model.wid && widgetFilter.Ftype === model.Ftype && !widgetFilter.filter.id;
+                        // Recuperamos solos los filtros de widgets que cumplan las condiciones:
+                        // - No tenga un filtro heredado como filtro
+                        // - El tipo de filtro sea igual que el widget que pueda heredarlo (Ftype)
+                        // - No recuperamos el filtro propio del widget  
+                        var shared = (!widgetFilter.filter || !widgetFilter.filter.id) && (widgetFilter.Ftype === model.Ftype) && (widgetFilter.wid !== model.wid);
                         if (shared && (filterId === widgetFilter.wid))
                             selectFilter = widgetFilter;
                         return shared;
                     });
+
                     $scope.sharedFilters = angular.copy(sharedFilters);
-                    $scope.search.id = selectFilter;
+                    if (!configChange || !selectFilter && !!filterId)
+                        _setFilterType(selectFilter);
                 };
 
                 var definition = $scope.definition;
@@ -652,8 +663,24 @@ angular.module('adf')
                     $scope.editing = true;
                 });
 
-                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function (event, widget) {
-                    $scope.editing = false;
+                var adfDashboardChanged = $scope.$on('adfDashboardChanged', function (event, name, model) {
+                    //config.widgetSelectors = tiene filtro
+                    var widgetConfigChanged = [];
+                    var grid = model.grid;
+                    if (grid && grid.length > 0) {
+                        grid.forEach(function (element) {
+                            var definition = element.definition;
+                            widgetConfigChanged.push(definition.wid);
+                        });
+                        var widgetFilters = $scope.options.extraData && $scope.options.extraData.widgetFilters;
+                        var sharedFilters = widgetFilters.filter(function (widgetFilter) {
+                            var filter = widgetFilter.filter;
+                            return filter && !filter.id || widgetConfigChanged.indexOf(filter.id) !== -1;
+                        });
+                        $scope.sharedFilters = angular.copy(sharedFilters);
+                        $scope.editing = false;
+                        $scope.$broadcast('widgetConfigChanged', widgetConfigChanged);
+                    }
                 });
 
                 var adfDashboardEditsCancelled = $scope.$on('adfDashboardEditsCancelled', function (event, widget) {
@@ -799,12 +826,8 @@ angular.module('adf')
                     }
                 };
 
-                $scope.reload = function (completeReload) {
-                    if (completeReload) {
-                        $scope.$broadcast('widgetReload', completeReload);
-                    } else {
-                        $scope.$broadcast('widgetReload');
-                    }
+                $scope.reload = function () {
+                    $scope.$broadcast('widgetReload');
 
                     $scope.setReloadTimeout();
                 };

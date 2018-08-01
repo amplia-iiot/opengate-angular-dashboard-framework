@@ -219,8 +219,12 @@ angular.module('adf')
                     $scope.search = $scope.search || {};
                     adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id);
                 }
-                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function () {
-                    currentScope = compileWidget($scope, $element, currentScope, true);
+                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function (event, changeWidgets) {
+                    if (changeWidgets && changeWidgets.indexOf($scope.model.wid) !== -1) {
+                        adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id, true);
+                    } else {
+                        currentScope = compileWidget($scope, $element, currentScope, true);
+                    }
                 });
 
                 var widgetReloadEvt = $scope.$on('widgetReload', function (event, reloadWidgets) {
