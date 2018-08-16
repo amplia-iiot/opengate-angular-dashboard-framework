@@ -3,17 +3,12 @@
     <div class="panel-heading clearfix" ng-if="!widget.frameless || editMode">
         <div ng-include src="definition.titleTemplateUrl"></div>
     </div>
-    <div ng-class="{ 'panel-body':!widget.frameless || editMode, 'widget-blur-loading': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }"
-        uib-collapse="widgetState.isCollapsed">
-        <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filter.showFilter" class="row form-group"
-            style="margin-top: 5px !important;">
+    <div ng-class="{ 'panel-body':!widget.frameless || editMode, 'widget-blur-loading': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }" uib-collapse="widgetState.isCollapsed">
+        <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filter.showFilter" class="row form-group" style="margin-top: 5px !important;">
             <div ng-if="filter.typeFilter === 0" class="col-xs-12 col-md-8">
                 <div class="filter" mass-autocomplete>
-                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-model="search.oql"
-                        ng-blur="launchSearchingAdv()" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}"
-                        mass-autocomplete-item="autocomplete_options()" ng-change="debugQuery() "></input>
-                    <label ng-click='launchSearchingAdv()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
-                        class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-model="search.oql" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}" mass-autocomplete-item="autocomplete_options()" ng-change="debugQuery()">
+                    <label ng-click='launchSearchingAdv()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
                 </div>
                 <div ng-if="!editMode && filter_error" class="col-xs-12">
                     <alert type="danger" class="text-center text-danger">
@@ -25,16 +20,13 @@
             </div>
             <div ng-if="filter.typeFilter === 1" class="col-xs-12 col-md-8">
                 <div class="filter">
-                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-blur="launchSearchingQuick()"
-                        ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
-                    <label ng-click='launchSearchingQuick()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
-                        class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-blur="launchSearchingQuick()" ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
+                    <label ng-click='launchSearchingQuick()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
                 </div>
             </div>
             <div ng-if="filter.typeFilter === 2" class="col-xs-12 col-md-8">
                 <div class="filter ">
-                    <ui-select id="sharedFilter" ng-model="search.id" theme="bootstrap" title="{{ 'FORM.TITLE.SHARED_FILTER' | translate }}"
-                        on-select="filterSharedSelect($item, $model)" on-remove="filterSharedRemove($item, $model)">
+                    <ui-select id="sharedFilter" ng-model="search.id" theme="bootstrap" title="{{ 'FORM.TITLE.SHARED_FILTER' | translate }}" on-select="filterSharedSelect($item, $model)" on-remove="filterSharedRemove($item, $model)">
                         <ui-select-match placeholder="{{ 'FORM.PLACEHOLDER.SHARED_FILTER' | translate }} " allow-clear="true">{{$select.selected.title}} </ui-select-match>
                         <ui-select-choices repeat="sharedFilter in sharedFilters | filter: $select.search">
                             <div>
@@ -43,15 +35,15 @@
                             <small>
                                 <div ng-if="sharedFilter.filter.type === 'advanced'">{{ 'FORM.LABEL.ADVANCED' | translate }}
                                     <span ng-bind-html="''+sharedFilter.filter.oql | highlight: $select.search"></span>
-                                </div>
-                                <div ng-if="sharedFilter.filter.type === 'basic'">{{ 'FORM.LABEL.BASIC' | translate }}
-                                    <span ng-bind-html="''+sharedFilter.filter.value | highlight: $select.search"></span>
-                                </div>
+                            </div>
+                            <div ng-if="sharedFilter.filter.type === 'basic'">{{ 'FORM.LABEL.BASIC' | translate }}
+                                <span ng-bind-html="''+sharedFilter.filter.value | highlight: $select.search"></span>
+                            </div>
                             </small>
                         </ui-select-choices>
                     </ui-select>
-                    <label ng-click='launchSearchingShared()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
-                        class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    <!-- <label ng-click='launchSearchingShared()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;"
+                        class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label> -->
                 </div>
             </div>
             <div class="col-xs-12 col-md-4" uib-dropdown>
@@ -77,25 +69,22 @@
         </div>
         <div ng-if="customSelectors && config.sort && filter.showFilter" class="row form-group" style="margin-top: 5px !important;">
             <div class="sort col-xs-12 col-md-8">
-                <ui-select ng-model="config.sort.value" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_ORDER' | translate}}"
-                    allow-clear="true" append-to-body="true" ng-change="launchSearching()" ng-click="getCustomSelectors()">
+                <ui-select ng-model="config.sort.value" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_ORDER' | translate}}" allow-clear="true" append-to-body="true" ng-change="launchSearching()" ng-click="getCustomSelectors()">
                     <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.SHORTED_BY' | translate}}" allow-clear="true">{{ 'ADF.WIDGET.TITLE.SORTED_BY' | translate:{item: $select.selected} }}</ui-select-match>
-                    <ui-select-choices
-                        repeat="selector in customSelectors | filter: $select.search track by $index">
+                    <ui-select-choices repeat="selector in customSelectors | filter: $select.search track by $index">
                         <small>
                             <span ng-bind-html="selector | highlight: $select.search"></span>
                         </small>
-                        </ui-select-choices>
+                    </ui-select-choices>
                 </ui-select>
             </div>
             <div class="sortDirection col-xs-4 col-md-4">
-                <button class="btn btn-sm pointer" ng-click="changeDirection()" ng-disabled="config.sort.value === ''" title="{{'TOGGLE_SORTING_DIRECTION' | translate}}">
+                <button class="btn btn-sm pointer" ng-click="changeDirection()" ng-disabled="config.sort.value === ''" title="{{'ADF.WIDGET.TITLE.TOGGLE_SORTING_DIRECTION' | translate}}">
                     <i class="glyphicon" style="font-size:1.3em;" ng-class="config.sort.direction==='ASCENDING' ? 'glyphicon-sort-by-attributes': 'glyphicon-sort-by-attributes-alt'"></i>
                 </button>
             </div>
         </div>
-        <adf-widget-content ng-if="definition" model="definition" content="widget" extra="options.extraData" nav-options-handler="navOptionsHandler"
-            filter-handler="filterHandler" widget-actions-handler="widgetActionsHandler" /> </div>
+        <adf-widget-content ng-if="definition" model="definition" content="widget" extra="options.extraData" nav-options-handler="navOptionsHandler" filter-handler="filterHandler" widget-actions-handler="widgetActionsHandler" /> </div>
     <div class="loaderContainer" ng-if="navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData">
         <img class="loaderImage" src="{{widget.images[0]}}"> </div>
     <div class="row" ng-if="config.showSaveButton && sendEntities">

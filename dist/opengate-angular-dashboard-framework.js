@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '6.0.0');
+    .value('adfVersion', '7.0.0');
 /*
  * The MIT License
  *
@@ -1523,6 +1523,7 @@ angular.module('adf')
                     $scope.search.quick = '';
                     if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
                         $scope.config.filter = {
+                            type: 'advanced',
                             oql: '',
                             value: ''
                         };
@@ -1553,21 +1554,22 @@ angular.module('adf')
             };
 
             $scope.launchSearchingShared = function() {
-                if (!$scope.filterApplied) {
-                    var shared = $scope.search.id;
-                    if (shared) {
-                        shared.filter.id = shared.wid;
-                        $scope.config.filter = shared.filter;
-                    } else {
-                        $scope.config.filter = {};
-                    }
-                    $scope.launchSearching();
-                    $scope.filterApplied = true;
+                // if (!$scope.filterApplied) {
+                var shared = $scope.search.id;
+                if (shared) {
+                    shared.filter.id = shared.wid;
+                    $scope.config.filter = shared.filter;
+                } else {
+                    $scope.config.filter = {};
                 }
+                $scope.launchSearching();
+                $scope.filterApplied = true;
+                // }
             };
 
             $scope.filterSharedSelect = function($item, $model) {
                 $scope.filterApplied = false;
+                $scope.launchSearchingShared();
             };
             $scope.filterSharedRemove = function($item, $model) {
                 $scope.filterApplied = false;
@@ -1913,7 +1915,7 @@ angular.module('adf')
                         default:
                             $scope.filter.typeFilter = id ? 2 : 1;
                             $scope.search = {
-                                quick: filter = ''
+                                quick: filter.value = ''
                             };
                             break;
                     }

@@ -193,6 +193,7 @@ angular.module('adf')
                     $scope.search.quick = '';
                     if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
                         $scope.config.filter = {
+                            type: 'advanced',
                             oql: '',
                             value: ''
                         };
@@ -223,21 +224,22 @@ angular.module('adf')
             };
 
             $scope.launchSearchingShared = function() {
-                if (!$scope.filterApplied) {
-                    var shared = $scope.search.id;
-                    if (shared) {
-                        shared.filter.id = shared.wid;
-                        $scope.config.filter = shared.filter;
-                    } else {
-                        $scope.config.filter = {};
-                    }
-                    $scope.launchSearching();
-                    $scope.filterApplied = true;
+                // if (!$scope.filterApplied) {
+                var shared = $scope.search.id;
+                if (shared) {
+                    shared.filter.id = shared.wid;
+                    $scope.config.filter = shared.filter;
+                } else {
+                    $scope.config.filter = {};
                 }
+                $scope.launchSearching();
+                $scope.filterApplied = true;
+                // }
             };
 
             $scope.filterSharedSelect = function($item, $model) {
                 $scope.filterApplied = false;
+                $scope.launchSearchingShared();
             };
             $scope.filterSharedRemove = function($item, $model) {
                 $scope.filterApplied = false;
@@ -583,7 +585,7 @@ angular.module('adf')
                         default:
                             $scope.filter.typeFilter = id ? 2 : 1;
                             $scope.search = {
-                                quick: filter = ''
+                                quick: filter.value = ''
                             };
                             break;
                     }
