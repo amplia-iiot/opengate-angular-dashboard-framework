@@ -414,7 +414,9 @@ angular.module('adf')
                         title: (model.title !== 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD' ? model.title : ''),
                         description: model.description,
                         backgroundColor: model.backgroundColor ? model.backgroundColor : undefined,
-                        time: new Date()
+                        time: new Date(),
+                        backgroundImage: model.backgroundImage ? model.backgroundImage : undefined,
+                        file: model.backgroundImage ? model.backgroundImage : undefined,
                     };
 
                     editDashboardScope.iconConfiguration = {
@@ -451,12 +453,28 @@ angular.module('adf')
                             editDashboardScope.removeDataFile();
                         }
                     };
+                    editDashboardScope.backgroundImageSelected = function(file) {
+                        if (file) {
+                            editDashboardScope.iconConfiguration.file = file;
+                            Upload.base64DataUrl(file).then(
+                                function(url) {
+                                    editDashboardScope.copy.backgroundImage = url;
+                                    editDashboardScope.copy.file = url;
 
+                                });
+                        } else {
+                            editDashboardScope.removeBackgroundFile();
+                        }
+                    };
                     editDashboardScope.removeDataFile = function() {
                         editDashboardScope.iconConfiguration.file = null;
                         editDashboardScope.iconConfiguration.url = null;
                     };
+                    editDashboardScope.removeBackgroundFile = function() {
+                        editDashboardScope.copy.backgroundImage = null;
+                        editDashboardScope.copy.file = null;
 
+                    };
                     // pass icon list
                     editDashboardScope.availableIcons = $faIcons.list();
 
@@ -486,7 +504,7 @@ angular.module('adf')
                         }
                         model.iconType = editDashboardScope.iconConfiguration.model;
                         model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
-
+                        model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
