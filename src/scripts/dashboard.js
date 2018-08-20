@@ -47,7 +47,7 @@
  */
 
 angular.module('adf')
-    .directive('adfDashboard', function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate) {
+    .directive('adfDashboard', function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate, Upload) {
         'use strict';
 
         function stringToBoolean(string) {
@@ -382,7 +382,48 @@ angular.module('adf')
                     editDashboardScope.copy = {
                         title: (model.title !== 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD' ? model.title : ''),
                         description: model.description,
-                        icon: model.icon ? model.icon : 'fa-tachometer'
+                        backgroundColor: model.backgroundColor ? model.backgroundColor : undefined,
+                        time: new Date()
+                    };
+
+                    editDashboardScope.iconConfiguration = {
+                        name: 'iconConfiguration',
+                        model: model.iconType ? model.iconType : 'icon',
+                        url: undefined,
+                        file: undefined,
+                        iconType: model.iconType ? model.iconType : 'icon',
+                        icon: model.iconType === 'icon' ? model.icon : 'fa-tachometer',
+                        options: {
+                            'icon': {
+                                title: $translate.instant('ICON.LIBRARY'),
+                            },
+                            'image': {
+                                title: $translate.instant('ICON.IMAGE')
+                            }
+                        }
+                    };
+                    if (editDashboardScope.iconConfiguration.iconType === 'image') {
+                        editDashboardScope.iconConfiguration.file = model.icon;
+                        editDashboardScope.iconConfiguration.url = model.icon;
+                    }
+                    editDashboardScope.imageSelected = function(file) {
+                        if (file) {
+                            editDashboardScope.iconConfiguration.file = file;
+                            Upload.base64DataUrl(file).then(
+                                function(url) {
+                                    editDashboardScope.iconConfiguration.url = url;
+                                    editDashboardScope.iconConfiguration.file = url;
+                                    editDashboardScope.iconConfiguration.iconType = 'image'
+
+                                });
+                        } else {
+                            editDashboardScope.removeDataFile();
+                        }
+                    };
+
+                    editDashboardScope.removeDataFile = function() {
+                        editDashboardScope.iconConfiguration.file = null;
+                        editDashboardScope.iconConfiguration.url = null;
                     };
 
                     // pass icon list
@@ -405,7 +446,15 @@ angular.module('adf')
                         // copy the new title back to the model
                         model.title = editDashboardScope.copy.title;
                         model.description = editDashboardScope.copy.description;
-                        model.icon = editDashboardScope.copy.icon;
+                        if (editDashboardScope.iconConfiguration.model === 'image') {
+                            model.icon = editDashboardScope.iconConfiguration.url;
+
+                        } else if (editDashboardScope.iconConfiguration.model === 'icon') {
+                            model.icon = editDashboardScope.iconConfiguration.icon;
+
+                        }
+                        model.iconType = editDashboardScope.iconConfiguration.model;
+                        model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
 
                         // close modal and destroy the scope
                         instance.close();
