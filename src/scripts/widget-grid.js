@@ -156,7 +156,7 @@ angular.module('adf')
                     return true;
                 var filter = config.filter;
                 if (filter && filter.type === "basic") {
-                    return filter.length > 0;
+                    return filter.value.length > 0;
                 }
                 if (filter && filter.type === "advanced") {
                     return filter.value.length > 2 && filter.oql;
@@ -593,24 +593,26 @@ angular.module('adf')
                 };
 
                 this.updateWidgetFilters = function(filterId, configChange) {
+                    if ($scope.options && $scope.options.extraData && $scope.options.extraData.widgetFilters) {
+                        var _widgetFilters = $scope.options.extraData.widgetFilters;
+                        var model = $scope.definition;
+                        var selectFilter;
+                        var sharedFilters = _widgetFilters.filter(function(widgetFilter) {
+                            // Recuperamos solos los filtros de widgets que cumplan las condiciones:
+                            // - No tenga un filtro heredado como filtro
+                            // - El tipo de filtro sea igual que el widget que pueda heredarlo (Ftype)
+                            // - No recuperamos el filtro propio del widget  
+                            var shared = (!widgetFilter.filter || !widgetFilter.filter.id) && (widgetFilter.Ftype === model.Ftype) && (widgetFilter.wid !== model.wid);
+                            if (shared && (filterId === widgetFilter.wid))
+                                selectFilter = widgetFilter;
+                            return shared;
+                        });
 
-                    var _widgetFilters = $scope.options.extraData.widgetFilters;
-                    var model = $scope.definition;
-                    var selectFilter;
-                    var sharedFilters = _widgetFilters.filter(function(widgetFilter) {
-                        // Recuperamos solos los filtros de widgets que cumplan las condiciones:
-                        // - No tenga un filtro heredado como filtro
-                        // - El tipo de filtro sea igual que el widget que pueda heredarlo (Ftype)
-                        // - No recuperamos el filtro propio del widget  
-                        var shared = (!widgetFilter.filter || !widgetFilter.filter.id) && (widgetFilter.Ftype === model.Ftype) && (widgetFilter.wid !== model.wid);
-                        if (shared && (filterId === widgetFilter.wid))
-                            selectFilter = widgetFilter;
-                        return shared;
-                    });
+                        $scope.sharedFilters = angular.copy(sharedFilters);
+                        if (!configChange || !selectFilter && !!filterId)
+                            _setFilterType(selectFilter);
+                    }
 
-                    $scope.sharedFilters = angular.copy(sharedFilters);
-                    if (!configChange || !selectFilter && !!filterId)
-                        _setFilterType(selectFilter);
                 };
 
                 var definition = $scope.definition;

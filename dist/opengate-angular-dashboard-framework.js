@@ -1106,7 +1106,7 @@ angular.module('adf.provider', [])
 
 
 angular.module('adf')
-    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", "$translate", function ($log, $q, widgetService,
+    .directive('adfWidgetContent', ["$log", "$q", "widgetService", "$compile", "$controller", "$injector", "dashboard", "$translate", function($log, $q, widgetService,
         $compile, $controller, $injector, dashboard, $translate) {
 
         function renderError($element, msg) {
@@ -1117,7 +1117,7 @@ angular.module('adf')
         function compileWidget($scope, $element, currentScope, configChanged) {
             var model = $scope.model;
             if (!model) {
-                $translate('ADF.ERROR.MODEL_IS_UNDEFINED').then(function (translateMessage) {
+                $translate('ADF.ERROR.MODEL_IS_UNDEFINED').then(function(translateMessage) {
                     renderError($element, translateMessage);
                 });
                 return currentScope;
@@ -1128,7 +1128,7 @@ angular.module('adf')
             if (!content) {
                 $translate('ADF.ERROR.WIDGET_FOR_DEPRECTATED', {
                     title: model.title
-                }).then(function (translateMessage) {
+                }).then(function(translateMessage) {
                     renderError($element, translateMessage);
                 });
                 return currentScope;
@@ -1174,7 +1174,7 @@ angular.module('adf')
 
 
             if (newScope.config) {
-                newScope.config.getWindowTime = function () {
+                newScope.config.getWindowTime = function() {
                     var windowFilter = newScope.config.windowFilter;
                     if (windowFilter && windowFilter.type) {
                         var winTime = _getWindowTime(windowFilter.type);
@@ -1232,7 +1232,7 @@ angular.module('adf')
             var resolvers = {};
             resolvers.$tpl = widgetService.getTemplate(content);
             if (content.resolve) {
-                angular.forEach(content.resolve, function (promise, key) {
+                angular.forEach(content.resolve, function(promise, key) {
                     if (angular.isString(promise)) {
                         resolvers[key] = $injector.get(promise);
                     } else {
@@ -1242,7 +1242,7 @@ angular.module('adf')
             }
 
             // resolve all resolvers
-            $q.all(resolvers).then(function (locals) {
+            $q.all(resolvers).then(function(locals) {
                 angular.extend(locals, base);
 
                 // pass resolve map to template scope as defined in resolveAs
@@ -1261,12 +1261,12 @@ angular.module('adf')
                     $element.children().data('$ngControllerController', templateCtrl);
                 }
                 $compile($element.contents())(templateScope);
-            }, function (reason) {
+            }, function(reason) {
                 // handle promise rejection
                 var msg = 'ADF.ERROR.COULD_NOT_RESOLVE_ALL_PROMISSES';
                 $translate(msg, {
                     reason: (reason ? ': ' + reason : reason)
-                }).then(function (translateMessage) {
+                }).then(function(translateMessage) {
                     renderError($element, translateMessage);
                 });
             });
@@ -1292,36 +1292,37 @@ angular.module('adf')
                 filterHandler: '=?',
                 widgetActionsHandler: '=?'
             },
-            link: function ($scope, $element, attrs, adfWidgetGridCtrl) {
-
-
+            link: function($scope, $element, attrs, adfWidgetGridCtrl) {
                 var currentScope = compileWidget($scope, $element, null);
                 if (adfWidgetGridCtrl) {
                     $scope.search = $scope.search || {};
                     adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id);
                 }
-                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function (event, changeWidgets) {
-                    if (changeWidgets && changeWidgets.indexOf($scope.model.wid) !== -1) {
-                        adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id, true);
+
+                var widgetConfigChangedEvt = $scope.$on('widgetConfigChanged', function(event, changeWidgets) {
+                    if (changeWidgets) {
+                        if (changeWidgets.indexOf($scope.model.wid) !== -1 && adfWidgetGridCtrl) {
+                            adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id, true);
+                        }
                     } else {
                         currentScope = compileWidget($scope, $element, currentScope, true);
                     }
                 });
 
-                var widgetReloadEvt = $scope.$on('widgetReload', function (event, reloadWidgets) {
+                var widgetReloadEvt = $scope.$on('widgetReload', function(event, reloadWidgets) {
                     var reloadWidget = true;
                     if (reloadWidgets && reloadWidgets.length > 0) {
                         reloadWidget = reloadWidgets.indexOf($scope.model.wid) !== -1;
                     }
                     if (reloadWidget) {
                         currentScope = compileWidget($scope, $element, currentScope, false);
-                        if (adfWidgetGridCtrl) {
+                        if (adfWidgetGridCtrl && adfWidgetGridCtrl.updateWidgetFilters) {
                             adfWidgetGridCtrl.updateWidgetFilters($scope.model.config.filter && $scope.model.config.filter.id);
                         }
                     }
                 });
 
-                $scope.$on('destroy', function () {
+                $scope.$on('destroy', function() {
                     widgetConfigChangedEvt();
                     widgetReloadEvt();
                 });
@@ -1486,7 +1487,7 @@ angular.module('adf')
                     return true;
                 var filter = config.filter;
                 if (filter && filter.type === "basic") {
-                    return filter.length > 0;
+                    return filter.value.length > 0;
                 }
                 if (filter && filter.type === "advanced") {
                     return filter.value.length > 2 && filter.oql;
@@ -1923,24 +1924,26 @@ angular.module('adf')
                 };
 
                 this.updateWidgetFilters = function(filterId, configChange) {
+                    if ($scope.options && $scope.options.extraData && $scope.options.extraData.widgetFilters) {
+                        var _widgetFilters = $scope.options.extraData.widgetFilters;
+                        var model = $scope.definition;
+                        var selectFilter;
+                        var sharedFilters = _widgetFilters.filter(function(widgetFilter) {
+                            // Recuperamos solos los filtros de widgets que cumplan las condiciones:
+                            // - No tenga un filtro heredado como filtro
+                            // - El tipo de filtro sea igual que el widget que pueda heredarlo (Ftype)
+                            // - No recuperamos el filtro propio del widget  
+                            var shared = (!widgetFilter.filter || !widgetFilter.filter.id) && (widgetFilter.Ftype === model.Ftype) && (widgetFilter.wid !== model.wid);
+                            if (shared && (filterId === widgetFilter.wid))
+                                selectFilter = widgetFilter;
+                            return shared;
+                        });
 
-                    var _widgetFilters = $scope.options.extraData.widgetFilters;
-                    var model = $scope.definition;
-                    var selectFilter;
-                    var sharedFilters = _widgetFilters.filter(function(widgetFilter) {
-                        // Recuperamos solos los filtros de widgets que cumplan las condiciones:
-                        // - No tenga un filtro heredado como filtro
-                        // - El tipo de filtro sea igual que el widget que pueda heredarlo (Ftype)
-                        // - No recuperamos el filtro propio del widget  
-                        var shared = (!widgetFilter.filter || !widgetFilter.filter.id) && (widgetFilter.Ftype === model.Ftype) && (widgetFilter.wid !== model.wid);
-                        if (shared && (filterId === widgetFilter.wid))
-                            selectFilter = widgetFilter;
-                        return shared;
-                    });
+                        $scope.sharedFilters = angular.copy(sharedFilters);
+                        if (!configChange || !selectFilter && !!filterId)
+                            _setFilterType(selectFilter);
+                    }
 
-                    $scope.sharedFilters = angular.copy(sharedFilters);
-                    if (!configChange || !selectFilter && !!filterId)
-                        _setFilterType(selectFilter);
                 };
 
                 var definition = $scope.definition;
