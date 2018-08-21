@@ -78,7 +78,7 @@ angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
  */
 
 angular.module('adf')
-    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", "$faIcons", "$translate", function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate) {
+    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", "$faIcons", "$translate", "Upload", function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate, Upload) {
         
 
         function stringToBoolean(string) {
@@ -413,9 +413,84 @@ angular.module('adf')
                     editDashboardScope.copy = {
                         title: (model.title !== 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD' ? model.title : ''),
                         description: model.description,
-                        icon: model.icon ? model.icon : 'fa-tachometer'
+                        backgroundColor: model.backgroundColor ? model.backgroundColor : undefined,
+                        time: new Date(),
+                        backgroundImage: model.backgroundImage ? model.backgroundImage : undefined,
+                        file: model.backgroundImage ? model.backgroundImage : undefined,
                     };
 
+                    editDashboardScope.backgroundSize = {
+                        name: 'backgroundSize',
+                        model: model.backgroundImageSize ? model.backgroundImageSize : '100% 100%',
+                        options: {
+                            '100% 100%': {
+                                title: $translate.instant('SIZE_CONF.AUTO')
+                            },
+                            'contain': {
+                                title: $translate.instant('SIZE_CONF.CONTAIN')
+                            },
+                            'cover': {
+                                title: $translate.instant('SIZE_CONF.COVER')
+                            }
+                        }
+                    };
+
+                    editDashboardScope.iconConfiguration = {
+                        name: 'iconConfiguration',
+                        model: model.iconType ? model.iconType : 'icon',
+                        url: undefined,
+                        file: undefined,
+                        iconType: model.iconType ? model.iconType : 'icon',
+                        icon: model.iconType === 'icon' ? model.icon : 'fa-tachometer',
+                        options: {
+                            'icon': {
+                                title: $translate.instant('ICON.LIBRARY'),
+                            },
+                            'image': {
+                                title: $translate.instant('ICON.IMAGE')
+                            }
+                        }
+                    };
+                    if (editDashboardScope.iconConfiguration.iconType === 'image') {
+                        editDashboardScope.iconConfiguration.file = model.icon;
+                        editDashboardScope.iconConfiguration.url = model.icon;
+                    }
+                    editDashboardScope.imageSelected = function(file) {
+                        if (file) {
+                            editDashboardScope.iconConfiguration.file = file;
+                            Upload.base64DataUrl(file).then(
+                                function(url) {
+                                    editDashboardScope.iconConfiguration.url = url;
+                                    editDashboardScope.iconConfiguration.file = url;
+                                    editDashboardScope.iconConfiguration.iconType = 'image'
+
+                                });
+                        } else {
+                            editDashboardScope.removeDataFile();
+                        }
+                    };
+                    editDashboardScope.backgroundImageSelected = function(file) {
+                        if (file) {
+                            editDashboardScope.iconConfiguration.file = file;
+                            Upload.base64DataUrl(file).then(
+                                function(url) {
+                                    editDashboardScope.copy.backgroundImage = url;
+                                    editDashboardScope.copy.file = url;
+
+                                });
+                        } else {
+                            editDashboardScope.removeBackgroundFile();
+                        }
+                    };
+                    editDashboardScope.removeDataFile = function() {
+                        editDashboardScope.iconConfiguration.file = null;
+                        editDashboardScope.iconConfiguration.url = null;
+                    };
+                    editDashboardScope.removeBackgroundFile = function() {
+                        editDashboardScope.copy.backgroundImage = null;
+                        editDashboardScope.copy.file = null;
+
+                    };
                     // pass icon list
                     editDashboardScope.availableIcons = $faIcons.list();
 
@@ -436,8 +511,17 @@ angular.module('adf')
                         // copy the new title back to the model
                         model.title = editDashboardScope.copy.title;
                         model.description = editDashboardScope.copy.description;
-                        model.icon = editDashboardScope.copy.icon;
+                        if (editDashboardScope.iconConfiguration.model === 'image') {
+                            model.icon = editDashboardScope.iconConfiguration.url;
 
+                        } else if (editDashboardScope.iconConfiguration.model === 'icon') {
+                            model.icon = editDashboardScope.iconConfiguration.icon;
+
+                        }
+                        model.iconType = editDashboardScope.iconConfiguration.model;
+                        model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
+                        model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
+                        model.backgroundImageSize = editDashboardScope.backgroundSize.model;
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
@@ -666,7 +750,7 @@ angular.module('adf')
 
 /* global angular */
 angular.module('adf')
-    .directive('adfDashboardGrid', ["adfTemplatePath", function (adfTemplatePath) {
+    .directive('adfDashboardGrid', ["adfTemplatePath", function(adfTemplatePath) {
         
 
         function preLink($scope) {
@@ -675,7 +759,6 @@ angular.module('adf')
                 verticalMargin: 10,
                 animate: true,
                 float: false,
-                //alwaysShowResizeHandle: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
                 alwaysShowResizeHandle: true,
                 minWidth: 768,
                 auto: true,
@@ -698,78 +781,78 @@ angular.module('adf')
                 options: '='
             },
             templateUrl: adfTemplatePath + 'dashboard-grid.html',
-            compile: function () {
+            compile: function() {
                 return {
                     pre: preLink,
                 };
             },
-            controller: ["$scope", "$timeout", function ($scope, $timeout) {
+            controller: ["$scope", "$timeout", function($scope, $timeout) {
                 var dashEvents = [];
-                dashEvents.push($scope.$on('adfIsEditMode', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfIsEditMode', function() {
+                    $timeout(function() {
                         $scope.gsHandler.enable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardChanged', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfDashboardChanged', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfCancelEditMode', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfCancelEditMode', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfWidgetAdded', function (event) {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfWidgetAdded', function(event) {
+                    $timeout(function() {
                         $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                         $scope.gsHandler.enable();
                     }, 100);
                 }));
 
-                $scope.onChange = function (event, items) {
-                    console.log('onChange event: ' + event + ' items:' + items);
+                $scope.onChange = function(event, items) {
+                    //console.log('onChange event: ' + event + ' items:' + items);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onDragStart = function (event, ui) {
+                $scope.onDragStart = function(event, ui) {
                     console.log('onDragStart event: ' + event + ' ui:' + ui);
                 };
 
-                $scope.onDragStop = function (event, ui) {
+                $scope.onDragStop = function(event, ui) {
                     console.log('onDragStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onResizeStart = function (event, ui) {
+                $scope.onResizeStart = function(event, ui) {
                     console.log('onResizeStart event: ' + event + ' ui:' + ui);
                 };
 
-                $scope.onResizeStop = function (event, ui) {
+                $scope.onResizeStop = function(event, ui) {
                     console.log('onResizeStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                     $scope.$broadcast('OnResizeWidget');
                 };
 
-                $scope.onItemAdded = function (item) {
+                $scope.onItemAdded = function(item) {
                     console.log('onItemAdded item: ' + item);
                 };
 
-                $scope.onItemRemoved = function (item) {
+                $scope.onItemRemoved = function(item) {
                     console.log('onItemRemoved item: ' + item);
                 };
 
-                $scope.$on('destroy', function () {
-                    dashEvents.forEach(function (dashEvt) {
+                $scope.$on('destroy', function() {
+                    dashEvents.forEach(function(dashEvt) {
                         dashEvt();
                     });
                 });

@@ -25,7 +25,7 @@
 
 /* global angular */
 angular.module('adf')
-    .directive('adfDashboardGrid', function (adfTemplatePath) {
+    .directive('adfDashboardGrid', function(adfTemplatePath) {
         'use strict';
 
         function preLink($scope) {
@@ -34,7 +34,6 @@ angular.module('adf')
                 verticalMargin: 10,
                 animate: true,
                 float: false,
-                //alwaysShowResizeHandle: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
                 alwaysShowResizeHandle: true,
                 minWidth: 768,
                 auto: true,
@@ -57,78 +56,78 @@ angular.module('adf')
                 options: '='
             },
             templateUrl: adfTemplatePath + 'dashboard-grid.html',
-            compile: function () {
+            compile: function() {
                 return {
                     pre: preLink,
                 };
             },
-            controller: function ($scope, $timeout) {
+            controller: function($scope, $timeout) {
                 var dashEvents = [];
-                dashEvents.push($scope.$on('adfIsEditMode', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfIsEditMode', function() {
+                    $timeout(function() {
                         $scope.gsHandler.enable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardChanged', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfDashboardChanged', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfCancelEditMode', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfCancelEditMode', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfWidgetAdded', function (event) {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfWidgetAdded', function(event) {
+                    $timeout(function() {
                         $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                         $scope.gsHandler.enable();
                     }, 100);
                 }));
 
-                $scope.onChange = function (event, items) {
-                    console.log('onChange event: ' + event + ' items:' + items);
+                $scope.onChange = function(event, items) {
+                    //console.log('onChange event: ' + event + ' items:' + items);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onDragStart = function (event, ui) {
+                $scope.onDragStart = function(event, ui) {
                     console.log('onDragStart event: ' + event + ' ui:' + ui);
                 };
 
-                $scope.onDragStop = function (event, ui) {
+                $scope.onDragStop = function(event, ui) {
                     console.log('onDragStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onResizeStart = function (event, ui) {
+                $scope.onResizeStart = function(event, ui) {
                     console.log('onResizeStart event: ' + event + ' ui:' + ui);
                 };
 
-                $scope.onResizeStop = function (event, ui) {
+                $scope.onResizeStop = function(event, ui) {
                     console.log('onResizeStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                     $scope.$broadcast('OnResizeWidget');
                 };
 
-                $scope.onItemAdded = function (item) {
+                $scope.onItemAdded = function(item) {
                     console.log('onItemAdded item: ' + item);
                 };
 
-                $scope.onItemRemoved = function (item) {
+                $scope.onItemRemoved = function(item) {
                     console.log('onItemRemoved item: ' + item);
                 };
 
-                $scope.$on('destroy', function () {
-                    dashEvents.forEach(function (dashEvt) {
+                $scope.$on('destroy', function() {
+                    dashEvents.forEach(function(dashEvt) {
                         dashEvt();
                     });
                 });

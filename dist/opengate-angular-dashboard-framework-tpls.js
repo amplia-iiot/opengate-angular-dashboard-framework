@@ -78,7 +78,7 @@ angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
  */
 
 angular.module('adf')
-    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", "$faIcons", "$translate", function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate) {
+    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", "$faIcons", "$translate", "Upload", function($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate, Upload) {
         
 
         function stringToBoolean(string) {
@@ -413,9 +413,84 @@ angular.module('adf')
                     editDashboardScope.copy = {
                         title: (model.title !== 'ADF.DASHBOARD.TITLE.EMPTY_DASHBOARD' ? model.title : ''),
                         description: model.description,
-                        icon: model.icon ? model.icon : 'fa-tachometer'
+                        backgroundColor: model.backgroundColor ? model.backgroundColor : undefined,
+                        time: new Date(),
+                        backgroundImage: model.backgroundImage ? model.backgroundImage : undefined,
+                        file: model.backgroundImage ? model.backgroundImage : undefined,
                     };
 
+                    editDashboardScope.backgroundSize = {
+                        name: 'backgroundSize',
+                        model: model.backgroundImageSize ? model.backgroundImageSize : '100% 100%',
+                        options: {
+                            '100% 100%': {
+                                title: $translate.instant('SIZE_CONF.AUTO')
+                            },
+                            'contain': {
+                                title: $translate.instant('SIZE_CONF.CONTAIN')
+                            },
+                            'cover': {
+                                title: $translate.instant('SIZE_CONF.COVER')
+                            }
+                        }
+                    };
+
+                    editDashboardScope.iconConfiguration = {
+                        name: 'iconConfiguration',
+                        model: model.iconType ? model.iconType : 'icon',
+                        url: undefined,
+                        file: undefined,
+                        iconType: model.iconType ? model.iconType : 'icon',
+                        icon: model.iconType === 'icon' ? model.icon : 'fa-tachometer',
+                        options: {
+                            'icon': {
+                                title: $translate.instant('ICON.LIBRARY'),
+                            },
+                            'image': {
+                                title: $translate.instant('ICON.IMAGE')
+                            }
+                        }
+                    };
+                    if (editDashboardScope.iconConfiguration.iconType === 'image') {
+                        editDashboardScope.iconConfiguration.file = model.icon;
+                        editDashboardScope.iconConfiguration.url = model.icon;
+                    }
+                    editDashboardScope.imageSelected = function(file) {
+                        if (file) {
+                            editDashboardScope.iconConfiguration.file = file;
+                            Upload.base64DataUrl(file).then(
+                                function(url) {
+                                    editDashboardScope.iconConfiguration.url = url;
+                                    editDashboardScope.iconConfiguration.file = url;
+                                    editDashboardScope.iconConfiguration.iconType = 'image'
+
+                                });
+                        } else {
+                            editDashboardScope.removeDataFile();
+                        }
+                    };
+                    editDashboardScope.backgroundImageSelected = function(file) {
+                        if (file) {
+                            editDashboardScope.iconConfiguration.file = file;
+                            Upload.base64DataUrl(file).then(
+                                function(url) {
+                                    editDashboardScope.copy.backgroundImage = url;
+                                    editDashboardScope.copy.file = url;
+
+                                });
+                        } else {
+                            editDashboardScope.removeBackgroundFile();
+                        }
+                    };
+                    editDashboardScope.removeDataFile = function() {
+                        editDashboardScope.iconConfiguration.file = null;
+                        editDashboardScope.iconConfiguration.url = null;
+                    };
+                    editDashboardScope.removeBackgroundFile = function() {
+                        editDashboardScope.copy.backgroundImage = null;
+                        editDashboardScope.copy.file = null;
+
+                    };
                     // pass icon list
                     editDashboardScope.availableIcons = $faIcons.list();
 
@@ -436,8 +511,17 @@ angular.module('adf')
                         // copy the new title back to the model
                         model.title = editDashboardScope.copy.title;
                         model.description = editDashboardScope.copy.description;
-                        model.icon = editDashboardScope.copy.icon;
+                        if (editDashboardScope.iconConfiguration.model === 'image') {
+                            model.icon = editDashboardScope.iconConfiguration.url;
 
+                        } else if (editDashboardScope.iconConfiguration.model === 'icon') {
+                            model.icon = editDashboardScope.iconConfiguration.icon;
+
+                        }
+                        model.iconType = editDashboardScope.iconConfiguration.model;
+                        model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
+                        model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
+                        model.backgroundImageSize = editDashboardScope.backgroundSize.model;
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
@@ -666,7 +750,7 @@ angular.module('adf')
 
 /* global angular */
 angular.module('adf')
-    .directive('adfDashboardGrid', ["adfTemplatePath", function (adfTemplatePath) {
+    .directive('adfDashboardGrid', ["adfTemplatePath", function(adfTemplatePath) {
         
 
         function preLink($scope) {
@@ -675,7 +759,6 @@ angular.module('adf')
                 verticalMargin: 10,
                 animate: true,
                 float: false,
-                //alwaysShowResizeHandle: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
                 alwaysShowResizeHandle: true,
                 minWidth: 768,
                 auto: true,
@@ -698,78 +781,78 @@ angular.module('adf')
                 options: '='
             },
             templateUrl: adfTemplatePath + 'dashboard-grid.html',
-            compile: function () {
+            compile: function() {
                 return {
                     pre: preLink,
                 };
             },
-            controller: ["$scope", "$timeout", function ($scope, $timeout) {
+            controller: ["$scope", "$timeout", function($scope, $timeout) {
                 var dashEvents = [];
-                dashEvents.push($scope.$on('adfIsEditMode', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfIsEditMode', function() {
+                    $timeout(function() {
                         $scope.gsHandler.enable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardChanged', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfDashboardChanged', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfCancelEditMode', function () {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfCancelEditMode', function() {
+                    $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfWidgetAdded', function (event) {
-                    $timeout(function () {
+                dashEvents.push($scope.$on('adfWidgetAdded', function(event) {
+                    $timeout(function() {
                         $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                         $scope.gsHandler.enable();
                     }, 100);
                 }));
 
-                $scope.onChange = function (event, items) {
-                    console.log('onChange event: ' + event + ' items:' + items);
+                $scope.onChange = function(event, items) {
+                    //console.log('onChange event: ' + event + ' items:' + items);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onDragStart = function (event, ui) {
+                $scope.onDragStart = function(event, ui) {
                     console.log('onDragStart event: ' + event + ' ui:' + ui);
                 };
 
-                $scope.onDragStop = function (event, ui) {
+                $scope.onDragStop = function(event, ui) {
                     console.log('onDragStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onResizeStart = function (event, ui) {
+                $scope.onResizeStart = function(event, ui) {
                     console.log('onResizeStart event: ' + event + ' ui:' + ui);
                 };
 
-                $scope.onResizeStop = function (event, ui) {
+                $scope.onResizeStop = function(event, ui) {
                     console.log('onResizeStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                     $scope.$broadcast('OnResizeWidget');
                 };
 
-                $scope.onItemAdded = function (item) {
+                $scope.onItemAdded = function(item) {
                     console.log('onItemAdded item: ' + item);
                 };
 
-                $scope.onItemRemoved = function (item) {
+                $scope.onItemRemoved = function(item) {
                     console.log('onItemRemoved item: ' + item);
                 };
 
-                $scope.$on('destroy', function () {
-                    dashEvents.forEach(function (dashEvt) {
+                $scope.$on('destroy', function() {
+                    dashEvents.forEach(function(dashEvt) {
                         dashEvt();
                     });
                 });
@@ -2276,7 +2359,7 @@ angular.module('adf')
     return exposed;
   }]);
 
-angular.module("adf").run(["$templateCache", function($templateCache) {$templateCache.put("../src/templates/dashboard-edit.html","<div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title translate>ADF.DASHBOARD.TITLE.EDIT.DASHBOARD</h3> </div> <div class=modal-body> <form role=form name=form novalidate> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=dashboardTitle ng-model=copy.title required ng-init=\"copy.title=(copy.title | translate)\"> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardDescription translate>ADF.DASHBOARD.LABEL.DESCRIPTION</label> <input type=text class=\"form-control text-primary\" id=dashboardDescription ng-init=\"copy.description=(copy.description | translate)\" ng-model=copy.description> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=icon translate>ADF.DASHBOARD.LABEL.ICON</label> <ui-select tagging=tagTransform id=icon ng-model=copy.icon theme=bootstrap allow-clear=false required=true on-select=selectIcon($select.selected) title=\"{{\'ADF.WIDGET.TITLE.CHOOSE_ICON\' | translate}}\"> <ui-select-match placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ICON\' | translate}}\" allow-clear=false> <i class=\"fa {{$select.selected}} fa-2x\"></i> <span>{{$select.selected}}</span> </ui-select-match> <ui-select-choices class=oux-icon-selector repeat=\"iconTmp in availableIcons | filter: $select.search\"> <i class=\"fa fa-4x\" ng-class=iconTmp title={{iconTmp}}></i> <br> <span ng-bind-html=\"iconTmp| highlight: $select.search\"></span> </ui-select-choices> </ui-select> </div> </form> </div> <div class=modal-footer> <div class=col-xs-12> <button type=submit class=\"btn btn-primary\" ng-click=closeDialog() ng-disabled=form.$invalid translate>ADF.COMMON.CLOSE</button> </div> </div>");
+angular.module("adf").run(["$templateCache", function($templateCache) {$templateCache.put("../src/templates/dashboard-edit.html","<div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title translate>ADF.DASHBOARD.TITLE.EDIT.DASHBOARD</h3> </div> <div class=modal-body> <form role=form name=form novalidate> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=dashboardTitle ng-model=copy.title required ng-init=\"copy.title=(copy.title | translate)\"> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardDescription translate>ADF.DASHBOARD.LABEL.DESCRIPTION</label> <input type=text class=\"form-control text-primary\" id=dashboardDescription ng-init=\"copy.description=(copy.description | translate)\" ng-model=copy.description> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=iconConfiguration.model class=text-primary>{{\'ADF.DASHBOARD.LABEL.ICON\' | translate }} </label> <div class=\"radio radio-primary\"> <label id=icon_library> <input type=radio name=iconLibrary ng-model=iconConfiguration.model value=icon> <span class=circle></span> <span class=check></span> {{\'ICON.LIBRARY\' | translate }} </label> </div> <div class=radio-options> <ui-select ng-disabled=\"iconConfiguration.model !== \'icon\'\" tagging=tagTransform id=icon ng-model=iconConfiguration.icon theme=bootstrap allow-clear=false on-select=selectIcon($select.selected) title=\"{{\'ADF.WIDGET.TITLE.CHOOSE_ICON\' | translate}}\"> <ui-select-match placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ICON\' | translate}}\" allow-clear=false> <i class=\"fa {{$select.selected}} fa-2x\"></i> <span>{{$select.selected}}</span> </ui-select-match> <ui-select-choices class=oux-icon-selector repeat=\"iconTmp in availableIcons | filter: $select.search\"> <i class=\"fa fa-4x\" ng-class=iconTmp title={{iconTmp}}></i> <br> <span ng-bind-html=\"iconTmp| highlight: $select.search\"></span> </ui-select-choices> </ui-select> <input type=hidden ng-model=iconConfiguration.icon required=\"iconConfiguration.model === \'icon\'\"> </div> <div class=\"radio radio-primary\"> <label id=icon_image> <input type=radio name=iconImage ng-model=iconConfiguration.model value=image> <span class=circle></span> <span class=check></span> {{\'ICON.IMAGE\' | translate }} </label> </div> <div class=radio-options> <div class=col-xs-12 ng-disabled=\"iconConfiguration.model !== \'image\'\"> <div ng-disabled=\"iconConfiguration.model !== \'image\'\" ng-if=!iconConfiguration.url ngf-drop ng-model=iconConfiguration.file ngf-max-size=1MB ngf-select=imageSelected($file) class=\"drop-box pointer\" ngf-drag-over-class=\"\'dragover\'\" ngf-multiple=false ngf-accept=\"\'image/*\'\" ngf-pattern=\"\'image/*\'\">{{ \'FORM.DRAG_DROP\' | translate }}<br>{{ \'FORM.MAX_SIZE\' | translate }}</div> <img ng-if=iconConfiguration.url class=navbar-domain src=\"{{ iconConfiguration.url }}\" data-intro=\"{{ \'HELP.HEADER.DOMAIN_LOGO\' | translate }}\" data-position=fixed> <input ng-if=\"iconConfiguration.model === \'image\'\" type=hidden ng-model=iconConfiguration.url required> </div> <div class=col-xs-12 ng-if=iconConfiguration.url> <button id=idRemoveFileLink ng-click=removeDataFile() class=\"btn btn-warning ux-txt-warning btn-group-justified pointer\"><i class=\"fa fa-trash\" aria-hidden=true></i> {{ \'BUTTON.TITLE.REMOVE\' | translate }}</button> </div> </div> <input type=hidden ng-model=iconConfiguration.model required> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardBackground translate>ADF.DASHBOARD.LABEL.BACKGROUND_COLOR</label> <input type=text placeholder=\"{{ \'ADF.WIDGET.PLACEHOLDER.COLOR\' | translate }}\" colorpicker=hex class=\"form-control {{stream.identifier}}_color\" ng-model=copy.backgroundColor> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardBackground translate>ADF.DASHBOARD.LABEL.BACKGROUND_IMAGE</label> <div class=\"col-xs-12 col-md-12\"> <div ng-if=!copy.backgroundImage ngf-drop ng-model=copy.file ngf-max-size=1MB ngf-select=backgroundImageSelected($file) class=\"drop-box pointer\" ngf-drag-over-class=\"\'dragover\'\" ngf-multiple=false ngf-accept=\"\'image/*\'\" ngf-pattern=\"\'image/*\'\">{{ \'FORM.DRAG_DROP\' | translate }}<br>{{ \'FORM.MAX_SIZE\' | translate }}</div> <img ng-if=copy.backgroundImage class=navbar-domain src=\"{{ copy.backgroundImage }}\" data-intro=\"{{ \'HELP.HEADER.DOMAIN_LOGO\' | translate }}\" data-position=fixed> </div> <div class=col-xs-12 ng-if=copy.backgroundImage> <button id=idRemoveBackgroundImageFileLink ng-click=removeBackgroundFile() class=\"btn btn-warning ux-txt-warning btn-group-justified pointer\"><i class=\"fa fa-trash\" aria-hidden=true></i> {{ \'BUTTON.TITLE.REMOVE\' | translate }}</button> </div> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=BACKGROUND_SIZE class=text-primary>{{\'ADF.DASHBOARD.LABEL.BACKGROUND_SIZE\' | translate }} <field-options required=true></field-options></label> <wizard-radio info=backgroundSize></wizard-radio> <input type=hidden ng-model=backgroundSize.model required> </div> <div class=\"form-group col-xs-12 col-md-12\"> <b><p>{{\'DIALOG.ICON.PREVIEW\' | translate}}</p></b> <div class=\"col-xs-12 col-md-3\"> </div> <div class=\"col-xs-12 col-md-9 dashboardPanel\"> <div gridstack class=grid-stack> <div gridstack-item class=grid-stack-item gs-item-x=0 gs-item-y=0 gs-item-width=5 gs-item-height=2 gs-item-min-width=2 gs-item-min-height=1 gs-item-autopos=0 data-intro=\"{{ \'HELP.WORKSPACES.DASHBOARD\' | translate }}\" data-position=absolute> <div class=\"grid-stack-item-content panel well no-padding\" style=\"background-color: {{copy.backgroundColor}} !important; background-image: url( {{copy.backgroundImage }} ); background-size : {{backgroundSize.model }}\" title=\"{{ copy.title | translate }}\"> <div class=\"col-xs-12 col-md-12 padding-5\"> <h4 class=\"text-primary no-margin\">{{ copy.title | translate }}</h4> <small ng-if=copy.description>{{ copy.description | translate }}</small> </div> <div class=dashboard-extra-info> <div class=\"padding-5 extra-info\"> <span><i class=\"fa fa-clock-o text-grey\"></i> <small am-time-ago=copy.time> {{copy.time}}</small></span> </div> <div class=\"padding-5 identity-icon-dashboard\"> <i ng-if=\"iconConfiguration.model === \'icon\'\" class=\"fa {{ iconConfiguration.icon}}\"></i> <img ng-if=\"iconConfiguration.model === \'image\'\" alt src=\"{{ iconConfiguration.url }}\" data-intro=\"{{ \'HELP.HEADER.DOMAIN_LOGO\' | translate }}\" data-position=fixed> </div> </div> </div> </div> </div> </div> </div> </form> </div> <div class=modal-footer> <div class=col-xs-12> <button type=submit class=\"btn btn-primary\" ng-click=closeDialog() ng-disabled=form.$invalid translate>ADF.COMMON.CLOSE</button> </div> </div>");
 $templateCache.put("../src/templates/dashboard-grid.html","<div gridstack class=grid-stack options=gridOptions on-drag-start=onDragStart(event,ui) on-drag-stop=onDragStop(event,ui) on-resize-start=onResizeStart(event,ui) on-resize-stop=onResizeStop(event,ui) gridstack-handler=gsHandler on-change=onChange(event,items)> <div gridstack-item ng-repeat=\"w in adfModel.grid\" class=grid-stack-item gs-item-x=w.x gs-item-y=w.y gs-item-width=w.width gs-item-height=w.height gs-item-min-width=2 gs-item-min-height=2 gs-item-autopos=0> <adf-widget-grid ng-if=\"w && w.definition\" class=grid-stack-item-content options=options definition=w.definition edit-mode=editMode widget-state=widgetState></adf-widget-grid> </div> </div>");
 $templateCache.put("../src/templates/dashboard-title.html","<div class=row style=padding:0px;> <div class=\"col-xs-12 col-md-5\" ng-if=!hideButtons> <span ng-if=model.icon id=idDashboardIcon class=\"fa fa-2x\" ng-class=model.icon></span> <span id=idDashboardTitle class=\"fa-2x text-primary\">{{model.title | translate}}</span> <span ng-if=model.description id=idDashboardDescription>{{model.description | translate}}</span> </div> <div class=\"col-xs-12 col-md-7 text-right\" ng-if=!hideButtons> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.ADD\' | translate }}\" ng-click=addWidgetDialog() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-plus\" aria-hidden=true></i> {{\'ADF.DASHBOARD.TITLE.ADD\' | translate}} </a> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.CONFIGURATION\' | translate }}\" ng-click=editDashboardDialog() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-cog\"></i> {{\'ADF.DASHBOARD.TITLE.CONFIGURATION\' | translate}} </a> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.UNDO\' | translate }}\" ng-click=cancelEditMode() class=\"btn btn-warning btn-sm pointer no-transition\"> <i class=\"fa fa-close\"></i> {{\'ADF.DASHBOARD.TITLE.UNDO\' | translate}} </a> <a href ng-if=\"options.editable && !editMode && !model.temporal\" title=\"{{\'ADF.DASHBOARD.TITLE.EDIT.MODE\' | translate }}\" ng-click=toggleEditMode() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-pencil-square-o\"></i> {{\'ADF.DASHBOARD.TITLE.EDIT.MODE\' | translate}} </a> <a href ng-if=\"options.editable && editMode\" title=\"{{\'ADF.DASHBOARD.TITLE.SAVE\' | translate)}}\" ng-click=toggleEditMode() class=\"btn btn-success btn-sm pointer no-transition\"> <i class=\"fa fa-save\"></i> {{\'ADF.DASHBOARD.TITLE.SAVE\' | translate}} </a> </div> </div>");
 $templateCache.put("../src/templates/dashboard.html","<div class=dashboard-container x-ng-class=\"{\'edit\' : editMode}\"> <div ng-include src=model.titleTemplateUrl></div> <div class=dashboard x-ng-class=\"{\'edit\' : editMode}\" style=\"padding: 0px;margin: 0px;\"> <adf-dashboard-grid ng-if=model.grid adf-model=model options=options edit-mode=editMode> </adf-dashboard-grid></div> </div>");
