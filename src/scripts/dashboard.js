@@ -388,6 +388,25 @@ angular.module('adf')
                         file: model.backgroundImage ? model.backgroundImage : undefined,
                     };
 
+                    editDashboardScope.backgroundSize = {
+                        name: 'backgroundSize',
+                        model: model.backgroundImageSize ? model.backgroundImageSize : 'auto',
+                        options: {
+                            'auto': {
+                                title: $translate.instant('SIZE_CONF.AUTO')
+                            },
+                            'contain': {
+                                title: $translate.instant('SIZE_CONF.CONTAIN')
+                            },
+                            'cover': {
+                                title: $translate.instant('SIZE_CONF.COVER')
+                            },
+                            'initial': {
+                                title: $translate.instant('SIZE_CONF.INITIAL')
+                            }
+                        }
+                    };
+
                     editDashboardScope.iconConfiguration = {
                         name: 'iconConfiguration',
                         model: model.iconType ? model.iconType : 'icon',
@@ -474,6 +493,7 @@ angular.module('adf')
                         model.iconType = editDashboardScope.iconConfiguration.model;
                         model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
                         model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
+                        model.backgroundImageSize = editDashboardScope.backgroundSize.model;
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
