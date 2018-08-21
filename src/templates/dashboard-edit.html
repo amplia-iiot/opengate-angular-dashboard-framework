@@ -65,10 +65,9 @@
         </div>
         <div class="form-group col-xs-12 col-md-6">
             <label for="dashboardBackground" translate>ADF.DASHBOARD.LABEL.BACKGROUND_IMAGE</label>
-            <div class="col-xs-12 col-md-6">
+            <div class="col-xs-12 col-md-12">
                 <div ng-if="!copy.backgroundImage" ngf-drop ng-model="copy.file" ngf-max-size="1MB" ngf-select="backgroundImageSelected($file)" class="drop-box pointer" ngf-drag-over-class="'dragover'" ngf-multiple="false" ngf-accept="'image/*'" ngf-pattern="'image/*'">{{ 'FORM.DRAG_DROP' | translate }}<br>{{ 'FORM.MAX_SIZE' | translate }}</div>
                 <img ng-if="copy.backgroundImage" class="navbar-domain" src="{{ copy.backgroundImage }}" data-intro="{{ 'HELP.HEADER.DOMAIN_LOGO' | translate }}" data-position="fixed">
-
             </div>
 
             <div class="col-xs-12" ng-if="copy.backgroundImage">
