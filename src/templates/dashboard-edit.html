@@ -87,7 +87,7 @@
             <div class="col-xs-12 col-md-9 dashboardPanel ">
                 <div gridstack class="grid-stack">
                     <div gridstack-item class="grid-stack-item" gs-item-x="0" gs-item-y="0" gs-item-width="5" gs-item-height="2" gs-item-min-width="2" gs-item-min-height="1" gs-item-autopos="0" data-intro="{{ 'HELP.WORKSPACES.DASHBOARD' | translate }}" data-position="absolute">
-                        <div class="grid-stack-item-content panel well  no-padding " style="background-color: {{copy.backgroundColor}} !important; background-image: url( {{copy.backgroundImage }} ); background-size : {{backgroundSize.model }}" title="{{ copy.title | translate }}">
+                        <div class="grid-stack-item-content panel well  no-padding " style="background-color: {{copy.backgroundColor}} !important; background-image: url( {{copy.backgroundImage }} ) !important; background-size : {{backgroundSize.model }} !important" title="{{ copy.title | translate }}">
                             <div class="col-xs-12 col-md-12 padding-5">
                                 <h4 class="text-primary  no-margin">{{ copy.title | translate }}</h4>
                                 <small ng-if="copy.description">{{ copy.description | translate }}</small>
