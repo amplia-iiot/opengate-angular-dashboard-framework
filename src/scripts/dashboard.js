@@ -390,9 +390,9 @@ angular.module('adf')
 
                     editDashboardScope.backgroundSize = {
                         name: 'backgroundSize',
-                        model: model.backgroundImageSize ? model.backgroundImageSize : 'auto',
+                        model: model.backgroundImageSize ? model.backgroundImageSize : '100% 100%',
                         options: {
-                            'auto': {
+                            '100% 100%': {
                                 title: $translate.instant('SIZE_CONF.AUTO')
                             },
                             'contain': {
@@ -400,9 +400,6 @@ angular.module('adf')
                             },
                             'cover': {
                                 title: $translate.instant('SIZE_CONF.COVER')
-                            },
-                            'initial': {
-                                title: $translate.instant('SIZE_CONF.INITIAL')
                             }
                         }
                     };
