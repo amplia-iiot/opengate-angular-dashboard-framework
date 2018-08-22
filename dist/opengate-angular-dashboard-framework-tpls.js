@@ -1569,12 +1569,20 @@ angular.module('adf')
                 if (config.entityKey)
                     return true;
                 var filter = config.filter;
-                if (filter && filter.type === "basic") {
-                    return filter.value.length > 0;
+
+                if (filter) {
+                    if (filter.headersFilter && filter.headersFilter.length > 0) {
+                        return true;
+                    } else {
+                        if (filter.type === "basic") {
+                            return filter.value.length > 0;
+                        }
+                        if (filter.type === "advanced") {
+                            return filter.value.length > 2 && filter.oql;
+                        }
+                    }
                 }
-                if (filter && filter.type === "advanced") {
-                    return filter.value.length > 2 && filter.oql;
-                }
+
                 return false;
             };
 
