@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '7.0.0');
+    .value('adfVersion', '7.1.0');
 /*
  * The MIT License
  *
@@ -1439,7 +1439,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter) {
+    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "toastr", "$translate", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, toastr, $translate) {
         function preLink($scope) {
             var definition = $scope.definition;
 
@@ -1612,13 +1612,19 @@ angular.module('adf')
 
             $scope.launchSearchingAdv = function() {
                 if (!$scope.filterApplied) {
+                    var executeSearch = true;
                     $scope.search.quick = '';
                     if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
-                        $scope.config.filter = {
-                            type: 'advanced',
-                            oql: '',
-                            value: ''
-                        };
+                        if ($scope.search.oql && $scope.search.oql.trim().length > 0) {
+                            toastr.error($translate.instant("TOASTR.FILTER_IS_MALFORMED"));
+                            executeSearch = false;
+                        } else {
+                            $scope.config.filter = {
+                                type: 'advanced',
+                                oql: '',
+                                value: ''
+                            };
+                        }
                     } else {
                         $scope.config.filter = {
                             type: 'advanced',
@@ -1627,8 +1633,11 @@ angular.module('adf')
                             headersFilter: $scope.config.filter.headersFilter
                         };
                     }
-                    $scope.launchSearching();
-                    $scope.filterApplied = true;
+
+                    if (executeSearch) {
+                        $scope.launchSearching();
+                        $scope.filterApplied = true;
+                    }
                 }
             };
 
