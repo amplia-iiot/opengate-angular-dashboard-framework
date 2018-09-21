@@ -32,7 +32,7 @@
  * The dashboardProvider can be used to register widgets.
  */
 angular.module('adf.provider', [])
-    .provider('dashboard', function() {
+    .provider('dashboard', function () {
 
         var widgets = {};
         var widgetsPath = '';
@@ -46,7 +46,7 @@ angular.module('adf.provider', [])
         var customWidgetTemplatePath = null;
 
         // default apply function of widget.edit.apply
-        var defaultApplyFunction = function() {
+        var defaultApplyFunction = function () {
             return true;
         };
 
@@ -111,7 +111,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.widget = function(name, widget) {
+        this.widget = function (name, widget) {
             var w = angular.extend({
                 reload: false,
                 frameless: false
@@ -124,6 +124,10 @@ angular.module('adf.provider', [])
                 };
                 angular.extend(edit, w.edit);
                 w.edit = edit;
+            }
+            //OUW-1610
+            if (!w.config) {
+                w.config = {};
             }
             widgets[name] = w;
             return this;
@@ -147,7 +151,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.widgetsPath = function(path) {
+        this.widgetsPath = function (path) {
             widgetsPath = path;
             return this;
         };
@@ -164,7 +168,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.messageTemplate = function(template) {
+        this.messageTemplate = function (template) {
             messageTemplate = template;
             return this;
         };
@@ -182,7 +186,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.loadingTemplate = function(template) {
+        this.loadingTemplate = function (template) {
             loadingTemplate = template;
             return this;
         };
@@ -199,7 +203,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.customWidgetTemplatePath = function(templatePath) {
+        this.customWidgetTemplatePath = function (templatePath) {
             customWidgetTemplatePath = templatePath;
             return this;
         };
@@ -219,7 +223,7 @@ angular.module('adf.provider', [])
          *
          * @returns {Object} self
          */
-        this.$get = function() {
+        this.$get = function () {
             var cid = 0;
 
             return {
@@ -238,7 +242,7 @@ angular.module('adf.provider', [])
                  * Creates an ongoing numeric id. The method is used to create ids for
                  * columns and widgets in the dashboard.
                  */
-                id: function() {
+                id: function () {
                     return new Date().getTime() + '-' + (++cid);
                 },
 
@@ -253,7 +257,7 @@ angular.module('adf.provider', [])
                  * @param {string} id widget or column id
                  * @param {string} other widget or column id
                  */
-                idEquals: function(id, other) {
+                idEquals: function (id, other) {
                     // use toString, because old ids are numbers
                     return ((id) && (other)) && (id.toString() === other.toString());
                 }
