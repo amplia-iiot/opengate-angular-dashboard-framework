@@ -6,17 +6,20 @@
     <form role="form" name="form" novalidate>
         <div class="form-group col-xs-12 col-md-4">
             <label for="dashboardTitle" translate>ADF.COMMON.TITLE</label>
-            <input type="text" class="form-control text-primary" id="dashboardTitle" ng-model="copy.title" required="true" ng-init="copy.title=(copy.title | translate)">
+            <input type="text" class="form-control text-primary" id="dashboardTitle" ng-model="copy.title" required="true"
+                ng-init="copy.title=(copy.title | translate)">
         </div>
         <div class="form-group col-xs-12 col-md-8">
             <label for="dashboardDescription" translate>ADF.DASHBOARD.LABEL.DESCRIPTION</label>
-            <input type="text" class="form-control text-primary" id="dashboardDescription" ng-init="copy.description=(copy.description | translate)" ng-model="copy.description">
+            <input type="text" class="form-control text-primary" id="dashboardDescription" ng-init="copy.description=(copy.description | translate)"
+                ng-model="copy.description">
         </div>
         <div class="form-group col-xs-12 col-md-12">
-            <label for="iconConfiguration.model" class="text-primary">{{'ADF.DASHBOARD.LABEL.ICON' | translate }} </label>
+            <label for="iconConfiguration.model" class="text-primary">{{'ADF.DASHBOARD.LABEL.ICON' | translate }}
+            </label>
             <div class="radio radio-primary radio-inline no-margin">
                 <label id="icon_library">
-                    <input type="radio" name="iconLibrary" ng-model="iconConfiguration.model" value="icon" >
+                    <input type="radio" name="iconLibrary" ng-model="iconConfiguration.model" value="icon">
                     <span class="circle"></span>
                     <span class="check"></span>
                     {{'ICON.LIBRARY' | translate }}
@@ -24,57 +27,60 @@
             </div>
             <div class="radio radio-primary radio-inline">
                 <label id="icon_image">
-                        <input type="radio" name="iconImage" ng-model="iconConfiguration.model" value="image" >
-                        <span class="circle"></span>
-                        <span class="check"></span>
-                        {{'ICON.IMAGE' | translate }}
-                    </label>
+                    <input type="radio" name="iconImage" ng-model="iconConfiguration.model" value="image">
+                    <span class="circle"></span>
+                    <span class="check"></span>
+                    {{'ICON.IMAGE' | translate }}
+                </label>
             </div>
             <div class="padding-5" ng-if="iconConfiguration.model === 'icon'">
-                <ui-select ng-disabled="iconConfiguration.model !== 'icon'" tagging="tagTransform" id="icon" ng-model="iconConfiguration.icon" theme="bootstrap" allow-clear="false" on-select="selectIcon($select.selected)" title="{{'ADF.WIDGET.TITLE.CHOOSE_ICON' | translate}}">
+                <ui-select ng-disabled="iconConfiguration.model !== 'icon'" id="icon" ng-model="iconConfiguration.icon"
+                    theme="bootstrap" allow-clear="false" on-select="selectIcon($select.selected.key)" title="{{'ADF.WIDGET.TITLE.CHOOSE_ICON' | translate}}">
                     <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.ICON' | translate}}" allow-clear="false">
-                        <i class="fa {{$select.selected}} fa-2x"></i>
-                        <span>{{$select.selected}}</span>
+                        <i class="fa {{$select.selected.key}} fa-2x"></i>
+                        <span>{{$select.selected.key}}</span>
                     </ui-select-match>
-                    <ui-select-choices class="oux-icon-selector" repeat="iconTmp in availableIcons | filter: $select.search">
-                        <i class="fa fa-4x" ng-class="iconTmp" title="{{iconTmp}}"></i>
-                        <br/>
-                        <span ng-bind-html="iconTmp| highlight: $select.search"></span>
+                    <ui-select-choices class="oux-icon-selector" repeat="icon.key as (key, icon) in availableIcons | filter: $select.search">
+                        <i class="fa fa-4x" ng-class="icon.key" title="{{icon.key}}"></i>
+                        <br />
+                        <span ng-bind-html="icon.key| highlight: $select.search"></span>
                     </ui-select-choices>
                 </ui-select>
                 <input type="hidden" ng-model="iconConfiguration.icon" required="iconConfiguration.model === 'icon'" />
             </div>
-
             <div class="padding-5" ng-if="iconConfiguration.model === 'image'">
                 <div class="col-xs-12" ng-disabled="iconConfiguration.model !== 'image'">
-                    <div ng-disabled="iconConfiguration.model !== 'image'" ng-if="!iconConfiguration.url" ngf-drop ng-model="iconConfiguration.file" ngf-max-size="1MB" ngf-select="imageSelected($file)" class="drop-box pointer" ngf-drag-over-class="'dragover'" ngf-multiple="false"
-                        ngf-accept="'image/*'" ngf-pattern="'image/*'">{{ 'FORM.DRAG_DROP' | translate }}<br>{{ 'FORM.MAX_SIZE' | translate }}</div>
-                    <img ng-if="iconConfiguration.url" class="navbar-domain" src="{{ iconConfiguration.url }}" data-intro="{{ 'HELP.HEADER.DOMAIN_LOGO' | translate }}" data-position="fixed">
-                    <input ng-if="iconConfiguration.model === 'image'" type="hidden" ng-model="iconConfiguration.url" required/>
-
+                    <div ng-disabled="iconConfiguration.model !== 'image'" ng-if="!iconConfiguration.url" ngf-drop
+                        ng-model="iconConfiguration.file" ngf-max-size="1MB" ngf-select="imageSelected($file)" class="drop-box pointer"
+                        ngf-drag-over-class="'dragover'" ngf-multiple="false" ngf-accept="'image/*'" ngf-pattern="'image/*'">{{ 'FORM.DRAG_DROP' | translate }}<br>{{ 'FORM.MAX_SIZE' | translate }}</div>
+                    <img ng-if="iconConfiguration.url" class="navbar-domain" src="{{ iconConfiguration.url }}"
+                        data-intro="{{ 'HELP.HEADER.DOMAIN_LOGO' | translate }}" data-position="fixed">
+                    <input ng-if="iconConfiguration.model === 'image'" type="hidden" ng-model="iconConfiguration.url"
+                        required />
                 </div>
                 <div class="col-xs-12" ng-if="iconConfiguration.url">
-                    <button id="idRemoveFileLink" ng-click="removeDataFile()" class="btn btn-warning ux-txt-warning btn-group-justified pointer"><i class="fa fa-trash" aria-hidden="true"></i> {{ 'BUTTON.TITLE.REMOVE' | translate }}</button>
+                    <button id="idRemoveFileLink" ng-click="removeDataFile()" class="btn btn-warning ux-txt-warning btn-group-justified pointer"><i
+                            class="fa fa-trash" aria-hidden="true"></i> {{ 'BUTTON.TITLE.REMOVE' | translate }}</button>
                 </div>
-
             </div>
-            <input type="hidden" ng-model="iconConfiguration.model" required/>
+            <input type="hidden" ng-model="iconConfiguration.model" required />
         </div>
         <div class="form-group col-xs-12 col-md-12">
             <label for="dashboardBackground" translate>ADF.DASHBOARD.LABEL.BACKGROUND_COLOR</label>
-            <input type="text" placeholder="{{ 'ADF.WIDGET.PLACEHOLDER.COLOR' | translate }}" colorpicker="hex" class="form-control {{stream.identifier}}_color" ng-model="copy.backgroundColor">
+            <input type="text" placeholder="{{ 'ADF.WIDGET.PLACEHOLDER.COLOR' | translate }}" colorpicker="hex" class="form-control {{stream.identifier}}_color"
+                ng-model="copy.backgroundColor">
         </div>
         <div class="form-group col-xs-12 col-md-6">
             <label for="dashboardBackground" translate>ADF.DASHBOARD.LABEL.BACKGROUND_IMAGE</label>
-
-            <div ng-if="!copy.backgroundImage" ngf-drop ng-model="copy.file" ngf-max-size="1MB" ngf-select="backgroundImageSelected($file)" class="drop-box pointer" ngf-drag-over-class="'dragover'" ngf-multiple="false" ngf-accept="'image/*'" ngf-pattern="'image/*'">{{ 'FORM.DRAG_DROP' | translate }}<br>{{ 'FORM.MAX_SIZE' | translate }}</div>
+            <div ng-if="!copy.backgroundImage" ngf-drop ng-model="copy.file" ngf-max-size="1MB" ngf-select="backgroundImageSelected($file)"
+                class="drop-box pointer" ngf-drag-over-class="'dragover'" ngf-multiple="false" ngf-accept="'image/*'"
+                ngf-pattern="'image/*'">{{ 'FORM.DRAG_DROP' | translate }}<br>{{ 'FORM.MAX_SIZE' | translate }}</div>
             <!-- <img ng-if="copy.backgroundImage" class="navbar-domain" src="{{ copy.backgroundImage }}" data-intro="{{ 'HELP.HEADER.DOMAIN_LOGO' | translate }}" data-position="fixed"> -->
-
             <div class="col-xs-12" ng-if="copy.backgroundImage">
-                <button id="idRemoveBackgroundImageFileLink" ng-click="removeBackgroundFile()" class="btn btn-warning ux-txt-warning btn-group-justified pointer"><i class="fa fa-trash" aria-hidden="true"></i> {{ 'BUTTON.TITLE.REMOVE' | translate }}</button>
+                <button id="idRemoveBackgroundImageFileLink" ng-click="removeBackgroundFile()" class="btn btn-warning ux-txt-warning btn-group-justified pointer"><i
+                        class="fa fa-trash" aria-hidden="true"></i> {{ 'BUTTON.TITLE.REMOVE' | translate }}</button>
             </div>
         </div>
-
         <div class="form-group col-xs-12 col-md-6" ng-if="copy.backgroundImage">
             <label for="BACKGROUND_SIZE" class="text-primary">{{'ADF.DASHBOARD.LABEL.BACKGROUND_SIZE' | translate }}</label>
             <wizard-radio info="backgroundSize"></wizard-radio>
@@ -84,19 +90,24 @@
         </div>
         <div class="form-group col-xs-12 col-md-12 well padding-5 dashboardPanel">
             <div gridstack class="grid-stack">
-                <div gridstack-item class="grid-stack-item" gs-item-x="0" gs-item-y="0" gs-item-width="5" gs-item-height="2" gs-item-min-width="2" gs-item-min-height="1" gs-item-autopos="0" data-intro="{{ 'HELP.WORKSPACES.DASHBOARD' | translate }}" data-position="absolute">
-                    <div class="grid-stack-item-content panel well  no-padding " style="background-color: {{copy.backgroundColor}} !important; background-image: url( {{copy.backgroundImage }} ) !important; background-size : {{backgroundSize.model }} !important" title="{{ copy.title | translate }}">
+                <div gridstack-item class="grid-stack-item" gs-item-x="0" gs-item-y="0" gs-item-width="5"
+                    gs-item-height="2" gs-item-min-width="2" gs-item-min-height="1" gs-item-autopos="0" data-intro="{{ 'HELP.WORKSPACES.DASHBOARD' | translate }}"
+                    data-position="absolute">
+                    <div class="grid-stack-item-content panel well  no-padding " style="background-color: {{copy.backgroundColor}} !important; background-image: url( {{copy.backgroundImage }} ) !important; background-size : {{backgroundSize.model }} !important"
+                        title="{{ copy.title | translate }}">
                         <div class="col-xs-12 col-md-12 padding-5">
                             <h4 class="text-primary  no-margin">{{ copy.title | translate }}</h4>
                             <small ng-if="copy.description">{{ copy.description | translate }}</small>
                         </div>
                         <div class="dashboard-extra-info">
                             <div class="padding-5 extra-info">
-                                <span><i class="fa fa-clock-o text-grey"></i> <small am-time-ago="copy.time"> {{copy.time}}</small></span>
+                                <span><i class="fa fa-clock-o text-grey"></i> <small am-time-ago="copy.time">
+                                        {{copy.time}}</small></span>
                             </div>
                             <div class="padding-5 identity-icon-dashboard">
                                 <i ng-if="iconConfiguration.model === 'icon'" class="fa {{ iconConfiguration.icon}}"></i>
-                                <img ng-if="iconConfiguration.model === 'image'" alt="" src="{{ iconConfiguration.url }}" data-intro="{{ 'HELP.HEADER.DOMAIN_LOGO' | translate }}" data-position="fixed">
+                                <img ng-if="iconConfiguration.model === 'image'" alt="" src="{{ iconConfiguration.url }}"
+                                    data-intro="{{ 'HELP.HEADER.DOMAIN_LOGO' | translate }}" data-position="fixed">
                             </div>
                         </div>
                     </div>
@@ -104,7 +115,6 @@
             </div>
         </div>
     </form>
-
 </div>
 <div class="modal-footer">
     <div class="col-xs-12">

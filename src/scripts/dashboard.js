@@ -47,7 +47,7 @@
  */
 
 angular.module('adf')
-    .directive('adfDashboard', function ($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate, Upload) {
+    .directive('adfDashboard', function ($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, faStylesService, $translate, Upload) {
         'use strict';
 
         function stringToBoolean(string) {
@@ -457,7 +457,7 @@ angular.module('adf')
 
                     };
                     // pass icon list
-                    editDashboardScope.availableIcons = $faIcons.list();
+                    editDashboardScope.availableIcons = faStylesService.getStyles();
 
                     var adfEditTemplatePath = adfTemplatePath + 'dashboard-edit.html';
                     if (model.editTemplateUrl) {

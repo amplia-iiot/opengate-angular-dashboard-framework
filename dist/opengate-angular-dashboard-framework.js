@@ -78,7 +78,7 @@ angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
  */
 
 angular.module('adf')
-    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", "$faIcons", "$translate", "Upload", function ($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $faIcons, $translate, Upload) {
+    .directive('adfDashboard', ["$rootScope", "$log", "$timeout", "$uibModal", "dashboard", "adfTemplatePath", "faStylesService", "$translate", "Upload", function ($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, faStylesService, $translate, Upload) {
         
 
         function stringToBoolean(string) {
@@ -488,7 +488,7 @@ angular.module('adf')
 
                     };
                     // pass icon list
-                    editDashboardScope.availableIcons = $faIcons.list();
+                    editDashboardScope.availableIcons = faStylesService.getStyles();
 
                     var adfEditTemplatePath = adfTemplatePath + 'dashboard-edit.html';
                     if (model.editTemplateUrl) {
