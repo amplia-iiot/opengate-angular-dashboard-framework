@@ -34,18 +34,9 @@
                 </label>
             </div>
             <div class="padding-5" ng-if="iconConfiguration.model === 'icon'">
-                <ui-select ng-disabled="iconConfiguration.model !== 'icon'" id="icon" ng-model="iconConfiguration.icon"
-                    theme="bootstrap" allow-clear="false" on-select="selectIcon($select.selected.key)" title="{{'ADF.WIDGET.TITLE.CHOOSE_ICON' | translate}}">
-                    <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.ICON' | translate}}" allow-clear="false">
-                        <i class="fa {{$select.selected.key}} fa-2x"></i>
-                        <span>{{$select.selected.key}}</span>
-                    </ui-select-match>
-                    <ui-select-choices class="oux-icon-selector" repeat="icon.key as (key, icon) in availableIcons | filter: $select.search">
-                        <i class="fa fa-4x" ng-class="icon.key" title="{{icon.key}}"></i>
-                        <br />
-                        <span ng-bind-html="icon.key| highlight: $select.search"></span>
-                    </ui-select-choices>
-                </ui-select>
+                <ui-select-fa-styles id="icon" icon="iconConfiguration.icon" required="false" allow-clear="false"
+                    disabled="iconConfiguration.model !== 'icon'" title="{{'ADF.WIDGET.TITLE.CHOOSE_ICON' | translate}}">
+                </ui-select-fa-styles>
                 <input type="hidden" ng-model="iconConfiguration.icon" required="iconConfiguration.model === 'icon'" />
             </div>
             <div class="padding-5" ng-if="iconConfiguration.model === 'image'">

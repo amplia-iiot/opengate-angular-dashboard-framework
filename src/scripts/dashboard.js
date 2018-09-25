@@ -47,7 +47,7 @@
  */
 
 angular.module('adf')
-    .directive('adfDashboard', function ($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, faStylesService, $translate, Upload) {
+    .directive('adfDashboard', function ($rootScope, $log, $timeout, $uibModal, dashboard, adfTemplatePath, $translate, Upload) {
         'use strict';
 
         function stringToBoolean(string) {
@@ -427,7 +427,7 @@ angular.module('adf')
                                 function (url) {
                                     editDashboardScope.iconConfiguration.url = url;
                                     editDashboardScope.iconConfiguration.file = url;
-                                    editDashboardScope.iconConfiguration.iconType = 'image'
+                                    editDashboardScope.iconConfiguration.iconType = 'image';
 
                                 });
                         } else {
@@ -456,8 +456,6 @@ angular.module('adf')
                         editDashboardScope.copy.file = null;
 
                     };
-                    // pass icon list
-                    editDashboardScope.availableIcons = faStylesService.getStyles();
 
                     var adfEditTemplatePath = adfTemplatePath + 'dashboard-edit.html';
                     if (model.editTemplateUrl) {
@@ -480,7 +478,7 @@ angular.module('adf')
                             model.icon = editDashboardScope.iconConfiguration.url;
 
                         } else if (editDashboardScope.iconConfiguration.model === 'icon') {
-                            model.icon = editDashboardScope.iconConfiguration.icon;
+                            model.icon = (editDashboardScope.iconConfiguration.icon && editDashboardScope.iconConfiguration.icon.key) || editDashboardScope.iconConfiguration.icon;
 
                         }
                         model.iconType = editDashboardScope.iconConfiguration.model;
