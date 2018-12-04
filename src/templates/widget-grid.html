@@ -3,7 +3,7 @@
     <div class="panel-heading clearfix" ng-if="!widget.frameless || editMode">
         <div ng-include src="definition.titleTemplateUrl"></div>
     </div>
-    <div ng-class="{ 'panel-body':!widget.frameless || editMode, 'widget-blur-loading': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }" uib-collapse="widgetState.isCollapsed">
+    <div ng-class="{ 'panel-body':!widget.frameless || editMode, 'widget-blur-loading': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }">
         <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filter.showFilter" class="row form-group" style="margin-top: 5px !important;">
             <div ng-if="filter.typeFilter === 0" class="col-xs-12 col-md-8">
                 <div class="filter" mass-autocomplete>
@@ -65,7 +65,7 @@
                 </ul>
             </div>
         </div>
-        <div ng-if="customSelectors && config.sort && filter.showFilter" class="row form-group" style="margin-top: 5px !important;">
+        <div ng-if="customSelectors && config.sort && filter.showFilter && !editMode " class="row form-group" style="margin-top: 5px !important;">
             <div class="sort col-xs-12 col-md-8">
                 <ui-select ng-model="config.sort.value" theme="bootstrap" title="{{'ADF.WIDGET.TITLE.CHOOSE_ORDER' | translate}}" allow-clear="true" append-to-body="true" ng-change="launchSearching()" ng-click="getCustomSelectors()">
                     <ui-select-match placeholder="{{'ADF.WIDGET.PLACEHOLDER.SHORTED_BY' | translate}}" allow-clear="true">{{ 'ADF.WIDGET.TITLE.SORTED_BY' | translate:{item: $select.selected} }}</ui-select-match>

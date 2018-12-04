@@ -48,8 +48,39 @@
  modal dialog in fullscreen
 */
 
-.dashboard-modal.widget-fullscreen .modal-dialog {
-    width: 98%;
+.dashboard-modal {
+    // .widget-fullscreen .modal-dialog {
+    //     width: 98%;
+    // }
+    .widget-fullscreen {
+        left: 5px !important;
+        right: 5px !important;
+        display: block;
+        .panel-heading {
+            height: 20px;
+            .btn-sm {
+                margin: 0px !important;
+                padding: 0px 15px !important;
+            }
+        }
+        .panel-footer {
+            height: 20px;
+            // position: absolute;
+            // top: calc( 100% - 20px);
+            width: 100%;
+        }
+        .panel-body {
+            overflow: auto;
+            padding: 3px;
+            height: calc( 100% - 40px);
+        }
+        .panel-body adf-widget-content {
+            height: 100% !important;
+            .angular-leaflet-map {
+                min-height: 250px;
+            }
+        }
+    }
 }
 
 .no-transition {

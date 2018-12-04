@@ -45,8 +45,38 @@
 /*
  modal dialog in fullscreen
 */
-.dashboard-modal.widget-fullscreen .modal-dialog {
-  width: 98%;
+.dashboard-modal .widget-fullscreen {
+  left: 5px !important;
+  right: 5px !important;
+  display: block;
+}
+
+.dashboard-modal .widget-fullscreen .panel-heading {
+  height: 20px;
+}
+
+.dashboard-modal .widget-fullscreen .panel-heading .btn-sm {
+  margin: 0px !important;
+  padding: 0px 15px !important;
+}
+
+.dashboard-modal .widget-fullscreen .panel-footer {
+  height: 20px;
+  width: 100%;
+}
+
+.dashboard-modal .widget-fullscreen .panel-body {
+  overflow: auto;
+  padding: 3px;
+  height: calc( 100% - 40px);
+}
+
+.dashboard-modal .widget-fullscreen .panel-body adf-widget-content {
+  height: 100% !important;
+}
+
+.dashboard-modal .widget-fullscreen .panel-body adf-widget-content .angular-leaflet-map {
+  min-height: 250px;
 }
 
 .no-transition {
