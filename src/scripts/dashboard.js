@@ -585,7 +585,7 @@ angular.module('adf')
                     angular.forEach(addScope.widgets, function(widget, type) {
                         widget.key = type;
                         if (!widget.category) {
-                            widget.category = 'Miscellaneous';
+                            widget.category = 'ADF.CATEGORY.MISCELLANEOUS';
                         }
                     });
 
