@@ -217,12 +217,19 @@ angular.module('adf')
 
                 var categoriesTmp = widget.categoryTags.split(',');
 
+                var allWidgetCategoriesTranslated = [];
                 angular.forEach(categoriesTmp, function(category, idx) {
                     // push widget to category array
                     var translatedCat = $translate.instant(category);
-                    if (categories.indexOf(translatedCat) === -1)
+                    if (categories.indexOf(translatedCat) === -1) {
                         categories.push(translatedCat);
+                    }
+
+                    if (allWidgetCategoriesTranslated.indexOf(translatedCat) === -1) {
+                        allWidgetCategoriesTranslated.push(translatedCat);
+                    }
                 });
+                widget.categoryTags = allWidgetCategoriesTranslated.toString();
 
             });
             return categories;
