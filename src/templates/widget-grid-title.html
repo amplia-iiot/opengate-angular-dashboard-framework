@@ -39,7 +39,7 @@
         <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.REMOVE' | translate}}" ng-click="remove()" ng-if="editMode">
             <i class="glyphicon glyphicon-trash"></i>
         </a>
-        <div ng-if="!editMode" class="pointer" style="display: inline;" uib-dropdown uib-dropdown-toggle>
+        <div ng-if="!editMode" class="pointer" ng-show="!widget.notshowOtherOptions" style="display: inline;" uib-dropdown uib-dropdown-toggle>
             <i class="fa fa-ellipsis-h" style="font-size:1.2em;"></i>
             <ul uib-dropdown-menu class="dropdown-menu-right">
                 <li role="menuitem">
