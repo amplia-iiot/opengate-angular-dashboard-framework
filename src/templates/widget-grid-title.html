@@ -71,9 +71,9 @@
     </span>
     <div class="pull-right" ng-if="navOptionsHandler.prevPage && navOptionsHandler.nextPage && navOptionsHandler.hasPrevPage && navOptionsHandler.hasNextPage && ( !navOptionsHandler.isPaginationEnable || navOptionsHandler.isPaginationEnable() ) && ( !navOptionsHandler.isNoContent || !navOptionsHandler.isNoContent() )"
         style="margin-top:1px">
-        <button class="btn btn-primary btn-sm pointer" ng-click="navOptionsHandler.prevPage()" ng-disabled="!navOptionsHandler.hasPrevPage()">
+        <button class="btn btn-primary btn-sm pointer" ng-click="navOptionsHandler.prevPage()" ng-disabled="!navOptionsHandler.hasPrevPage() || (navOptionsHandler && navOptionsHandler.loadingData)">
             <i class="glyphicon glyphicon-chevron-left browser-link"></i>{{ 'BUTTON.TITLE.PREVIOUS' | translate }} </button>
-        <button class="btn btn-primary btn-sm pointer" ng-click="navOptionsHandler.nextPage()" ng-disabled="!navOptionsHandler.hasNextPage()"> {{ 'BUTTON.TITLE.NEXT' | translate }}
+        <button class="btn btn-primary btn-sm pointer" ng-click="navOptionsHandler.nextPage()" ng-disabled="!navOptionsHandler.hasNextPage() || (navOptionsHandler && navOptionsHandler.loadingData)"> {{ 'BUTTON.TITLE.NEXT' | translate }}
             <i class="glyphicon glyphicon-chevron-right browser-link"></i>
         </button>
     </div>
