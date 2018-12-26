@@ -510,20 +510,28 @@ angular.module('adf')
                     addNewWidgetToModel(model, w, name, !$scope.editMode);
                 });
 
-                var adfOpenModalWidgetFromOther = $scope.$on('adfOpenModalWidgetFromOther', function(event, widgetType, config) {
+                var adfOpenModalWidgetFromOther = $scope.$on('adfOpenModalWidgetFromOther', function(event, widgetType, config, origScope) {
                     var templateUrl = adfTemplatePath + 'widget-fullscreen.html';
                     var _config = config || {};
                     if (_config.sendSelection) {
                         templateUrl = adfTemplatePath + 'widget-fullscreen-selection.html';
                     }
-                    var widget = createWidget(widgetType);
-                    widget.config = angular.merge({}, widget.config, _config);
-                    widget.type = widgetType;
-                    if (widget.config.title) {
-                        widget.title = widget.config.title;
+
+                    var fullScreenScope;
+                    if (!origScope) {
+                        var widget = createWidget(widgetType);
+                        widget.config = angular.merge({}, widget.config, _config);
+                        widget.type = widgetType;
+                        if (widget.config.title) {
+                            widget.title = widget.config.title;
+                        }
+
+                        fullScreenScope = $scope.$new();
+                        fullScreenScope.definition = fullScreenScope.widget = widget;
+                    } else {
+                        fullScreenScope = origScope;
                     }
-                    var fullScreenScope = $scope.$new();
-                    fullScreenScope.definition = fullScreenScope.widget = widget;
+
                     var opts = {
                         scope: fullScreenScope,
                         templateUrl: templateUrl,
@@ -542,10 +550,12 @@ angular.module('adf')
                     var instance = $uibModal.open(opts);
                     fullScreenScope.closeDialog = function() {
                         instance.close();
-                        fullScreenScope.$destroy();
+                        if (!origScope) {
+                            fullScreenScope.$destroy();
+                        } else {
+                            fullScreenScope.reload();
+                        }
                     };
-
-
                 });
 
                 var adfAddWidgetDialog = $scope.$on('adfAddWidgetDialog', function(event) {

@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.2.0');
+    .value('adfVersion', '8.3.0');
 /*
  * The MIT License
  *
@@ -541,20 +541,28 @@ angular.module('adf')
                     addNewWidgetToModel(model, w, name, !$scope.editMode);
                 });
 
-                var adfOpenModalWidgetFromOther = $scope.$on('adfOpenModalWidgetFromOther', function(event, widgetType, config) {
+                var adfOpenModalWidgetFromOther = $scope.$on('adfOpenModalWidgetFromOther', function(event, widgetType, config, origScope) {
                     var templateUrl = adfTemplatePath + 'widget-fullscreen.html';
                     var _config = config || {};
                     if (_config.sendSelection) {
                         templateUrl = adfTemplatePath + 'widget-fullscreen-selection.html';
                     }
-                    var widget = createWidget(widgetType);
-                    widget.config = angular.merge({}, widget.config, _config);
-                    widget.type = widgetType;
-                    if (widget.config.title) {
-                        widget.title = widget.config.title;
+
+                    var fullScreenScope;
+                    if (!origScope) {
+                        var widget = createWidget(widgetType);
+                        widget.config = angular.merge({}, widget.config, _config);
+                        widget.type = widgetType;
+                        if (widget.config.title) {
+                            widget.title = widget.config.title;
+                        }
+
+                        fullScreenScope = $scope.$new();
+                        fullScreenScope.definition = fullScreenScope.widget = widget;
+                    } else {
+                        fullScreenScope = origScope;
                     }
-                    var fullScreenScope = $scope.$new();
-                    fullScreenScope.definition = fullScreenScope.widget = widget;
+
                     var opts = {
                         scope: fullScreenScope,
                         templateUrl: templateUrl,
@@ -573,10 +581,12 @@ angular.module('adf')
                     var instance = $uibModal.open(opts);
                     fullScreenScope.closeDialog = function() {
                         instance.close();
-                        fullScreenScope.$destroy();
+                        if (!origScope) {
+                            fullScreenScope.$destroy();
+                        } else {
+                            fullScreenScope.reload();
+                        }
                     };
-
-
                 });
 
                 var adfAddWidgetDialog = $scope.$on('adfAddWidgetDialog', function(event) {
@@ -1445,6 +1455,40 @@ angular.module('adf')
 
 angular.module('adf')
     .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "toastr", "$translate", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, toastr, $translate) {
+        var _setFilterType = function(selectFilter, $scope) {
+            var config = $scope.config || {};
+            var filter = config.filter = config.filter ? config.filter : {};
+            var id = filter.id = selectFilter && filter.id;
+            filter.headersFilter = selectFilter && filter.headersFilter;
+
+            if (!$scope.filter) {
+                $scope.filter = {};
+            }
+            switch (filter.type) {
+                case 'advanced':
+                    $scope.filter.typeFilter = id ? 2 : 0;
+                    $scope.search = {
+                        oql: filter.oql,
+                        json: filter.value
+                    };
+                    break;
+                case 'basic':
+                    $scope.filter.typeFilter = id ? 2 : 1;
+                    $scope.search = {
+                        quick: filter.value
+                    };
+
+                    break;
+                default:
+                    $scope.filter.typeFilter = id ? 2 : 1;
+                    $scope.search = {
+                        quick: filter.value = ''
+                    };
+                    break;
+            }
+            $scope.search.id = selectFilter;
+        };
+
         function preLink($scope) {
             var definition = $scope.definition;
 
@@ -1575,10 +1619,10 @@ angular.module('adf')
                         return true;
                     } else {
                         if (filter.type === "basic") {
-                            return filter.value.length > 0;
+                            return filter.value && filter.value.length > 0;
                         }
                         if (filter.type === "advanced") {
-                            return filter.value.length > 2 && filter.oql;
+                            return filter.value && filter.value.length > 2 && filter.oql;
                         }
                     }
                 }
@@ -1593,11 +1637,13 @@ angular.module('adf')
                 }
             };
 
-            $scope.filter = {
-                typeFilter: 1,
-                showFilter: false,
-                showFinalFilter: false
-            };
+            // $scope.filter = {
+            //     typeFilter: 1,
+            //     showFilter: false,
+            //     showFinalFilter: false
+            // };
+
+            _setFilterType(null, $scope);
 
             $scope.launchSearching = function() {
                 if ($scope.widget && !$scope.widget.preventRefreshFilterEvent) {
@@ -1646,6 +1692,9 @@ angular.module('adf')
 
             $scope.launchSearchingQuick = function() {
                 if (!$scope.filterApplied) {
+                    if (!$scope.search) {
+                        $scope.search = {};
+                    }
                     $scope.search.oql = $scope.search.json = '';
                     $scope.config.filter = {
                         type: 'basic',
@@ -1679,15 +1728,15 @@ angular.module('adf')
                 $scope.filterApplied = false;
             };
 
-            var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
-                $scope.config.windowFilter = timeObj ? timeObj : (config.windowFilter ? {} : timeObj);
-                var widget = {
-                    definition: definition,
-                    element: $element
-                };
-                $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
-                $scope.reload();
-            });
+            // var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
+            //     $scope.config.windowFilter = timeObj ? timeObj : (config.windowFilter ? {} : timeObj);
+            //     var widget = {
+            //         definition: definition,
+            //         element: $element
+            //     };
+            //     $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
+            //     $scope.reload();
+            // });
 
             $scope.enter = function(event) {
                 var keycode = (event.keyCode ? event.keyCode : event.which);
@@ -1995,36 +2044,23 @@ angular.module('adf')
                 options: '=',
                 widgetState: '='
             },
-            controller: ["$scope", function($scope) {
-                var _setFilterType = function(selectFilter) {
-                    var config = $scope.config || {};
-                    var filter = config.filter = config.filter ? config.filter : {};
-                    var id = filter.id = selectFilter && filter.id;
-                    filter.headersFilter = selectFilter && filter.headersFilter;
-                    switch (filter.type) {
-                        case 'advanced':
-                            $scope.filter.typeFilter = id ? 2 : 0;
-                            $scope.search = {
-                                oql: filter.oql,
-                                json: filter.value
-                            };
-                            break;
-                        case 'basic':
-                            $scope.filter.typeFilter = id ? 2 : 1;
-                            $scope.search = {
-                                quick: filter.value
-                            };
-
-                            break;
-                        default:
-                            $scope.filter.typeFilter = id ? 2 : 1;
-                            $scope.search = {
-                                quick: filter.value = ''
-                            };
-                            break;
-                    }
-                    $scope.search.id = selectFilter;
+            controller: ["$scope", "$element", function($scope, $element) {
+                $scope.filter = {
+                    typeFilter: 1,
+                    showFilter: false,
+                    showFinalFilter: false
                 };
+
+                var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
+                    $scope.config.windowFilter = timeObj ? timeObj : (config.windowFilter ? {} : timeObj);
+                    var widget = {
+                        definition: definition,
+                        element: $element
+                    };
+                    $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
+                    $scope.$broadcast('widgetWindowTimeChanged', $scope.config.windowFilter);
+                    $scope.reload();
+                });
 
                 this.updateWidgetFilters = function(filterId, configChange) {
                     if ($scope.options && $scope.options.extraData && $scope.options.extraData.widgetFilters) {
@@ -2044,7 +2080,7 @@ angular.module('adf')
 
                         $scope.sharedFilters = angular.copy(sharedFilters);
                         if (!configChange || !selectFilter && !!filterId)
-                            _setFilterType(selectFilter);
+                            _setFilterType(selectFilter, $scope);
                     }
 
                 };
@@ -2130,8 +2166,7 @@ angular.module('adf')
                 });
 
                 $scope.openFullScreen = function() {
-
-                    $scope.$emit('adfOpenModalWidgetFromOther', definition.type, $scope.config || {});
+                    $scope.$emit('adfOpenModalWidgetFromOther', definition.type, $scope.config || {}, $scope);
                 };
 
                 $scope.openAboutScreen = function(size) {
@@ -2273,6 +2308,8 @@ angular.module('adf')
                     $scope.setReloadTimeout();
                 };
 
+                // _setFilterType();
+
                 // verificacion de periodo de refresco
                 $scope.setReloadTimeout();
 
@@ -2284,6 +2321,7 @@ angular.module('adf')
                     adfDashboardEditsCancelled();
                     addItemToSelection();
                     removeItemFromSelection();
+                    windowTimeChanged();
                     $interval.cancel(stopReloadTimeout);
                 });
             }],
