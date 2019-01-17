@@ -1618,10 +1618,10 @@ angular.module('adf')
                     if (filter.headersFilter && filter.headersFilter.length > 0) {
                         return true;
                     } else {
-                        if (filter.type === "basic") {
+                        if (filter.type === 'basic') {
                             return filter.value && filter.value.length > 0;
                         }
-                        if (filter.type === "advanced") {
+                        if (filter.type === 'advanced') {
                             return filter.value && filter.value.length > 2 && filter.oql;
                         }
                     }
@@ -1665,7 +1665,7 @@ angular.module('adf')
                     $scope.search.quick = '';
                     if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
                         if ($scope.search.oql && $scope.search.oql.trim().length > 0) {
-                            toastr.error($translate.instant("TOASTR.FILTER_IS_MALFORMED"));
+                            toastr.error($translate.instant('TOASTR.FILTER_IS_MALFORMED'));
                             executeSearch = false;
                         } else {
                             $scope.config.filter = {

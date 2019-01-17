@@ -62,19 +62,19 @@ var protractorOptions = {
 /** lint **/
 
 gulp.task('csslint', function() {
-    gulp.src('src/styles/*.css')
+    return gulp.src('src/styles/*.css')
         .pipe($.csslint())
         .pipe($.csslint.reporter());
 });
 
 gulp.task('jslint', function() {
-    gulp.src('src/scripts/*.js')
+    return gulp.src('src/scripts/*.js')
         .pipe($.eslint())
         .pipe($.eslint.format())
         .pipe($.eslint.failAfterError());
 });
 
-gulp.task('lint', ['csslint', 'jslint']);
+gulp.task('lint', gulp.series('csslint', 'jslint'));
 
 /** clean **/
 
@@ -124,7 +124,7 @@ gulp.task('js-with-tpls', function() {
     return processScripts(sources, name + '-tpls');
 });
 
-gulp.task('build', ['styles', 'js', 'js-with-tpls']);
+gulp.task('build', gulp.parallel('styles', 'js', 'js-with-tpls'));
 
 /** build docs **/
 
@@ -139,8 +139,7 @@ gulp.task('install-widgets', function() {
     return gulp.src('sample/widgets/*/bower.json')
         .pipe($.install());
 });
-
-gulp.task('widget-templates', ['install-widgets'], function() {
+gulp.task('widget-templates:build', function() {
     var opts = {
         root: '{widgetsPath}',
         module: 'sample'
@@ -150,6 +149,8 @@ gulp.task('widget-templates', ['install-widgets'], function() {
         .pipe($.angularTemplatecache('widgets.js', opts))
         .pipe(gulp.dest('.tmp'));
 });
+
+gulp.task('widget-templates', gulp.series('install-widgets', 'widget-templates:build'));
 
 gulp.task('sample-templates', function() {
     var opts = {
@@ -178,7 +179,7 @@ gulp.task('copy-font', function() {
         .pipe(gulp.dest('dist/sample/fonts'));
 });
 
-gulp.task('sample', ['widget-templates', 'sample-templates', 'dashboard-templates', 'copy-font'], function() {
+gulp.task('sample:build', function() {
     var templates = gulp.src('.tmp/*.js', { read: false });
     var assets = $.useref.assets();
     return gulp.src('sample/index.html')
@@ -195,6 +196,7 @@ gulp.task('sample', ['widget-templates', 'sample-templates', 'dashboard-template
         .pipe($.revReplace())
         .pipe(gulp.dest('dist/sample'));
 });
+gulp.task('sample', gulp.series('widget-templates', 'sample-templates', 'dashboard-templates', 'copy-font', 'sample:build'));
 
 /** livereload **/
 
@@ -204,10 +206,10 @@ gulp.task('reload', function() {
 })
 
 gulp.task('watch-styles', function() {
-    return gulp.watch('src/styles/*.scss', ['styles', 'reload']);
+    return gulp.watch('src/styles/*.scss', gulp.series('styles', 'reload'));
 })
 
-gulp.task('watch', ['watch-styles'], function() {
+gulp.task('watch', gulp.parallel('watch-styles', function() {
     var paths = [
         'src/scripts/*.js',
         'src/styles/*.css',
@@ -223,9 +225,9 @@ gulp.task('watch', ['watch-styles'], function() {
         'sample/widgets/*/src/*.html'
     ];
     return gulp.watch(paths, ['reload']);
-});
+}));
 
-gulp.task('webserver', ['install-widgets'], function() {
+gulp.task('webserver', function() {
     return connect.server({
         port: 9002,
         livereload: true,
@@ -240,11 +242,18 @@ gulp.task('webserver', ['install-widgets'], function() {
     });
 });
 
-gulp.task('serve', ['webserver', 'styles', 'watch']);
+gulp.task('serve', gulp.series('install-widgets', 'webserver', 'styles', 'watch'));
 
 /** unit tests */
+gulp.task('karma', function(done) {
+    runKarma(done, true);
+});
 
-gulp.task('test', ['dashboard-templates', 'karma']);
+gulp.task('karma-debug', function(done) {
+    runKarma(done, false);
+});
+
+gulp.task('test', gulp.series('dashboard-templates', 'karma'));
 
 /** run karma */
 function runKarma(done, singleRun) {
@@ -254,15 +263,9 @@ function runKarma(done, singleRun) {
     }, done).start();
 }
 
-gulp.task('karma', ['dashboard-templates'], function(done) {
-    runKarma(done, true);
-});
 
-gulp.task('karma-debug', ['dashboard-templates'], function(done) {
-    runKarma(done, false);
-});
 
-gulp.task('coverall', ['test'], function() {
+gulp.task('coverall', function() {
     return gulp.src('dist/reports/coverage/html/lcov.info')
         .pipe($.coveralls());
 });
@@ -287,14 +290,13 @@ gulp.task('webdriver_update', webdriver_update);
 gulp.task('webdriver_standalone', webdriver_standalone);
 
 // start webserver for e2e tests
-gulp.task('e2e-server', ['install-widgets'], function() {
+gulp.task('e2e-server', function() {
     connect.server({
         port: 9003
     });
 });
 
-// Setting up the test task
-gulp.task('e2e', ['e2e-server', 'webdriver_update'], function(cb) {
+gulp.task('e2e-build', function(cb) {
     gulp.src('test/e2e/*Spec.js')
         .pipe(protractor(protractorOptions))
         .on('error', function(e) {
@@ -310,14 +312,17 @@ gulp.task('e2e', ['e2e-server', 'webdriver_update'], function(cb) {
         });
 });
 
+// Setting up the test task
+gulp.task('e2e', gulp.series('install-widgets', 'e2e-server', 'webdriver_update', 'e2e-build'));
+
 /** travis ci **/
 
-gulp.task('travis', ['jslint', 'test', 'coverall', 'build']);
+gulp.task('travis', gulp.series('jslint', 'test', 'coverall', 'build'));
 
 /** shorthand methods **/
-gulp.task('all', ['build', 'docs', 'sample']);
+gulp.task('all', gulp.series('build', 'docs', 'sample'));
 
-gulp.task('default', ['jslint', 'test', 'build']);
+gulp.task('default', gulp.series('jslint', 'test', 'build'));
 
 
 
@@ -352,18 +357,16 @@ gulp.task('create:release:branch', function(cb) {
     })
 });
 
-gulp.task('increase:version', ['create:release:branch'], function() {
+gulp.task('increase:version', function() {
     return increase(versionType());
 });
 
 // STEP 2
 
-gulp.task('build:all', function(cb) {
-    runSequence('increase:version', 'build', cb);
-})
+gulp.task('build:all', gulp.series('create:release:branch', 'increase:version', 'build'));
 
 // STEP 3 
-gulp.task('commit:increase:version', ['build:all'], function() {
+gulp.task('commit:increase:version', function() {
     return gulp.src(['dist', './bower.json', './package.json'])
         .pipe(git.add())
         .pipe(git.commit('release ' + versionType() + ' version:' + versionNumber()))
@@ -371,12 +374,12 @@ gulp.task('commit:increase:version', ['build:all'], function() {
 // STEP 3 
 
 // STEP 4
-gulp.task('checkout:master:increase', ['commit:increase:version'], function(cb) {
+gulp.task('checkout:master:increase', function(cb) {
     git.checkout(masterBranch(), function(err) {
         cb(err);
     })
 });
-gulp.task('merge:master:increase', ['checkout:master:increase'], function(cb) {
+gulp.task('merge:master:increase', function(cb) {
     git.merge(temporalBranchRelease(), function(err) {
         cb(err);
     });
@@ -388,12 +391,12 @@ gulp.task('merge:master:increase', ['checkout:master:increase'], function(cb) {
         .pipe(git.commit('release ' + versionType() + ' version:' + versionNumber()))
 });*/
 
-gulp.task('prepare_tag:increase', ['merge:master:increase'], function() {
+gulp.task('prepare_tag:increase', function() {
     return gulp.src(['./package.json'])
         .pipe(tag_version());
 });
 
-gulp.task('prepare:develop:increase', ['prepare_tag:increase'], function(cb) {
+gulp.task('checkout:develop', function(cb) {
     git.checkout(developBranch(), function(err) {
         if (!err) {
             git.merge(masterBranch(), function(err) {
@@ -405,9 +408,11 @@ gulp.task('prepare:develop:increase', ['prepare_tag:increase'], function(cb) {
         }
     });
 });
+
+gulp.task('prepare:develop:increase', gulp.series('build:all', 'commit:increase:version', 'checkout:master:increase', 'merge:master:increase', 'prepare_tag:increase', 'checkout:develop'));
 // STEP 4
 
-gulp.task('push:increase', ['prepare:develop:increase', 'prepare_tag:increase'], function(cb) {
+gulp.task('push:increase', gulp.series('prepare:develop:increase', 'prepare_tag:increase', function(cb) {
     git.push('origin', [masterBranch(), developBranch()], { args: " --follow-tags" }, function(err) {
         if (!err) {
             git.branch(temporalBranchRelease(), { args: "-D" }, function(err) {
@@ -417,7 +422,7 @@ gulp.task('push:increase', ['prepare:develop:increase', 'prepare_tag:increase'],
             cb(err);
         }
     });
-});
+}));
 
 
 function increase(importance) {
