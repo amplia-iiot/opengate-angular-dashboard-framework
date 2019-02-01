@@ -1,7 +1,7 @@
 <div class="panel-title" style="margin:0px;">
     <div class="pull-right container-actions bg-primary" data-intro="Widget actions" data-position="bottom">
-        <span ng-if="config.about">
-            <a href="" uib-popover="{{ config.about }}" popover-trigger="'mouseenter'" popover-placement="top" ng-click="openAboutScreen()">
+        <span ng-if="config.about" class="hide-on-fullscreen">
+            <a uib-popover="{{ config.about }}" popover-trigger="'mouseenter'" popover-placement="top" ng-click="openAboutScreen()">
                 <i class="glyphicon glyphicon-info-sign"></i>
             </a>
             <script type="text/ng-template" id="widgetAboutModal.html">
@@ -14,48 +14,48 @@
                 </div>
             </script>
         </span>
-        <a ng-if="!editMode && widget.print" href="" title="{{ 'ADF.WIDGET.TOOLTIP.PRINT' | translate }}" ng-click="print()">
+        <a ng-if="!editMode && widget.print" title="{{ 'ADF.WIDGET.TOOLTIP.PRINT' | translate }}" ng-click="print()" class="hide-on-fullscreen">
             <i class="glyphicon glyphicon-print"></i>
         </a>
-        <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.REFRESH' | translate }}" ng-if="widget.reload" ng-click="reload()">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.REFRESH' | translate }}" ng-if="widget.reload" ng-click="reload()">
             <i class="glyphicon glyphicon-refresh"></i>
         </a>
         <!-- show widget filter -->
-        <a permission permission-only=" 'viewFilter' " href="" title="{{ 'ADF.WIDGET.TOOLTIP.FILTER' | translate }}" ng-if="config.widgetSelectors && !editMode" ng-click="filter.showFilter = !filter.showFilter">
+        <a permission permission-only=" 'viewFilter' " title="{{ 'ADF.WIDGET.TOOLTIP.FILTER' | translate }}" ng-if="!widget.hideFilter && config.widgetSelectors && !editMode" ng-click="filter.showFilter = !filter.showFilter">
             <i class="glyphicon glyphicon-filter" ng-class="{'active': search.json || search.oql|| search.quick}"></i>
         </a>
         <!-- show widget sorting -->
-        <a permission permission-only=" 'viewFilter' " href="" title="{{ 'ADF.WIDGET.TOOLTIP.SORT' | translate }}" ng-if="config.sort && !editMode" ng-click="filter.showFilter = !filter.showFilter">
+        <a permission permission-only=" 'viewFilter' " title="{{ 'ADF.WIDGET.TOOLTIP.SORT' | translate }}" ng-if="!widget.hideFilter && config.sort && !editMode" ng-click="filter.showFilter = !filter.showFilter">
             <i class="glyphicon glyphicon-sort" ng-class="{'active': (config.sort.value && config.sort.value !== '')}"></i>
         </a>
         <!-- open edit mode -->
-        <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.EDIT' | translate }}" ng-click="edit()" ng-if="editMode">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.EDIT' | translate }}" class="hide-on-fullscreen" ng-click="edit()" ng-if="editMode">
             <i class="glyphicon glyphicon-cog"></i>
         </a>
-        <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.FULLSCREEN' | translate }}" ng-click="openFullScreen()" ng-show="options.maximizable && !widget.notMaximizable">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.FULLSCREEN' | translate }}" class="hide-on-fullscreen" ng-click="openFullScreen()" ng-show="options.maximizable && !widget.notMaximizable">
             <i class="glyphicon glyphicon-fullscreen"></i>
         </a>
         <!-- remove widget -->
-        <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.REMOVE' | translate}}" ng-click="remove()" ng-if="editMode">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.REMOVE' | translate}}" class="hide-on-fullscreen" ng-click="remove()" ng-if="editMode">
             <i class="glyphicon glyphicon-trash"></i>
         </a>
-        <div ng-if="!editMode" class="pointer" ng-show="!widget.notshowOtherOptions" style="display: inline;" uib-dropdown uib-dropdown-toggle>
+        <div ng-if="!editMode" class="pointer hide-on-fullscreen" ng-show="!widget.notshowOtherOptions" style="display: inline;" uib-dropdown uib-dropdown-toggle>
             <i class="fa fa-ellipsis-h" style="font-size:1.2em;"></i>
             <ul uib-dropdown-menu class="dropdown-menu-right">
                 <li role="menuitem">
-                    <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}}" ng-click="saveWidgetScreen(definition.wid)">
+                    <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}}" ng-click="saveWidgetScreen(definition.wid)">
                         <span class="glyphicon glyphicon-picture"></span> {{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}} </a>
                 </li>
                 <li role="menuitem" ng-if="widget.qr">
-                    <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.QR' | translate }}" ng-click="generateQR()">
+                    <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.QR' | translate }}" ng-click="generateQR()">
                         <span class="fa fa-qrcode" style="font-size: 1.1em;"></span> {{ 'ADF.WIDGET.TOOLTIP.QR' | translate }} </a>
                 </li>
                 <li ng-if="widget.csv" permission permission-only=" 'download' " role="menuitem">
-                    <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }}" ng-click="downloadCsv()">
+                    <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }}" ng-click="downloadCsv()">
                         <span class="glyphicon glyphicon-file"></span> {{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }} </a>
                 </li>
                 <li role="menuitem" permission permission-only=" 'executeOperation' " ng-if="widget.executeOperation && isExecuteOperationEnabled()">
-                    <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }}" ng-click="executeOperation()">
+                    <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }}" ng-click="executeOperation()">
                         <span class="glyphicon glyphicon-flash"></span> {{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }} </a>
                 </li>
                 <li role="menuitem" ng-if="widgetActionsHandler && widgetActionsHandler.actions && widgetActionsHandler.actions.length > 0" ng-repeat="customAction in widgetActionsHandler.actions" permission permission-only="customAction.permissions">
@@ -78,7 +78,7 @@
         </button>
     </div>
     <div permission permission-only=" ['viewFilter','executeOperation'] " class="pull-right" ng-if="selectedItemsLength > 0" style="margin-top:1px">
-        <a href="" title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()" class="btn btn-primary btn-sm pointer ">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()" class="btn btn-primary btn-sm pointer ">
             <i class="glyphicon glyphicon-check"></i>
             <small class="ogux-budget">{{ selectedItemsLength }}</small>
         </a>
@@ -87,19 +87,19 @@
 <script type="text/ng-template" id="actionsMenuTpl.html">
     <ul class="dropdown-menu" uib-dropdown-menu role="menu">
         <li>
-            <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}}" ng-click="saveWidgetScreen(definition.wid)">
+            <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}}" ng-click="saveWidgetScreen(definition.wid)">
                 <span class="glyphicon glyphicon-picture"></span> {{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}} </a>
         </li>
         <li ng-if="widget.qr">
-            <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.QR' | translate }}" ng-click="generateQR()">
+            <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.QR' | translate }}" ng-click="generateQR()">
                 <span class="fa fa-qrcode" style="font-size: 1.1em;"></span> {{ 'ADF.WIDGET.TOOLTIP.QR' | translate }} </a>
         </li>
         <li ng-if="widget.csv" permission permission-only=" 'download' ">
-            <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }}" ng-click="downloadCsv()">
+            <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }}" ng-click="downloadCsv()">
                 <span class="glyphicon glyphicon-file"></span> {{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }} </a>
         </li>
         <li permission permission-only=" 'executeOperation' " ng-if="widget.executeOperation && isExecuteOperationEnabled()">
-            <a class="pointer" href="" title="{{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }}" ng-click="executeOperation()">
+            <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }}" ng-click="executeOperation()">
                 <span class="glyphicon glyphicon-flash"></span> {{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }} </a>
         </li>
         <li ng-if="widgetActionsHandler && widgetActionsHandler.actions && widgetActionsHandler.actions.length > 0" ng-repeat="customAction in widgetActionsHandler.actions" permission permission-only="customAction.permissions">
