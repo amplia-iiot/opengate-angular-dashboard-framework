@@ -29,14 +29,14 @@
             <i class="glyphicon glyphicon-sort" ng-class="{'active': (config.sort.value && config.sort.value !== '')}"></i>
         </a>
         <!-- open edit mode -->
-        <a title="{{ 'ADF.WIDGET.TOOLTIP.EDIT' | translate }}" class="hide-on-fullscreen" ng-click="edit()" ng-if="editMode">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.EDIT' | translate }}" class="pointer hide-on-fullscreen" ng-click="edit()" ng-if="editMode">
             <i class="glyphicon glyphicon-cog"></i>
         </a>
-        <a title="{{ 'ADF.WIDGET.TOOLTIP.FULLSCREEN' | translate }}" class="hide-on-fullscreen" ng-click="openFullScreen()" ng-show="options.maximizable && !widget.notMaximizable">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.FULLSCREEN' | translate }}" class="pointer hide-on-fullscreen" ng-click="openFullScreen()" ng-show="options.maximizable && !widget.notMaximizable">
             <i class="glyphicon glyphicon-fullscreen"></i>
         </a>
         <!-- remove widget -->
-        <a title="{{ 'ADF.WIDGET.TOOLTIP.REMOVE' | translate}}" class="hide-on-fullscreen" ng-click="remove()" ng-if="editMode">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.REMOVE' | translate}}" class="pointer hide-on-fullscreen" ng-click="remove()" ng-if="editMode">
             <i class="glyphicon glyphicon-trash"></i>
         </a>
         <div ng-if="!editMode" class="pointer hide-on-fullscreen" ng-show="!widget.notshowOtherOptions" style="display: inline;" uib-dropdown uib-dropdown-toggle>
@@ -77,8 +77,8 @@
             <i class="glyphicon glyphicon-chevron-right browser-link"></i>
         </button>
     </div>
-    <div permission permission-only=" ['viewFilter','executeOperation'] " class="pull-right" ng-if="selectedItemsLength > 0" style="margin-top:1px">
-        <a title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()" class="btn btn-primary btn-sm pointer ">
+    <div permission permission-only=" ['viewFilter','executeOperation'] " class="pull-right hide-on-fullscreen" ng-if="selectedItemsLength > 0" style="margin-top:1px">
+        <a title="{{ 'ADF.WIDGET.TOOLTIP.SELECTION' | translate }}" ng-click="manageSelectedItems()" class="btn btn-primary btn-sm pointer">
             <i class="glyphicon glyphicon-check"></i>
             <small class="ogux-budget">{{ selectedItemsLength }}</small>
         </a>

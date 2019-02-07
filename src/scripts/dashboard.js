@@ -499,7 +499,6 @@ angular.module('adf')
                 };
 
                 var adfOpenWidgetFromOther = $scope.$on('adfOpenWidgetFromOther', function(event, widget, config) {
-
                     var internal_config = createConfiguration(widget);
                     var _config = angular.merge({}, internal_config, config || {});
                     var w = {

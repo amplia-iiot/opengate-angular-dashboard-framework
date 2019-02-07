@@ -1,5 +1,6 @@
 <div gridstack class="grid-stack" options="gridOptions" on-drag-start="onDragStart(event,ui)" on-drag-stop="onDragStop(event,ui)" on-resize-start="onResizeStart(event,ui)" on-resize-stop="onResizeStop(event,ui)" gridstack-handler="gsHandler" on-change="onChange(event,items)">
-    <div gridstack-item ng-repeat="w in adfModel.grid" class="grid-stack-item" gs-item-x="w.x" gs-item-y="w.y" gs-item-width="w.width" gs-item-height="w.height" gs-item-min-width="2" gs-item-min-height="2" gs-item-autopos="0">
+    <div gridstack-item ng-repeat="w in adfModel.grid" class="grid-stack-item" gs-item-x="w.x" gs-item-y="w.y" gs-item-width="w.width" gs-item-height="w.height" gs-item-min-width="w.definition && w.definition.minWidth?w.definition.minWidth:2" gs-item-min-height="w.definition && w.definition.minHeight?w.definition.minHeight:1"
+        gs-item-autopos="0">
         <adf-widget-grid ng-if="w && w.definition" class="grid-stack-item-content" options="options" definition="w.definition" edit-mode="editMode" widget-state="widgetState"></adf-widget-grid>
     </div>
 </div>

@@ -530,7 +530,6 @@ angular.module('adf')
                 };
 
                 var adfOpenWidgetFromOther = $scope.$on('adfOpenWidgetFromOther', function(event, widget, config) {
-
                     var internal_config = createConfiguration(widget);
                     var _config = angular.merge({}, internal_config, config || {});
                     var w = {
@@ -2166,7 +2165,18 @@ angular.module('adf')
                 });
 
                 $scope.openFullScreen = function() {
-                    $scope.$emit('adfOpenModalWidgetFromOther', definition.type, $scope.config || {}, $scope);
+                    var elem = document.getElementsByClassName('widget widget_' + $scope.definition.wid);
+                    if (elem[0].requestFullscreen) {
+                        elem[0].requestFullscreen();
+                    } else if (elem[0].mozRequestFullScreen) { /* Firefox */
+                        elem[0].mozRequestFullScreen();
+                    } else if (elem[0].webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                        elem[0].webkitRequestFullscreen();
+                    } else if (elem[0].msRequestFullscreen) { /* IE/Edge */
+                        elem[0].msRequestFullscreen();
+                    } else {
+                        $scope.$emit('adfOpenModalWidgetFromOther', definition.type, $scope.config || {}, $scope);
+                    }
                 };
 
                 $scope.openAboutScreen = function(size) {
