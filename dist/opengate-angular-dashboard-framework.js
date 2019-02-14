@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.4.1');
+    .value('adfVersion', '8.5.0');
 /*
  * The MIT License
  *
@@ -2149,7 +2149,7 @@ angular.module('adf')
                             var definition = element.definition;
                             widgetConfigChanged.push(definition.wid);
                         });
-                        var widgetFilters = $scope.options.extraData && $scope.options.extraData.widgetFilters;
+                        var widgetFilters = $scope.options && $scope.options.extraData && $scope.options.extraData.widgetFilters;
                         var sharedFilters = widgetFilters.filter(function(widgetFilter) {
                             var filter = widgetFilter.filter;
                             return filter && !filter.id || widgetConfigChanged.indexOf(filter.id) !== -1;

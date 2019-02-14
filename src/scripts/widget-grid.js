@@ -721,7 +721,7 @@ angular.module('adf')
                             var definition = element.definition;
                             widgetConfigChanged.push(definition.wid);
                         });
-                        var widgetFilters = $scope.options.extraData && $scope.options.extraData.widgetFilters;
+                        var widgetFilters = $scope.options && $scope.options.extraData && $scope.options.extraData.widgetFilters;
                         var sharedFilters = widgetFilters.filter(function(widgetFilter) {
                             var filter = widgetFilter.filter;
                             return filter && !filter.id || widgetConfigChanged.indexOf(filter.id) !== -1;
