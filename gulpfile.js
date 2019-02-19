@@ -332,7 +332,6 @@ var ver = require('gulp-ver'),
     git = require('gulp-git'),
     bump = require('gulp-bump'),
     argv = require('yargs').argv,
-    runSequence = require('run-sequence'),
     tag_version = require('gulp-tag-version');
 
 

@@ -208,13 +208,7 @@ angular.module('adf')
                 }
             };
 
-            // $scope.filter = {
-            //     typeFilter: 1,
-            //     showFilter: false,
-            //     showFinalFilter: false
-            // };
-
-            _setFilterType(null, $scope);
+            _setFilterType('init', $scope);
 
             $scope.launchSearching = function() {
                 if ($scope.widget && !$scope.widget.preventRefreshFilterEvent) {
@@ -890,7 +884,6 @@ angular.module('adf')
                     $scope.setReloadTimeout();
                 };
 
-                // _setFilterType();
 
                 // verificacion de periodo de refresco
                 $scope.setReloadTimeout();
