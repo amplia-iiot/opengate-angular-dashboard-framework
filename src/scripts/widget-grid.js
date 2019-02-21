@@ -572,8 +572,13 @@ angular.module('adf')
                     createApplyPromise(result).then(function() {
                         definition.title = editScope.definition.title;
                         if (editScope.definition.type === 'summaryChart') {
-                            editScope.definition.Ftype = editScope.definition.config.type.toLowerCase();
-                            definition.Ftype = editScope.definition.config.type.toLowerCase();
+                            if (editScope.definition.config.type === 'ENTITIES_VALUES') {
+                                editScope.definition.Ftype = 'entities';
+                                definition.Ftype = 'entities';
+                            } else {
+                                editScope.definition.Ftype = editScope.definition.config.type.toLowerCase();
+                                definition.Ftype = editScope.definition.config.type.toLowerCase();
+                            }
                         }
                         angular.extend(definition.config, editScopeDefinition);
 

@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.5.0');
+    .value('adfVersion', '8.5.1');
 /*
  * The MIT License
  *
@@ -2000,8 +2000,13 @@ angular.module('adf')
                     createApplyPromise(result).then(function() {
                         definition.title = editScope.definition.title;
                         if (editScope.definition.type === 'summaryChart') {
-                            editScope.definition.Ftype = editScope.definition.config.type.toLowerCase();
-                            definition.Ftype = editScope.definition.config.type.toLowerCase();
+                            if (editScope.definition.config.type === 'ENTITIES_VALUES') {
+                                editScope.definition.Ftype = 'entities';
+                                definition.Ftype = 'entities';
+                            } else {
+                                editScope.definition.Ftype = editScope.definition.config.type.toLowerCase();
+                                definition.Ftype = editScope.definition.config.type.toLowerCase();
+                            }
                         }
                         angular.extend(definition.config, editScopeDefinition);
 
