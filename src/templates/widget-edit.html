@@ -24,6 +24,10 @@
                         <option value="20" translate>ADF.WIDGET.OPTIONS.20_SECONDS</option>
                         <option value="40" translate>ADF.WIDGET.OPTIONS.40_SECONDS</option>
                         <option value="60" translate>ADF.WIDGET.OPTIONS.EVERY_MINUTE</option>
+                        <option value="300" translate>ADF.WIDGET.OPTIONS.5_MINUTES</option>
+                        <option value="600" translate>ADF.WIDGET.OPTIONS.10_MINUTES</option>
+                        <option value="900" translate>ADF.WIDGET.OPTIONS.15_MINUTES</option>
+                        <option value="1800" translate>ADF.WIDGET.OPTIONS.30_MINUTES</option>
                     </select>
                 </div>
             </div>
@@ -50,6 +54,6 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" ng-click="closeDialog()" translate>ADF.WIDGET.BUTTON.CANCEL</button>
-        <button type="submit" class="btn btn-primary" ng-disabled="widgetEditForm.$invalid" value="{{'ADF.WIDGET.BUTTON.APPLY' | translate }}" translate>ADF.WIDGET.BUTTON.APPLY</button>
+        <button type="submit" class="btn btn-primary ux-txt-success" ng-disabled="widgetEditForm.$invalid" value="{{'ADF.WIDGET.BUTTON.APPLY' | translate }}" translate>ADF.WIDGET.BUTTON.APPLY</button>
     </div>
 </form>

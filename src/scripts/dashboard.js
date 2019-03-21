@@ -222,7 +222,11 @@ angular.module('adf')
                 extraData: '='
             },
             controller: function($scope) {
-                var model = {};
+                var model = {
+                    extraConfig: {
+                        cellHeight: 145
+                    }
+                };
                 var widgetFilter = null;
                 var name = $scope.name;
 
@@ -294,6 +298,17 @@ angular.module('adf')
                             if (!model.titleTemplateUrl) {
                                 model.titleTemplateUrl = adfTemplatePath + 'dashboard-title.html';
                             }
+
+                            if (!model.extraConfig) {
+                                model.extraConfig = {
+                                    cellHeight: 145
+                                };
+                            } else {
+                                if (!model.extraConfig.cellHeight) {
+                                    model.extraConfig.cellHeight = 145;
+                                }
+                            }
+
                             $scope.model = model;
                         } else {
                             $log.error('could not find or create model');
@@ -359,7 +374,7 @@ angular.module('adf')
                     if (!$scope.continuousEditMode && ($scope.modelCopy !== $scope.adfModel)) {
                         $scope.modelCopy = angular.copy($scope.modelCopy, $scope.adfModel);
                     }
-                    $rootScope.$broadcast('adfDashboardEditsCancelled');
+                    $rootScope.$broadcast('adfDashboardEditsCancelled', $scope.adfModel.title, $scope.adfModel);
                 };
 
                 var adfEditDashboardDialog = $scope.$on('adfEditDashboardDialog', function(event) {
@@ -389,6 +404,7 @@ angular.module('adf')
                         time: new Date(),
                         backgroundImage: model.backgroundImage ? model.backgroundImage : undefined,
                         file: model.backgroundImage ? model.backgroundImage : undefined,
+                        extraConfig: angular.copy(model.extraConfig)
                     };
 
                     editDashboardScope.backgroundSize = {
@@ -477,21 +493,29 @@ angular.module('adf')
                     });
 
 
-                    editDashboardScope.closeDialog = function() {
-                        // copy the new title back to the model
-                        model.title = editDashboardScope.copy.title;
-                        model.description = editDashboardScope.copy.description;
-                        if (editDashboardScope.iconConfiguration.model === 'image') {
-                            model.icon = editDashboardScope.iconConfiguration.url;
+                    editDashboardScope.closeDialog = function(cancelChanges) {
+                        if (!cancelChanges) {
+                            // copy the new title back to the model
+                            model.title = editDashboardScope.copy.title;
+                            model.description = editDashboardScope.copy.description;
+                            if (editDashboardScope.iconConfiguration.model === 'image') {
+                                model.icon = editDashboardScope.iconConfiguration.url;
 
-                        } else if (editDashboardScope.iconConfiguration.model === 'icon') {
-                            model.icon = (editDashboardScope.iconConfiguration.icon && editDashboardScope.iconConfiguration.icon.key) || editDashboardScope.iconConfiguration.icon;
+                            } else if (editDashboardScope.iconConfiguration.model === 'icon') {
+                                model.icon = (editDashboardScope.iconConfiguration.icon && editDashboardScope.iconConfiguration.icon.key) || editDashboardScope.iconConfiguration.icon;
 
+                            }
+                            model.iconType = editDashboardScope.iconConfiguration.model;
+                            model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
+                            model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
+                            model.backgroundImageSize = editDashboardScope.backgroundSize.model;
+                            model.extraConfig = editDashboardScope.copy.extraConfig ? editDashboardScope.copy.extraConfig : undefined;
+
+                            $rootScope.$broadcast('adfDashboardInternalConfigChanged', model);
+                        } else {
+                            console.warn('Dashboard config cancelled by user');
                         }
-                        model.iconType = editDashboardScope.iconConfiguration.model;
-                        model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
-                        model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
-                        model.backgroundImageSize = editDashboardScope.backgroundSize.model;
+
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();

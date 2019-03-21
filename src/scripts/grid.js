@@ -28,21 +28,25 @@ angular.module('adf')
     .directive('adfDashboardGrid', function(adfTemplatePath) {
         'use strict';
 
+        var gridOptions = {
+            cellHeight: 145,
+            verticalMargin: 10,
+            animate: true,
+            float: false,
+            alwaysShowResizeHandle: true,
+            minWidth: 768,
+            auto: true,
+            resizable: {
+                handles: 'e, se, s, sw, w'
+            },
+            disableDrag: true,
+            disableResize: true
+        };
+
         function preLink($scope) {
-            $scope.gridOptions = {
-                cellHeight: 146,
-                verticalMargin: 10,
-                animate: true,
-                float: false,
-                alwaysShowResizeHandle: true,
-                minWidth: 768,
-                auto: true,
-                resizable: {
-                    handles: 'e, se, s, sw, w'
-                },
-                disableDrag: !$scope.editMode,
-                disableResize: !$scope.editMode
-            };
+            gridOptions.disableDrag = !$scope.editMode;
+            gridOptions.disableResize = !$scope.editMode;
+            $scope.gridOptions = gridOptions;
 
             $scope.gsHandler = null;
         }
@@ -75,10 +79,24 @@ angular.module('adf')
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function() {
+                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function($event, name, model) {
+                    if (model && model.extraConfig) {
+                        if (angular.isNumber(model.extraConfig.cellHeight)) {
+                            $scope.gsHandler.cellHeight(model.extraConfig.cellHeight);
+                        }
+                    }
+
                     $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
+                }));
+
+                dashEvents.push($scope.$on('adfDashboardInternalConfigChanged', function($event, newModel) {
+                    if (newModel && newModel.extraConfig) {
+                        if (angular.isNumber(newModel.extraConfig.cellHeight)) {
+                            $scope.gsHandler.cellHeight(newModel.extraConfig.cellHeight);
+                        }
+                    }
                 }));
 
                 dashEvents.push($scope.$on('adfCancelEditMode', function() {
@@ -99,18 +117,18 @@ angular.module('adf')
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onDragStart = function(event, ui) {
-                    console.log('onDragStart event: ' + event + ' ui:' + ui);
-                };
+                // $scope.onDragStart = function(event, ui) {
+                //     console.log('onDragStart event: ' + event + ' ui:' + ui);
+                // };
 
                 $scope.onDragStop = function(event, ui) {
                     console.log('onDragStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onResizeStart = function(event, ui) {
-                    console.log('onResizeStart event: ' + event + ' ui:' + ui);
-                };
+                // $scope.onResizeStart = function(event, ui) {
+                //     console.log('onResizeStart event: ' + event + ' ui:' + ui);
+                // };
 
                 $scope.onResizeStop = function(event, ui) {
                     console.log('onResizeStop event: ' + event + ' ui:' + ui);
@@ -118,15 +136,21 @@ angular.module('adf')
                     $scope.$broadcast('OnResizeWidget');
                 };
 
-                $scope.onItemAdded = function(item) {
-                    console.log('onItemAdded item: ' + item);
-                };
+                // $scope.onItemAdded = function(item) {
+                //     console.log('onItemAdded item: ' + item);
+                // };
 
-                $scope.onItemRemoved = function(item) {
-                    console.log('onItemRemoved item: ' + item);
-                };
+                // $scope.onItemRemoved = function(item) {
+                //     console.log('onItemRemoved item: ' + item);
+                // };
 
-                $scope.$on('destroy', function() {
+                if ($scope.adfModel && $scope.adfModel.extraConfig) {
+                    if (angular.isNumber($scope.adfModel.extraConfig.cellHeight)) {
+                        gridOptions.cellHeight = $scope.adfModel.extraConfig.cellHeight;
+                    }
+                }
+
+                $scope.$on('$destroy', function() {
                     dashEvents.forEach(function(dashEvt) {
                         dashEvt();
                     });

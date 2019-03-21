@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.5.1');
+    .value('adfVersion', '8.6.0');
 /*
  * The MIT License
  *
@@ -253,7 +253,11 @@ angular.module('adf')
                 extraData: '='
             },
             controller: ["$scope", function($scope) {
-                var model = {};
+                var model = {
+                    extraConfig: {
+                        cellHeight: 145
+                    }
+                };
                 var widgetFilter = null;
                 var name = $scope.name;
 
@@ -325,6 +329,17 @@ angular.module('adf')
                             if (!model.titleTemplateUrl) {
                                 model.titleTemplateUrl = adfTemplatePath + 'dashboard-title.html';
                             }
+
+                            if (!model.extraConfig) {
+                                model.extraConfig = {
+                                    cellHeight: 145
+                                };
+                            } else {
+                                if (!model.extraConfig.cellHeight) {
+                                    model.extraConfig.cellHeight = 145;
+                                }
+                            }
+
                             $scope.model = model;
                         } else {
                             $log.error('could not find or create model');
@@ -390,7 +405,7 @@ angular.module('adf')
                     if (!$scope.continuousEditMode && ($scope.modelCopy !== $scope.adfModel)) {
                         $scope.modelCopy = angular.copy($scope.modelCopy, $scope.adfModel);
                     }
-                    $rootScope.$broadcast('adfDashboardEditsCancelled');
+                    $rootScope.$broadcast('adfDashboardEditsCancelled', $scope.adfModel.title, $scope.adfModel);
                 };
 
                 var adfEditDashboardDialog = $scope.$on('adfEditDashboardDialog', function(event) {
@@ -420,6 +435,7 @@ angular.module('adf')
                         time: new Date(),
                         backgroundImage: model.backgroundImage ? model.backgroundImage : undefined,
                         file: model.backgroundImage ? model.backgroundImage : undefined,
+                        extraConfig: angular.copy(model.extraConfig)
                     };
 
                     editDashboardScope.backgroundSize = {
@@ -508,21 +524,29 @@ angular.module('adf')
                     });
 
 
-                    editDashboardScope.closeDialog = function() {
-                        // copy the new title back to the model
-                        model.title = editDashboardScope.copy.title;
-                        model.description = editDashboardScope.copy.description;
-                        if (editDashboardScope.iconConfiguration.model === 'image') {
-                            model.icon = editDashboardScope.iconConfiguration.url;
+                    editDashboardScope.closeDialog = function(cancelChanges) {
+                        if (!cancelChanges) {
+                            // copy the new title back to the model
+                            model.title = editDashboardScope.copy.title;
+                            model.description = editDashboardScope.copy.description;
+                            if (editDashboardScope.iconConfiguration.model === 'image') {
+                                model.icon = editDashboardScope.iconConfiguration.url;
 
-                        } else if (editDashboardScope.iconConfiguration.model === 'icon') {
-                            model.icon = (editDashboardScope.iconConfiguration.icon && editDashboardScope.iconConfiguration.icon.key) || editDashboardScope.iconConfiguration.icon;
+                            } else if (editDashboardScope.iconConfiguration.model === 'icon') {
+                                model.icon = (editDashboardScope.iconConfiguration.icon && editDashboardScope.iconConfiguration.icon.key) || editDashboardScope.iconConfiguration.icon;
 
+                            }
+                            model.iconType = editDashboardScope.iconConfiguration.model;
+                            model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
+                            model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
+                            model.backgroundImageSize = editDashboardScope.backgroundSize.model;
+                            model.extraConfig = editDashboardScope.copy.extraConfig ? editDashboardScope.copy.extraConfig : undefined;
+
+                            $rootScope.$broadcast('adfDashboardInternalConfigChanged', model);
+                        } else {
+                            console.warn('Dashboard config cancelled by user');
                         }
-                        model.iconType = editDashboardScope.iconConfiguration.model;
-                        model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
-                        model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
-                        model.backgroundImageSize = editDashboardScope.backgroundSize.model;
+
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
@@ -764,21 +788,25 @@ angular.module('adf')
     .directive('adfDashboardGrid', ["adfTemplatePath", function(adfTemplatePath) {
         
 
+        var gridOptions = {
+            cellHeight: 145,
+            verticalMargin: 10,
+            animate: true,
+            float: false,
+            alwaysShowResizeHandle: true,
+            minWidth: 768,
+            auto: true,
+            resizable: {
+                handles: 'e, se, s, sw, w'
+            },
+            disableDrag: true,
+            disableResize: true
+        };
+
         function preLink($scope) {
-            $scope.gridOptions = {
-                cellHeight: 146,
-                verticalMargin: 10,
-                animate: true,
-                float: false,
-                alwaysShowResizeHandle: true,
-                minWidth: 768,
-                auto: true,
-                resizable: {
-                    handles: 'e, se, s, sw, w'
-                },
-                disableDrag: !$scope.editMode,
-                disableResize: !$scope.editMode
-            };
+            gridOptions.disableDrag = !$scope.editMode;
+            gridOptions.disableResize = !$scope.editMode;
+            $scope.gridOptions = gridOptions;
 
             $scope.gsHandler = null;
         }
@@ -811,10 +839,24 @@ angular.module('adf')
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function() {
+                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function($event, name, model) {
+                    if (model && model.extraConfig) {
+                        if (angular.isNumber(model.extraConfig.cellHeight)) {
+                            $scope.gsHandler.cellHeight(model.extraConfig.cellHeight);
+                        }
+                    }
+
                     $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
+                }));
+
+                dashEvents.push($scope.$on('adfDashboardInternalConfigChanged', function($event, newModel) {
+                    if (newModel && newModel.extraConfig) {
+                        if (angular.isNumber(newModel.extraConfig.cellHeight)) {
+                            $scope.gsHandler.cellHeight(newModel.extraConfig.cellHeight);
+                        }
+                    }
                 }));
 
                 dashEvents.push($scope.$on('adfCancelEditMode', function() {
@@ -835,18 +877,18 @@ angular.module('adf')
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onDragStart = function(event, ui) {
-                    console.log('onDragStart event: ' + event + ' ui:' + ui);
-                };
+                // $scope.onDragStart = function(event, ui) {
+                //     console.log('onDragStart event: ' + event + ' ui:' + ui);
+                // };
 
                 $scope.onDragStop = function(event, ui) {
                     console.log('onDragStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onResizeStart = function(event, ui) {
-                    console.log('onResizeStart event: ' + event + ' ui:' + ui);
-                };
+                // $scope.onResizeStart = function(event, ui) {
+                //     console.log('onResizeStart event: ' + event + ' ui:' + ui);
+                // };
 
                 $scope.onResizeStop = function(event, ui) {
                     console.log('onResizeStop event: ' + event + ' ui:' + ui);
@@ -854,15 +896,21 @@ angular.module('adf')
                     $scope.$broadcast('OnResizeWidget');
                 };
 
-                $scope.onItemAdded = function(item) {
-                    console.log('onItemAdded item: ' + item);
-                };
+                // $scope.onItemAdded = function(item) {
+                //     console.log('onItemAdded item: ' + item);
+                // };
 
-                $scope.onItemRemoved = function(item) {
-                    console.log('onItemRemoved item: ' + item);
-                };
+                // $scope.onItemRemoved = function(item) {
+                //     console.log('onItemRemoved item: ' + item);
+                // };
 
-                $scope.$on('destroy', function() {
+                if ($scope.adfModel && $scope.adfModel.extraConfig) {
+                    if (angular.isNumber($scope.adfModel.extraConfig.cellHeight)) {
+                        gridOptions.cellHeight = $scope.adfModel.extraConfig.cellHeight;
+                    }
+                }
+
+                $scope.$on('$destroy', function() {
                     dashEvents.forEach(function(dashEvt) {
                         dashEvt();
                     });
@@ -2167,12 +2215,16 @@ angular.module('adf')
                     var elem = document.getElementsByClassName('widget widget_' + $scope.definition.wid);
                     if (elem[0].requestFullscreen) {
                         elem[0].requestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].mozRequestFullScreen) { /* Firefox */
                         elem[0].mozRequestFullScreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].webkitRequestFullscreen) { /* Chrome, Safari and Opera */
                         elem[0].webkitRequestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].msRequestFullscreen) { /* IE/Edge */
                         elem[0].msRequestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else {
                         $scope.$emit('adfOpenModalWidgetFromOther', definition.type, $scope.config || {}, $scope);
                     }
@@ -2424,13 +2476,13 @@ angular.module('adf')
     return exposed;
   }]);
 
-angular.module("adf").run(["$templateCache", function($templateCache) {$templateCache.put("../src/templates/dashboard-edit.html","<div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title translate>ADF.DASHBOARD.TITLE.EDIT.DASHBOARD</h3> </div> <div class=modal-body> <form role=form name=form novalidate> <div class=\"form-group col-xs-12 col-md-4\"> <label for=dashboardTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=dashboardTitle ng-model=copy.title required ng-init=\"copy.title=(copy.title | translate)\"> </div> <div class=\"form-group col-xs-12 col-md-8\"> <label for=dashboardDescription translate>ADF.DASHBOARD.LABEL.DESCRIPTION</label> <input type=text class=\"form-control text-primary\" id=dashboardDescription ng-init=\"copy.description=(copy.description | translate)\" ng-model=copy.description> </div> <div class=\"form-group col-xs-12 col-md-12\"> <label for=iconConfiguration.model class=text-primary>{{\'ADF.DASHBOARD.LABEL.ICON\' | translate }} </label> <div class=\"radio radio-primary radio-inline no-margin\"> <label id=icon_library> <input type=radio name=iconLibrary ng-model=iconConfiguration.model value=icon> <span class=circle></span> <span class=check></span> {{\'ICON.LIBRARY\' | translate }} </label> </div> <div class=\"radio radio-primary radio-inline\"> <label id=icon_image> <input type=radio name=iconImage ng-model=iconConfiguration.model value=image> <span class=circle></span> <span class=check></span> {{\'ICON.IMAGE\' | translate }} </label> </div> <div class=padding-5 ng-if=\"iconConfiguration.model === \'icon\'\"> <ui-select-fa-styles id=icon icon=iconConfiguration.icon required=false allow-clear=false disabled=\"iconConfiguration.model !== \'icon\'\" title=\"{{\'ADF.WIDGET.TITLE.CHOOSE_ICON\' | translate}}\"> </ui-select-fa-styles> <input type=hidden ng-model=iconConfiguration.icon required=\"iconConfiguration.model === \'icon\'\"> </div> <div class=padding-5 ng-if=\"iconConfiguration.model === \'image\'\"> <div class=col-xs-12 ng-disabled=\"iconConfiguration.model !== \'image\'\"> <div ng-disabled=\"iconConfiguration.model !== \'image\'\" ng-if=!iconConfiguration.url ngf-drop ng-model=iconConfiguration.file ngf-max-size=1MB ngf-select=imageSelected($file) class=\"drop-box pointer\" ngf-drag-over-class=\"\'dragover\'\" ngf-multiple=false ngf-accept=\"\'image/*\'\" ngf-pattern=\"\'image/*\'\">{{ \'FORM.DRAG_DROP\' | translate }}<br>{{ \'FORM.MAX_SIZE\' | translate }}</div> <img ng-if=iconConfiguration.url class=navbar-domain src=\"{{ iconConfiguration.url }}\" data-intro=\"{{ \'HELP.HEADER.DOMAIN_LOGO\' | translate }}\" data-position=fixed> <input ng-if=\"iconConfiguration.model === \'image\'\" type=hidden ng-model=iconConfiguration.url required> </div> <div class=col-xs-12 ng-if=iconConfiguration.url> <button id=idRemoveFileLink ng-click=removeDataFile() class=\"btn btn-warning ux-txt-warning btn-group-justified pointer\"><i class=\"fa fa-trash\" aria-hidden=true></i> {{ \'BUTTON.TITLE.REMOVE\' | translate }}</button> </div> </div> <input type=hidden ng-model=iconConfiguration.model required> </div> <div class=\"form-group col-xs-12 col-md-12\"> <label for=dashboardBackground translate>ADF.DASHBOARD.LABEL.BACKGROUND_COLOR</label> <input type=text placeholder=\"{{ \'ADF.WIDGET.PLACEHOLDER.COLOR\' | translate }}\" colorpicker=hex class=\"form-control {{stream.identifier}}_color\" ng-model=copy.backgroundColor> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardBackground translate>ADF.DASHBOARD.LABEL.BACKGROUND_IMAGE</label> <div ng-if=!copy.backgroundImage ngf-drop ng-model=copy.file ngf-max-size=1MB ngf-select=backgroundImageSelected($file) class=\"drop-box pointer\" ngf-drag-over-class=\"\'dragover\'\" ngf-multiple=false ngf-accept=\"\'image/*\'\" ngf-pattern=\"\'image/*\'\">{{ \'FORM.DRAG_DROP\' | translate }}<br>{{ \'FORM.MAX_SIZE\' | translate }}</div>  <div class=col-xs-12 ng-if=copy.backgroundImage> <button id=idRemoveBackgroundImageFileLink ng-click=removeBackgroundFile() class=\"btn btn-warning ux-txt-warning btn-group-justified pointer\"><i class=\"fa fa-trash\" aria-hidden=true></i> {{ \'BUTTON.TITLE.REMOVE\' | translate }}</button> </div> </div> <div class=\"form-group col-xs-12 col-md-6\" ng-if=copy.backgroundImage> <label for=BACKGROUND_SIZE class=text-primary>{{\'ADF.DASHBOARD.LABEL.BACKGROUND_SIZE\' | translate }}</label> <wizard-radio info=backgroundSize></wizard-radio> </div> <div class=\"form-group col-xs-12 col-md-12\"> <b>{{\'DIALOG.ICON.PREVIEW\' | translate}}</b> </div> <div class=\"form-group col-xs-12 col-md-12 well padding-5 dashboardPanel\"> <div gridstack class=grid-stack> <div gridstack-item class=grid-stack-item gs-item-x=0 gs-item-y=0 gs-item-width=5 gs-item-height=2 gs-item-min-width=2 gs-item-min-height=1 gs-item-autopos=0 data-intro=\"{{ \'HELP.WORKSPACES.DASHBOARD\' | translate }}\" data-position=absolute> <div class=\"grid-stack-item-content panel well no-padding\" style=\"background-color: {{copy.backgroundColor}} !important; background-image: url( {{copy.backgroundImage }} ) !important; background-size : {{backgroundSize.model }} !important\" title=\"{{ copy.title | translate }}\"> <div class=\"col-xs-12 col-md-12 padding-5\"> <h4 class=\"text-primary no-margin\">{{ copy.title | translate }}</h4> <small ng-if=copy.description>{{ copy.description | translate }}</small> </div> <div class=dashboard-extra-info> <div class=\"padding-5 extra-info\"> <span><i class=\"fa fa-clock-o text-grey\"></i> <small am-time-ago=copy.time> {{copy.time}}</small></span> </div> <div class=\"padding-5 identity-icon-dashboard\"> <i ng-if=\"iconConfiguration.model === \'icon\'\" class=\"fa {{ iconConfiguration.icon}}\"></i> <img ng-if=\"iconConfiguration.model === \'image\'\" alt src=\"{{ iconConfiguration.url }}\" data-intro=\"{{ \'HELP.HEADER.DOMAIN_LOGO\' | translate }}\" data-position=fixed> </div> </div> </div> </div> </div> </div> </form> </div> <div class=modal-footer> <div class=col-xs-12> <button type=submit class=\"btn btn-primary\" ng-click=closeDialog() ng-disabled=form.$invalid translate>ADF.COMMON.CLOSE</button> </div> </div> ");
+angular.module("adf").run(["$templateCache", function($templateCache) {$templateCache.put("../src/templates/dashboard-edit.html","<div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title translate>ADF.DASHBOARD.TITLE.EDIT.DASHBOARD</h3> </div> <div class=modal-body> <form role=form name=form novalidate> <div class=\"form-group col-xs-12 col-md-4\"> <label for=dashboardTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=dashboardTitle ng-model=copy.title required ng-init=\"copy.title=(copy.title | translate)\"> </div> <div class=\"form-group col-xs-12 col-md-8\"> <label for=dashboardDescription translate>ADF.DASHBOARD.LABEL.DESCRIPTION</label> <input type=text class=\"form-control text-primary\" id=dashboardDescription ng-init=\"copy.description=(copy.description | translate)\" ng-model=copy.description> </div> <div class=col-xs-12> <uib-tabset active=configModeSelected justified=true> <uib-tab index=0 heading=\"{{ \'HEADER.TAB.GENERAL\' | translate }}\"> <div class=\"form-group col-xs-12 col-md-12\"> <label for=iconConfiguration.model class=text-primary>{{\'ADF.DASHBOARD.LABEL.ICON\' | translate }}</label> <div class=\"radio radio-primary radio-inline no-margin\"> <label id=icon_library> <input type=radio name=iconLibrary ng-model=iconConfiguration.model value=icon> <span class=circle></span> <span class=check></span> {{\'ICON.LIBRARY\' | translate }} </label> </div> <div class=\"radio radio-primary radio-inline\"> <label id=icon_image> <input type=radio name=iconImage ng-model=iconConfiguration.model value=image> <span class=circle></span> <span class=check></span> {{\'ICON.IMAGE\' | translate }} </label> </div> <div class=padding-5 ng-if=\"iconConfiguration.model === \'icon\'\"> <ui-select-fa-styles id=icon icon=iconConfiguration.icon required=false allow-clear=false disabled=\"iconConfiguration.model !== \'icon\'\" title=\"{{\'ADF.WIDGET.TITLE.CHOOSE_ICON\' | translate}}\"> </ui-select-fa-styles> <input type=hidden ng-model=iconConfiguration.icon required=\"iconConfiguration.model === \'icon\'\"> </div> <div class=padding-5 ng-if=\"iconConfiguration.model === \'image\'\"> <div class=col-xs-12 ng-disabled=\"iconConfiguration.model !== \'image\'\"> <div ng-disabled=\"iconConfiguration.model !== \'image\'\" ng-if=!iconConfiguration.url ngf-drop ng-model=iconConfiguration.file ngf-max-size=1MB ngf-select=imageSelected($file) class=\"drop-box pointer\" ngf-drag-over-class=\"\'dragover\'\" ngf-multiple=false ngf-accept=\"\'image/*\'\" ngf-pattern=\"\'image/*\'\">{{ \'FORM.DRAG_DROP\' | translate }}<br>{{ \'FORM.MAX_SIZE\' | translate }}</div> <img ng-if=iconConfiguration.url class=navbar-domain src=\"{{ iconConfiguration.url }}\" data-intro=\"{{ \'HELP.HEADER.DOMAIN_LOGO\' | translate }}\" data-position=fixed> <input ng-if=\"iconConfiguration.model === \'image\'\" type=hidden ng-model=iconConfiguration.url required> </div> <div class=col-xs-12 ng-if=iconConfiguration.url> <button id=idRemoveFileLink ng-click=removeDataFile() class=\"btn btn-warning ux-txt-warning btn-group-justified pointer\"><i class=\"fa fa-trash\" aria-hidden=true></i> {{ \'BUTTON.TITLE.REMOVE\' | translate }}</button> </div> </div> <input type=hidden ng-model=iconConfiguration.model required> </div> <div class=\"form-group col-xs-12 col-md-12\"> <label for=dashboardBackground translate>ADF.DASHBOARD.LABEL.BACKGROUND_COLOR</label> <input type=text placeholder=\"{{ \'ADF.WIDGET.PLACEHOLDER.COLOR\' | translate }}\" colorpicker=hex class=\"form-control {{stream.identifier}}_color\" ng-model=copy.backgroundColor> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label for=dashboardBackground translate>ADF.DASHBOARD.LABEL.BACKGROUND_IMAGE</label> <div ng-if=!copy.backgroundImage ngf-drop ng-model=copy.file ngf-max-size=1MB ngf-select=backgroundImageSelected($file) class=\"drop-box pointer\" ngf-drag-over-class=\"\'dragover\'\" ngf-multiple=false ngf-accept=\"\'image/*\'\" ngf-pattern=\"\'image/*\'\">{{ \'FORM.DRAG_DROP\' | translate }}<br>{{ \'FORM.MAX_SIZE\' | translate }}</div>  <div class=col-xs-12 ng-if=copy.backgroundImage> <button id=idRemoveBackgroundImageFileLink ng-click=removeBackgroundFile() class=\"btn btn-warning ux-txt-warning btn-group-justified pointer\"><i class=\"fa fa-trash\" aria-hidden=true></i> {{ \'BUTTON.TITLE.REMOVE\' | translate }}</button> </div> </div> <div class=\"form-group col-xs-12 col-md-6\" ng-if=copy.backgroundImage> <label for=BACKGROUND_SIZE class=text-primary>{{\'ADF.DASHBOARD.LABEL.BACKGROUND_SIZE\' | translate }}</label> <wizard-radio info=backgroundSize></wizard-radio> </div> <div class=\"form-group col-xs-12 col-md-12\"> <b>{{\'DIALOG.ICON.PREVIEW\' | translate}}</b> </div> <div class=\"form-group col-xs-12 col-md-12 well padding-5 dashboardPanel\"> <div gridstack class=grid-stack> <div gridstack-item class=grid-stack-item gs-item-x=0 gs-item-y=0 gs-item-width=5 gs-item-height=2 gs-item-min-width=2 gs-item-min-height=1 gs-item-autopos=0 data-intro=\"{{ \'HELP.WORKSPACES.DASHBOARD\' | translate }}\" data-position=absolute> <div class=\"grid-stack-item-content panel well no-padding\" style=\"background-color: {{copy.backgroundColor}} !important; background-image: url( {{copy.backgroundImage }} ) !important; background-size : {{backgroundSize.model }} !important\" title=\"{{ copy.title | translate }}\"> <div class=\"col-xs-12 col-md-12 padding-5\"> <h4 class=\"text-primary no-margin\">{{ copy.title | translate }}</h4> <small ng-if=copy.description>{{ copy.description | translate }}</small> </div> <div class=dashboard-extra-info> <div class=\"padding-5 extra-info\"> <span><i class=\"fa fa-clock-o text-grey\"></i> <small am-time-ago=copy.time> {{copy.time}}</small></span> </div> <div class=\"padding-5 identity-icon-dashboard\"> <i ng-if=\"iconConfiguration.model === \'icon\'\" class=\"fa {{ iconConfiguration.icon}}\"></i> <img ng-if=\"iconConfiguration.model === \'image\'\" alt src=\"{{ iconConfiguration.url }}\" data-intro=\"{{ \'HELP.HEADER.DOMAIN_LOGO\' | translate }}\" data-position=fixed> </div> </div> </div> </div> </div> </div> </uib-tab> <uib-tab index=1 heading=\"{{ \'HEADER.TAB.ADVANCED\' | translate }}\"> <div class=\"form-group col-xs-12\"> <label translate>ADF.DASHBOARD.LABEL.REFRESH_RATIO</label> <select class=form-control ng-model=copy.extraConfig.dashboardRefreshInterval ng-change=changeInterval(dashboardRefreshInterval)> <option ng-value translate>ADF.WIDGET.OPTIONS.MANUAL</option> <option ng-value=300 translate>ADF.WIDGET.OPTIONS.5_MINUTES</option> <option ng-value=600 translate>ADF.WIDGET.OPTIONS.10_MINUTES</option> <option ng-value=900 translate>ADF.WIDGET.OPTIONS.15_MINUTES</option> <option ng-value=1800 translate>ADF.WIDGET.OPTIONS.30_MINUTES</option> </select> </div> <div class=\"form-group col-xs-12 col-md-6\"> <label translate>ADF.DASHBOARD.LABEL.CELL_HEIGHT</label> <input type=number class=form-control ng-model=copy.extraConfig.cellHeight min=50 ng-required=true> <button class=\"btn btn-default\" ng-disabled=\"copy.extraConfig.cellHeight === 145\" ng-click=\"copy.extraConfig.cellHeight = 145\">{{\'FORM.OPTIONS.DEFAULT\' | translate}}</button> </div> <div class=\"form-group col-xs-12 col-md-6\"> <div class=\"panel panel-default widget\" ng-style=\"{\'height\' : copy.extraConfig.cellHeight}\"> <div class=panel-title style=margin:0px;>{{\'ADF.DASHBOARD.LABEL.WIDGET_EXAMPLE\' | translate}} <div class=\"pull-right container-actions bg-primary\"><i class=\"fa fa-ellipsis-h\" style=font-size:1.2em;></i></div> </div> </div> </div> </uib-tab> </uib-tabset> </div> </form> </div> <div class=modal-footer> <div class=\"form-group col-xs-12\"> <button type=button class=\"btn btn-danger\" ng-click=closeDialog(true) translate>ADF.COMMON.CANCEL</button> <button type=submit class=\"btn btn-primary ux-txt-success\" ng-click=closeDialog() ng-disabled=form.$invalid translate>ADF.COMMON.CLOSE</button> </div> </div>");
 $templateCache.put("../src/templates/dashboard-grid.html","<div gridstack class=grid-stack options=gridOptions on-drag-start=onDragStart(event,ui) on-drag-stop=onDragStop(event,ui) on-resize-start=onResizeStart(event,ui) on-resize-stop=onResizeStop(event,ui) gridstack-handler=gsHandler on-change=onChange(event,items)> <div gridstack-item ng-repeat=\"w in adfModel.grid\" class=grid-stack-item gs-item-x=w.x gs-item-y=w.y gs-item-width=w.width gs-item-height=w.height gs-item-min-width=\"w.definition && w.definition.minWidth?w.definition.minWidth:2\" gs-item-min-height=\"w.definition && w.definition.minHeight?w.definition.minHeight:1\" gs-item-autopos=0> <adf-widget-grid ng-if=\"w && w.definition\" class=grid-stack-item-content options=options definition=w.definition edit-mode=editMode widget-state=widgetState></adf-widget-grid> </div> </div>");
 $templateCache.put("../src/templates/dashboard-title.html","<div class=row style=padding:0px;> <div class=\"col-xs-12 col-md-5\" ng-if=!hideButtons> <span ng-if=model.icon id=idDashboardIcon class=\"fa fa-2x\" ng-class=model.icon></span> <span id=idDashboardTitle class=\"fa-2x text-primary\">{{model.title | translate}}</span> <span ng-if=model.description id=idDashboardDescription>{{model.description | translate}}</span> </div> <div class=\"col-xs-12 col-md-7 text-right\" ng-if=!hideButtons> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.ADD\' | translate }}\" ng-click=addWidgetDialog() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-plus\" aria-hidden=true></i> {{\'ADF.DASHBOARD.TITLE.ADD\' | translate}} </a> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.CONFIGURATION\' | translate }}\" ng-click=editDashboardDialog() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-cog\"></i> {{\'ADF.DASHBOARD.TITLE.CONFIGURATION\' | translate}} </a> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.UNDO\' | translate }}\" ng-click=cancelEditMode() class=\"btn btn-warning btn-sm pointer no-transition\"> <i class=\"fa fa-close\"></i> {{\'ADF.DASHBOARD.TITLE.UNDO\' | translate}} </a> <a href ng-if=\"options.editable && !editMode && !model.temporal\" title=\"{{\'ADF.DASHBOARD.TITLE.EDIT.MODE\' | translate }}\" ng-click=toggleEditMode() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-pencil-square-o\"></i> {{\'ADF.DASHBOARD.TITLE.EDIT.MODE\' | translate}} </a> <a href ng-if=\"options.editable && editMode\" title=\"{{\'ADF.DASHBOARD.TITLE.SAVE\' | translate)}}\" ng-click=toggleEditMode() class=\"btn btn-success btn-sm pointer no-transition\"> <i class=\"fa fa-save\"></i> {{\'ADF.DASHBOARD.TITLE.SAVE\' | translate}} </a> </div> </div>");
 $templateCache.put("../src/templates/dashboard.html","<div class=dashboard-container x-ng-class=\"{\'edit\' : editMode}\"> <div ng-include src=model.titleTemplateUrl></div> <div class=dashboard x-ng-class=\"{\'edit\' : editMode}\" style=\"padding: 0px;margin: 0px;\"> <adf-dashboard-grid ng-if=model.grid adf-model=model options=options edit-mode=editMode> </adf-dashboard-grid></div> </div>");
 $templateCache.put("../src/templates/widget-add.html","<div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h4 class=modal-title translate>ADF.WIDGET.TITLE.ADD_HEADER</h4> </div> <div class=modal-body>  <div ng-if=createCategories> <uib-accordion ng-init=\"categorized = createCategories(widgets)\"> <div uib-accordion-group heading=\"{{category.name | translate}}\" ng-repeat=\"category in categorized | adfOrderByObjectKey: \'name\'\"> <dl class=dl-horizontal> <dt ng-repeat-start=\"widget in category.widgets | adfOrderByObjectKey: \'key\'\"> <a href ng-click=addWidget(widget.key) ng-class={{widget.key}}> {{widget.title | translate}} </a> </dt> <dd ng-repeat-end ng-if=widget.description> {{widget.description | translate}} </dd> </dl> </div> </uib-accordion> </div>  <div ng-if=!createCategories> <div class=row> <div class=\"col-md-4 col-xs-12 form-group no-margin\"> <select ng-model=widgetFilterCfg.widgetFilter.categoryTags name=widgetsCategoryFilter class=form-control> <option value translate>ADF.WIDGET.LABEL.ALL_WIDGETS</option> <option ng-repeat=\"category in availableCategories | orderBy\" value={{category}}>{{ category | translate }}</option> </select> </div> <div class=\"col-md-4 col-xs-12 form-group no-margin\"> <select ng-model=widgetFilterCfg.widgetSorting name=widgetsSorting class=form-control> <option value=priority ng-selected=\"widgetFilterCfg.widgetSorting===\'priority\' || !widgetFilterCfg.widgetSorting\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.PRIORITY\' | translate) }\"></option> <option value=name ng-selected=\"widgetFilterCfg.widgetSorting===\'name\'\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.NAME\' | translate) }\"></option> <option value=category ng-selected=\"widgetFilterCfg.widgetSorting===\'category\'\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.CATEGORY\' | translate) }\"></option> <option value=description ng-selected=\"widgetFilterCfg.widgetSorting===\'description\'\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.DESCRIPTION\' | translate) }\"></option> </select> </div> <div class=\"col-md-4 col-xs-12 form-group no-margin\"> <select ng-model=widgetFilterCfg.widgetSortingDirection name=widgetSortingDirection class=form-control> <option value translate>BUTTON.TITLE.ASCENDING</option> <option value=1 translate>BUTTON.TITLE.DESCENDING</option> </select> </div> </div> <div class=row> <div class=\"col-xs-12 form-group no-margin\"> <input type=text class=form-control name=widgetsTitleFilter autofocus ng-model=widgetFilterCfg.widgetFilter.title placeholder=\"{{ \'ADF.WIDGET.PLACEHOLDER.TYPE_WIDGET_FILTER\'| translate }}\"> </div> </div> <div ng-repeat=\"widget in widgets | adfOrderByObjectKey: \'key\' | filter:widgetFilterCfg.widgetFilter:strict | orderBy:widgetFilterCfg.widgetSorting:widgetFilterCfg.widgetSortingDirection track by $index\" ng-class=\"{ \'widgetPanelBig\' : $index ===0 , \'widgetPanelNormal\' : $index > 0 }\"> <div class=\"pointer panel widgetInfoParent {{widget.key}}\" ng-click=addWidget(widget.key) title=\"{{widget.description | translate}}\"> <div class=\"widgetInfoImage pointer\"> <div ng-if=widget.svg class=widget-icon ng-include=widget.svg></div> <img ng-if=\"widget.images && !widget.svg\" ng-init=\"widget._currImg = widget.images[0]\" src=\"{{ widget._currImg }}\" ng-click=addWidget(widget.key) title=\"Click to change (if available)\"> <i ng-if=\"!widget.images && !widget.svg\" class=\"widgetInfoIcon fa\" ng-class=\"widget.icon ? widget.icon: \'fa-plus-circle\'\" ng-style=\"widget.color?{\'color\':widget.color}:\'\'\" aria-hidden=true></i> </div> <div class=widgetInfoContainer id=widgetKey_{{widget.key}} ng-class=\"{ \'bg-contrast\' : $index ===0, \'bg-primary\': $index !== 0}\">  <span class=widgetInfoTitle>{{widget.title }}</span><br> <span>({{widget.category}})</span> <span class=widgetInfoDescription>{{widget.description}}</span> </div> </div> </div> </div> </div> <div class=modal-footer style=clear:both;> <button type=button class=\"btn btn-primary\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> </div>");
 $templateCache.put("../src/templates/widget-delete.html","<div class=modal-header> <h4 class=modal-title> <span translate>ADF.COMMON.DELETE</span> {{widget.title | translate}}</h4> </div> <div class=modal-body> <form role=form> <div class=form-group> <label for=widgetTitle translate>ADF.WIDGET.LABEL.DELETE_CONFIRM_MESSAGE</label> </div> </form> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> <button type=button class=\"btn btn-primary\" ng-click=deleteDialog() translate>ADF.COMMON.DELETE</button> </div> ");
-$templateCache.put("../src/templates/widget-edit.html","<form name=widgetEditForm novalidate role=form ng-submit=saveDialog()> <div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title>{{widget.title | translate}}</h3> </div> <div class=modal-body> <div class=row> <div class=col-xs-12> <div class=\"alert alert-danger\" role=alert ng-show=validationError> <strong translate>ADF.ERROR.APPLY_ERROR</strong> {{validationError | translate}} </div> </div> </div> <div class=row ng-if=widget.show_reload_config> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-init=\"definition.title=(definition.title | translate)\" ng-model=definition.title placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.TITLE\' | translate}}\"> </div> </div> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetReloadPeriod translate>ADF.WIDGET.TOOLTIP.REFRESH</label> <select class=form-control id=widgetReloadPeriod aria-label=\"ngSelected demo\" ng-model=definition.config.reloadPeriod required ng-init=\"definition.config.reloadPeriod ? definition.config.reloadPeriod : (definition.config.reloadPeriod = \'0\')\"> <option value=0 translate>ADF.WIDGET.OPTIONS.MANUAL</option> <option value=20 translate>ADF.WIDGET.OPTIONS.20_SECONDS</option> <option value=40 translate>ADF.WIDGET.OPTIONS.40_SECONDS</option> <option value=60 translate>ADF.WIDGET.OPTIONS.EVERY_MINUTE</option> </select> </div> </div> </div> <div class=row ng-if=!widget.show_reload_config> <div class=\"col-xs-12 col-md-12\"> <div class=form-group> <label for=widgetTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-init=\"definition.title=(definition.title | translate)\" ng-model=definition.title placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.TITLE\' | translate}}\"> </div> </div> </div> <div ng-if=widget.edit class=row> <div class=col-xs-12> <adf-widget-content model=definition content=widget.edit> </adf-widget-content></div> </div> <div class=row> <div class=col-xs-12> <div class=form-group> <label for=widgetAbout translate>ADF.COMMON.ABOUT</label> <textarea class=\"form-control text-primary\" id=widgetAbout ng-model=definition.config.about placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ENTER.DESCRIPTION\'|translate}}\"></textarea> </div> </div> </div> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() translate>ADF.WIDGET.BUTTON.CANCEL</button> <button type=submit class=\"btn btn-primary\" ng-disabled=widgetEditForm.$invalid value=\"{{\'ADF.WIDGET.BUTTON.APPLY\' | translate }}\" translate>ADF.WIDGET.BUTTON.APPLY</button> </div> </form>");
+$templateCache.put("../src/templates/widget-edit.html","<form name=widgetEditForm novalidate role=form ng-submit=saveDialog()> <div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title>{{widget.title | translate}}</h3> </div> <div class=modal-body> <div class=row> <div class=col-xs-12> <div class=\"alert alert-danger\" role=alert ng-show=validationError> <strong translate>ADF.ERROR.APPLY_ERROR</strong> {{validationError | translate}} </div> </div> </div> <div class=row ng-if=widget.show_reload_config> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-init=\"definition.title=(definition.title | translate)\" ng-model=definition.title placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.TITLE\' | translate}}\"> </div> </div> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetReloadPeriod translate>ADF.WIDGET.TOOLTIP.REFRESH</label> <select class=form-control id=widgetReloadPeriod aria-label=\"ngSelected demo\" ng-model=definition.config.reloadPeriod required ng-init=\"definition.config.reloadPeriod ? definition.config.reloadPeriod : (definition.config.reloadPeriod = \'0\')\"> <option value=0 translate>ADF.WIDGET.OPTIONS.MANUAL</option> <option value=20 translate>ADF.WIDGET.OPTIONS.20_SECONDS</option> <option value=40 translate>ADF.WIDGET.OPTIONS.40_SECONDS</option> <option value=60 translate>ADF.WIDGET.OPTIONS.EVERY_MINUTE</option> <option value=300 translate>ADF.WIDGET.OPTIONS.5_MINUTES</option> <option value=600 translate>ADF.WIDGET.OPTIONS.10_MINUTES</option> <option value=900 translate>ADF.WIDGET.OPTIONS.15_MINUTES</option> <option value=1800 translate>ADF.WIDGET.OPTIONS.30_MINUTES</option> </select> </div> </div> </div> <div class=row ng-if=!widget.show_reload_config> <div class=\"col-xs-12 col-md-12\"> <div class=form-group> <label for=widgetTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-init=\"definition.title=(definition.title | translate)\" ng-model=definition.title placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.TITLE\' | translate}}\"> </div> </div> </div> <div ng-if=widget.edit class=row> <div class=col-xs-12> <adf-widget-content model=definition content=widget.edit> </adf-widget-content></div> </div> <div class=row> <div class=col-xs-12> <div class=form-group> <label for=widgetAbout translate>ADF.COMMON.ABOUT</label> <textarea class=\"form-control text-primary\" id=widgetAbout ng-model=definition.config.about placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ENTER.DESCRIPTION\'|translate}}\"></textarea> </div> </div> </div> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() translate>ADF.WIDGET.BUTTON.CANCEL</button> <button type=submit class=\"btn btn-primary ux-txt-success\" ng-disabled=widgetEditForm.$invalid value=\"{{\'ADF.WIDGET.BUTTON.APPLY\' | translate }}\" translate>ADF.WIDGET.BUTTON.APPLY</button> </div> </form>");
 $templateCache.put("../src/templates/widget-fullscreen-selection.html","<div class=modal-header> <div class=\"pull-right widget-icons\"> <a href title=\"{{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }}\" ng-click=closeDialog() class=\"btn btn-xs btn-danger oux-button-margin\"> <i class=\"glyphicon glyphicon-remove\"></i> {{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }} </a> </div> <h4 class=\"modal-title pull-left\" translate>&nbsp;{{ definition.title | translate}}</h4> </div> <div class=\"modal-body widget\"> <adf-widget-grid class=widget-fullscreen definition=definition edit-mode=false widget-state=widgetState></adf-widget-grid> </div> <div class=modal-footer></div>");
 $templateCache.put("../src/templates/widget-fullscreen.html","<div class=modal-header> <div class=\"pull-right widget-icons\"> <a href title=\"{{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }}\" ng-click=closeDialog() class=\"btn btn-xs btn-danger oux-button-margin\"> <i class=\"glyphicon glyphicon-remove\"></i> {{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }} </a> <a permission permission-only=\"\'manageWorkspace\'\" href title=\"{{ \'ADF.WIDGET.TOOLTIP.INSERT\' |translate }}\" ng-if=persistDashboard ng-click=persistDashboard() class=\"btn btn-xs btn-primary oux-button-margin\"> <i class=\"glyphicon glyphicon-save\"></i> {{ \'ADF.WIDGET.TOOLTIP.INSERT\' |translate }} </a> </div> <h4 class=\"modal-title pull-left\" translate>&nbsp;{{ definition.title | translate}}</h4> </div> <div class=\"modal-body widget\">  <adf-widget-grid class=widget-fullscreen definition=definition edit-mode=false widget-state=widgetState></adf-widget-grid> </div> <div class=modal-footer ng-if=widget.show_modal_footer> <button type=button class=\"btn btn-primary\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> </div>");
 $templateCache.put("../src/templates/widget-grid-title.html","<div class=panel-title style=margin:0px;> <div class=\"pull-right container-actions bg-primary\" data-intro=\"Widget actions\" data-position=bottom> <span ng-if=config.about class=hide-on-fullscreen> <a uib-popover=\"{{ config.about }}\" popover-trigger=\"\'mouseenter\'\" popover-placement=top ng-click=openAboutScreen()> <i class=\"glyphicon glyphicon-info-sign\"></i> </a> <script type=text/ng-template id=widgetAboutModal.html> <div class=\"modal-header\"> <h4 class=\"modal-title\" translate>ADF.COMMON.ABOUT</h4> </div> <div class=\"modal-body\">{{ about.info }}</div> <div class=\"modal-footer\"> <button class=\"btn btn-primary\" type=\"button\" ng-click=\"ok()\" translate>ADF.WIDGET.BUTTON.OK</button> </div> </script> </span> <a ng-if=\"!editMode && widget.print\" title=\"{{ \'ADF.WIDGET.TOOLTIP.PRINT\' | translate }}\" ng-click=print() class=hide-on-fullscreen> <i class=\"glyphicon glyphicon-print\"></i> </a> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.REFRESH\' | translate }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a>  <a permission permission-only=\"\'viewFilter\'\" title=\"{{ \'ADF.WIDGET.TOOLTIP.FILTER\' | translate }}\" ng-if=\"!widget.hideFilter && config.widgetSelectors && !editMode\" ng-click=\"filter.showFilter = !filter.showFilter\"> <i class=\"glyphicon glyphicon-filter\" ng-class=\"{\'active\': search.json || search.oql|| search.quick}\"></i> </a>  <a permission permission-only=\"\'viewFilter\'\" title=\"{{ \'ADF.WIDGET.TOOLTIP.SORT\' | translate }}\" ng-if=\"!widget.hideFilter && config.sort && !editMode\" ng-click=\"filter.showFilter = !filter.showFilter\"> <i class=\"glyphicon glyphicon-sort\" ng-class=\"{\'active\': (config.sort.value && config.sort.value !== \'\')}\"></i> </a>  <a title=\"{{ \'ADF.WIDGET.TOOLTIP.EDIT\' | translate }}\" class=\"pointer hide-on-fullscreen\" ng-click=edit() ng-if=editMode> <i class=\"glyphicon glyphicon-cog\"></i> </a> <a title=\"{{ \'ADF.WIDGET.TOOLTIP.FULLSCREEN\' | translate }}\" class=\"pointer hide-on-fullscreen\" ng-click=openFullScreen() ng-show=\"options.maximizable && !widget.notMaximizable\"> <i class=\"glyphicon glyphicon-fullscreen\"></i> </a>  <a title=\"{{ \'ADF.WIDGET.TOOLTIP.REMOVE\' | translate}}\" class=\"pointer hide-on-fullscreen\" ng-click=remove() ng-if=editMode> <i class=\"glyphicon glyphicon-trash\"></i> </a> <div ng-if=!editMode class=\"pointer hide-on-fullscreen\" ng-show=!widget.notshowOtherOptions style=\"display: inline;\" uib-dropdown uib-dropdown-toggle> <i class=\"fa fa-ellipsis-h\" style=font-size:1.2em;></i> <ul uib-dropdown-menu class=dropdown-menu-right> <li role=menuitem> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.PICTURE\' | translate}}\" ng-click=saveWidgetScreen(definition.wid)> <span class=\"glyphicon glyphicon-picture\"></span> {{ \'ADF.WIDGET.TOOLTIP.PICTURE\' | translate}} </a> </li> <li role=menuitem ng-if=widget.qr> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.QR\' | translate }}\" ng-click=generateQR()> <span class=\"fa fa-qrcode\" style=\"font-size: 1.1em;\"></span> {{ \'ADF.WIDGET.TOOLTIP.QR\' | translate }} </a> </li> <li ng-if=widget.csv permission permission-only=\"\'download\'\" role=menuitem> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.CSV\' | translate }}\" ng-click=downloadCsv()> <span class=\"glyphicon glyphicon-file\"></span> {{ \'ADF.WIDGET.TOOLTIP.CSV\' | translate }} </a> </li> <li role=menuitem permission permission-only=\"\'executeOperation\'\" ng-if=\"widget.executeOperation && isExecuteOperationEnabled()\"> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.OPERATION\' | translate }}\" ng-click=executeOperation()> <span class=\"glyphicon glyphicon-flash\"></span> {{ \'ADF.WIDGET.TOOLTIP.OPERATION\' | translate }} </a> </li> <li role=menuitem ng-if=\"widgetActionsHandler && widgetActionsHandler.actions && widgetActionsHandler.actions.length > 0\" ng-repeat=\"customAction in widgetActionsHandler.actions\" permission permission-only=customAction.permissions> <a class=pointer title={{customAction.title}} ng-click=customAction.action(choice.value)> <span class=\"pointer {{customAction.icon}}\"></span> {{customAction.title}} </a> </li> </ul> </div> </div> <span class=pull-left>  <h4 ng-if=\"!widget.frameless && definition.title\" style=\"margin:4px 0px 0px 2px;float:left;\" translate class=text-primary>{{definition.title | translate}}</h4> </span> <div class=pull-right ng-if=\"navOptionsHandler.prevPage && navOptionsHandler.nextPage && navOptionsHandler.hasPrevPage && navOptionsHandler.hasNextPage && ( !navOptionsHandler.isPaginationEnable || navOptionsHandler.isPaginationEnable() ) && ( !navOptionsHandler.isNoContent || !navOptionsHandler.isNoContent() )\" style=margin-top:1px> <button class=\"btn btn-primary btn-sm pointer\" ng-click=navOptionsHandler.prevPage() ng-disabled=\"!navOptionsHandler.hasPrevPage() || (navOptionsHandler && navOptionsHandler.loadingData)\"> <i class=\"glyphicon glyphicon-chevron-left browser-link\"></i>{{ \'BUTTON.TITLE.PREVIOUS\' | translate }} </button> <button class=\"btn btn-primary btn-sm pointer\" ng-click=navOptionsHandler.nextPage() ng-disabled=\"!navOptionsHandler.hasNextPage() || (navOptionsHandler && navOptionsHandler.loadingData)\"> {{ \'BUTTON.TITLE.NEXT\' | translate }} <i class=\"glyphicon glyphicon-chevron-right browser-link\"></i> </button> </div> <div permission permission-only=\"[\'viewFilter\',\'executeOperation\']\" class=\"pull-right hide-on-fullscreen\" ng-if=\"selectedItemsLength > 0\" style=margin-top:1px> <a title=\"{{ \'ADF.WIDGET.TOOLTIP.SELECTION\' | translate }}\" ng-click=manageSelectedItems() class=\"btn btn-primary btn-sm pointer\"> <i class=\"glyphicon glyphicon-check\"></i> <small class=ogux-budget>{{ selectedItemsLength }}</small> </a> </div> </div> <script type=text/ng-template id=actionsMenuTpl.html> <ul class=\"dropdown-menu\" uib-dropdown-menu role=\"menu\"> <li> <a class=\"pointer\" title=\"{{ \'ADF.WIDGET.TOOLTIP.PICTURE\' | translate}}\" ng-click=\"saveWidgetScreen(definition.wid)\"> <span class=\"glyphicon glyphicon-picture\"></span> {{ \'ADF.WIDGET.TOOLTIP.PICTURE\' | translate}} </a> </li> <li ng-if=\"widget.qr\"> <a class=\"pointer\" title=\"{{ \'ADF.WIDGET.TOOLTIP.QR\' | translate }}\" ng-click=\"generateQR()\"> <span class=\"fa fa-qrcode\" style=\"font-size: 1.1em;\"></span> {{ \'ADF.WIDGET.TOOLTIP.QR\' | translate }} </a> </li> <li ng-if=\"widget.csv\" permission permission-only=\" \'download\' \"> <a class=\"pointer\" title=\"{{ \'ADF.WIDGET.TOOLTIP.CSV\' | translate }}\" ng-click=\"downloadCsv()\"> <span class=\"glyphicon glyphicon-file\"></span> {{ \'ADF.WIDGET.TOOLTIP.CSV\' | translate }} </a> </li> <li permission permission-only=\" \'executeOperation\' \" ng-if=\"widget.executeOperation && isExecuteOperationEnabled()\"> <a class=\"pointer\" title=\"{{ \'ADF.WIDGET.TOOLTIP.OPERATION\' | translate }}\" ng-click=\"executeOperation()\"> <span class=\"glyphicon glyphicon-flash\"></span> {{ \'ADF.WIDGET.TOOLTIP.OPERATION\' | translate }} </a> </li> <li ng-if=\"widgetActionsHandler && widgetActionsHandler.actions && widgetActionsHandler.actions.length > 0\" ng-repeat=\"customAction in widgetActionsHandler.actions\" permission permission-only=\"customAction.permissions\"> <a class=\"pointer\" title=\"{{customAction.title}}\" ng-click=\"customAction.action(choice.value)\"> <span class=\"pointer {{customAction.icon}}\"></span> {{customAction.title}} </a> </li> </ul> </script>");

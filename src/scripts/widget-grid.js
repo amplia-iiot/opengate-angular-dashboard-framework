@@ -739,12 +739,16 @@ angular.module('adf')
                     var elem = document.getElementsByClassName('widget widget_' + $scope.definition.wid);
                     if (elem[0].requestFullscreen) {
                         elem[0].requestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].mozRequestFullScreen) { /* Firefox */
                         elem[0].mozRequestFullScreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].webkitRequestFullscreen) { /* Chrome, Safari and Opera */
                         elem[0].webkitRequestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].msRequestFullscreen) { /* IE/Edge */
                         elem[0].msRequestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else {
                         $scope.$emit('adfOpenModalWidgetFromOther', definition.type, $scope.config || {}, $scope);
                     }

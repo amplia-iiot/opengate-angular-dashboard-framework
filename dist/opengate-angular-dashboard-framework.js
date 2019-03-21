@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.5.1');
+    .value('adfVersion', '8.6.0');
 /*
  * The MIT License
  *
@@ -253,7 +253,11 @@ angular.module('adf')
                 extraData: '='
             },
             controller: ["$scope", function($scope) {
-                var model = {};
+                var model = {
+                    extraConfig: {
+                        cellHeight: 145
+                    }
+                };
                 var widgetFilter = null;
                 var name = $scope.name;
 
@@ -325,6 +329,17 @@ angular.module('adf')
                             if (!model.titleTemplateUrl) {
                                 model.titleTemplateUrl = adfTemplatePath + 'dashboard-title.html';
                             }
+
+                            if (!model.extraConfig) {
+                                model.extraConfig = {
+                                    cellHeight: 145
+                                };
+                            } else {
+                                if (!model.extraConfig.cellHeight) {
+                                    model.extraConfig.cellHeight = 145;
+                                }
+                            }
+
                             $scope.model = model;
                         } else {
                             $log.error('could not find or create model');
@@ -390,7 +405,7 @@ angular.module('adf')
                     if (!$scope.continuousEditMode && ($scope.modelCopy !== $scope.adfModel)) {
                         $scope.modelCopy = angular.copy($scope.modelCopy, $scope.adfModel);
                     }
-                    $rootScope.$broadcast('adfDashboardEditsCancelled');
+                    $rootScope.$broadcast('adfDashboardEditsCancelled', $scope.adfModel.title, $scope.adfModel);
                 };
 
                 var adfEditDashboardDialog = $scope.$on('adfEditDashboardDialog', function(event) {
@@ -420,6 +435,7 @@ angular.module('adf')
                         time: new Date(),
                         backgroundImage: model.backgroundImage ? model.backgroundImage : undefined,
                         file: model.backgroundImage ? model.backgroundImage : undefined,
+                        extraConfig: angular.copy(model.extraConfig)
                     };
 
                     editDashboardScope.backgroundSize = {
@@ -508,21 +524,29 @@ angular.module('adf')
                     });
 
 
-                    editDashboardScope.closeDialog = function() {
-                        // copy the new title back to the model
-                        model.title = editDashboardScope.copy.title;
-                        model.description = editDashboardScope.copy.description;
-                        if (editDashboardScope.iconConfiguration.model === 'image') {
-                            model.icon = editDashboardScope.iconConfiguration.url;
+                    editDashboardScope.closeDialog = function(cancelChanges) {
+                        if (!cancelChanges) {
+                            // copy the new title back to the model
+                            model.title = editDashboardScope.copy.title;
+                            model.description = editDashboardScope.copy.description;
+                            if (editDashboardScope.iconConfiguration.model === 'image') {
+                                model.icon = editDashboardScope.iconConfiguration.url;
 
-                        } else if (editDashboardScope.iconConfiguration.model === 'icon') {
-                            model.icon = (editDashboardScope.iconConfiguration.icon && editDashboardScope.iconConfiguration.icon.key) || editDashboardScope.iconConfiguration.icon;
+                            } else if (editDashboardScope.iconConfiguration.model === 'icon') {
+                                model.icon = (editDashboardScope.iconConfiguration.icon && editDashboardScope.iconConfiguration.icon.key) || editDashboardScope.iconConfiguration.icon;
 
+                            }
+                            model.iconType = editDashboardScope.iconConfiguration.model;
+                            model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
+                            model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
+                            model.backgroundImageSize = editDashboardScope.backgroundSize.model;
+                            model.extraConfig = editDashboardScope.copy.extraConfig ? editDashboardScope.copy.extraConfig : undefined;
+
+                            $rootScope.$broadcast('adfDashboardInternalConfigChanged', model);
+                        } else {
+                            console.warn('Dashboard config cancelled by user');
                         }
-                        model.iconType = editDashboardScope.iconConfiguration.model;
-                        model.backgroundColor = editDashboardScope.copy.backgroundColor ? editDashboardScope.copy.backgroundColor : undefined;
-                        model.backgroundImage = editDashboardScope.copy.backgroundImage ? editDashboardScope.copy.backgroundImage : undefined;
-                        model.backgroundImageSize = editDashboardScope.backgroundSize.model;
+
                         // close modal and destroy the scope
                         instance.close();
                         editDashboardScope.$destroy();
@@ -764,21 +788,25 @@ angular.module('adf')
     .directive('adfDashboardGrid', ["adfTemplatePath", function(adfTemplatePath) {
         
 
+        var gridOptions = {
+            cellHeight: 145,
+            verticalMargin: 10,
+            animate: true,
+            float: false,
+            alwaysShowResizeHandle: true,
+            minWidth: 768,
+            auto: true,
+            resizable: {
+                handles: 'e, se, s, sw, w'
+            },
+            disableDrag: true,
+            disableResize: true
+        };
+
         function preLink($scope) {
-            $scope.gridOptions = {
-                cellHeight: 146,
-                verticalMargin: 10,
-                animate: true,
-                float: false,
-                alwaysShowResizeHandle: true,
-                minWidth: 768,
-                auto: true,
-                resizable: {
-                    handles: 'e, se, s, sw, w'
-                },
-                disableDrag: !$scope.editMode,
-                disableResize: !$scope.editMode
-            };
+            gridOptions.disableDrag = !$scope.editMode;
+            gridOptions.disableResize = !$scope.editMode;
+            $scope.gridOptions = gridOptions;
 
             $scope.gsHandler = null;
         }
@@ -811,10 +839,24 @@ angular.module('adf')
                     }, 100);
                 }));
 
-                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function() {
+                dashEvents.push($scope.$on('adfDashboardEditsCancelled', function($event, name, model) {
+                    if (model && model.extraConfig) {
+                        if (angular.isNumber(model.extraConfig.cellHeight)) {
+                            $scope.gsHandler.cellHeight(model.extraConfig.cellHeight);
+                        }
+                    }
+
                     $timeout(function() {
                         $scope.gsHandler.disable();
                     }, 100);
+                }));
+
+                dashEvents.push($scope.$on('adfDashboardInternalConfigChanged', function($event, newModel) {
+                    if (newModel && newModel.extraConfig) {
+                        if (angular.isNumber(newModel.extraConfig.cellHeight)) {
+                            $scope.gsHandler.cellHeight(newModel.extraConfig.cellHeight);
+                        }
+                    }
                 }));
 
                 dashEvents.push($scope.$on('adfCancelEditMode', function() {
@@ -835,18 +877,18 @@ angular.module('adf')
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onDragStart = function(event, ui) {
-                    console.log('onDragStart event: ' + event + ' ui:' + ui);
-                };
+                // $scope.onDragStart = function(event, ui) {
+                //     console.log('onDragStart event: ' + event + ' ui:' + ui);
+                // };
 
                 $scope.onDragStop = function(event, ui) {
                     console.log('onDragStop event: ' + event + ' ui:' + ui);
                     $scope.adfModel.grid = GridStackUI.Utils.sort($scope.adfModel.grid);
                 };
 
-                $scope.onResizeStart = function(event, ui) {
-                    console.log('onResizeStart event: ' + event + ' ui:' + ui);
-                };
+                // $scope.onResizeStart = function(event, ui) {
+                //     console.log('onResizeStart event: ' + event + ' ui:' + ui);
+                // };
 
                 $scope.onResizeStop = function(event, ui) {
                     console.log('onResizeStop event: ' + event + ' ui:' + ui);
@@ -854,15 +896,21 @@ angular.module('adf')
                     $scope.$broadcast('OnResizeWidget');
                 };
 
-                $scope.onItemAdded = function(item) {
-                    console.log('onItemAdded item: ' + item);
-                };
+                // $scope.onItemAdded = function(item) {
+                //     console.log('onItemAdded item: ' + item);
+                // };
 
-                $scope.onItemRemoved = function(item) {
-                    console.log('onItemRemoved item: ' + item);
-                };
+                // $scope.onItemRemoved = function(item) {
+                //     console.log('onItemRemoved item: ' + item);
+                // };
 
-                $scope.$on('destroy', function() {
+                if ($scope.adfModel && $scope.adfModel.extraConfig) {
+                    if (angular.isNumber($scope.adfModel.extraConfig.cellHeight)) {
+                        gridOptions.cellHeight = $scope.adfModel.extraConfig.cellHeight;
+                    }
+                }
+
+                $scope.$on('$destroy', function() {
                     dashEvents.forEach(function(dashEvt) {
                         dashEvt();
                     });
@@ -2167,12 +2215,16 @@ angular.module('adf')
                     var elem = document.getElementsByClassName('widget widget_' + $scope.definition.wid);
                     if (elem[0].requestFullscreen) {
                         elem[0].requestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].mozRequestFullScreen) { /* Firefox */
                         elem[0].mozRequestFullScreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].webkitRequestFullscreen) { /* Chrome, Safari and Opera */
                         elem[0].webkitRequestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else if (elem[0].msRequestFullscreen) { /* IE/Edge */
                         elem[0].msRequestFullscreen();
+                        $scope.$broadcast('OnResizeWidget');
                     } else {
                         $scope.$emit('adfOpenModalWidgetFromOther', definition.type, $scope.config || {}, $scope);
                     }
