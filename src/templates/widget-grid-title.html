@@ -65,9 +65,9 @@
             </ul>
         </div>
     </div>
-    <span class="pull-left">
+    <span class="pull-left" ng-class="{ 'nav-buttons-enabled' : navOptionsHandler.prevPage && navOptionsHandler.nextPage && navOptionsHandler.hasPrevPage && navOptionsHandler.hasNextPage && ( !navOptionsHandler.isPaginationEnable || navOptionsHandler.isPaginationEnable() ) && ( !navOptionsHandler.isNoContent || !navOptionsHandler.isNoContent() ) }">
         <!-- selected items control -->
-        <h4 ng-if="!widget.frameless && definition.title" style="margin:4px 0px 0px 2px;float:left;" translate class="text-primary">{{definition.title | translate}}</h4>
+        <h4 ng-if="!widget.frameless && definition.title" translate class="text-primary">{{definition.title | translate}}</h4>
     </span>
     <div class="pull-right" ng-if="navOptionsHandler.prevPage && navOptionsHandler.nextPage && navOptionsHandler.hasPrevPage && navOptionsHandler.hasNextPage && ( !navOptionsHandler.isPaginationEnable || navOptionsHandler.isPaginationEnable() ) && ( !navOptionsHandler.isNoContent || !navOptionsHandler.isNoContent() )"
         style="margin-top:1px">
