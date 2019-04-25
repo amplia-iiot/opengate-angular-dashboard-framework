@@ -788,6 +788,18 @@ angular.module('adf')
                     });
                 };
 
+
+                $scope.moveWidgetToDashboard = function(wId) {
+                    $scope.$emit('ouxWidget-move', {
+                        'objectSelector': '.widget_' + wId
+                    }, wId);
+                };
+                $scope.copyWidgetToDashboard = function(wId) {
+                    $scope.$emit('ouxWidget-copy', {
+                        'objectSelector': '.widget_' + wId
+                    }, wId);
+                };
+
                 var createQuickFilter = function(fieldsQuickSearch) {
                     var _filter = {
                         or: []

@@ -46,6 +46,14 @@
                     <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}}" ng-click="saveWidgetScreen(definition.wid)">
                         <span class="glyphicon glyphicon-picture"></span> {{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}} </a>
                 </li>
+                <li role="menuitem">
+                    <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.MOVE' | translate}}" ng-click="moveWidgetToDashboard(definition)">
+                        <span class="fa-2x ogicon ogicon-mov_clone text-primary"></span> {{ 'ADF.WIDGET.TOOLTIP.MOVE' | translate}} </a>
+                </li>
+                <li role="menuitem">
+                    <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.COPY' | translate}}" ng-click="copyWidgetToDashboard(definition)">
+                        <span class="fa-2x ogicon ogicon-mov_clone text-primary"></span> {{ 'ADF.WIDGET.TOOLTIP.COPY' | translate}} </a>
+                </li>
                 <li role="menuitem" ng-if="widget.qr">
                     <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.QR' | translate }}" ng-click="generateQR()">
                         <span class="fa fa-qrcode" style="font-size: 1.1em;"></span> {{ 'ADF.WIDGET.TOOLTIP.QR' | translate }} </a>

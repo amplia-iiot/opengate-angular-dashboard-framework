@@ -368,6 +368,20 @@ angular.module('adf')
                         $scope.adfModel.grid.splice(index, 1);
                     }
                 });
+                var adfWidgetRemovedAndSave = $scope.$on('adfWidgetRemovedFromGridAndSave', function(event, widget) {
+                    var index = null;
+                    $scope.toggleEditMode();
+                    angular.forEach($scope.adfModel.grid, function(widgetTmp, idx) {
+                        if (widgetTmp.definition.wid === widget.wid) {
+                            index = idx;
+                        }
+                    });
+
+                    if (index >= 0) {
+                        $scope.adfModel.grid.splice(index, 1);
+                    }
+                    $scope.toggleEditMode();
+                });
 
                 $scope.cancelEditMode = function() {
                     $scope.editMode = false;
@@ -698,6 +712,7 @@ angular.module('adf')
                     adfAddWidgetDialog();
                     adfEditDashboardDialog();
                     adfWidgetRemoved();
+                    adfWidgetRemovedAndSave();
                 });
             },
             link: function($scope, $element, $attr) {

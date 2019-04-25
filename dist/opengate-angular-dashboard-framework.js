@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.7.0');
+    .value('adfVersion', '8.7.1');
 /*
  * The MIT License
  *
@@ -260,6 +260,9 @@ angular.module('adf')
                 };
                 var widgetFilter = null;
                 var name = $scope.name;
+                var _getWorkspaceId = function(widget) {
+                    return 'hola';
+                }
 
                 var _getReloadWidgets = function(widget) {
                     var reloadWidgets = {
@@ -267,6 +270,7 @@ angular.module('adf')
                         reload: []
                     };
                     if (widget) {
+
                         var definition = angular.copy(widget.definition);
                         var ftype = definition.Ftype;
                         var id = definition.wid;
@@ -398,6 +402,21 @@ angular.module('adf')
                     if (index >= 0) {
                         $scope.adfModel.grid.splice(index, 1);
                     }
+                });
+                var adfWidgetRemovedAndSave = $scope.$on('adfWidgetRemovedFromGridAndSave', function(event, widget) {
+                    var index = null;
+                    $scope.toggleEditMode();
+
+                    angular.forEach($scope.adfModel.grid, function(widgetTmp, idx) {
+                        if (widgetTmp.definition.wid === widget.wid) {
+                            index = idx;
+                        }
+                    });
+
+                    if (index >= 0) {
+                        $scope.adfModel.grid.splice(index, 1);
+                    }
+                    $scope.toggleEditMode();
                 });
 
                 $scope.cancelEditMode = function() {
@@ -729,6 +748,7 @@ angular.module('adf')
                     adfAddWidgetDialog();
                     adfEditDashboardDialog();
                     adfWidgetRemoved();
+                    adfWidgetRemovedAndSave();
                 });
             }],
             link: function($scope, $element, $attr) {
@@ -2264,6 +2284,19 @@ angular.module('adf')
                         'objectSelector': '.widget_' + wId,
                         'fileName': 'capture_' + new Date().getTime()
                     });
+                };
+
+
+                $scope.moveWidgetToDashboard = function(wId, conf) {
+                    // console.log($scope.adfModel.grid);
+                    $scope.$emit('ouxWidget-move', {
+                        'objectSelector': '.widget_' + wId
+                    }, wId);
+                };
+                $scope.copyWidgetToDashboard = function(wId) {
+                    $scope.$emit('ouxWidget-copy', {
+                        'objectSelector': '.widget_' + wId
+                    }, wId);
                 };
 
                 var createQuickFilter = function(fieldsQuickSearch) {
