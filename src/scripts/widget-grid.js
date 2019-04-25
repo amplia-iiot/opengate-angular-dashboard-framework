@@ -500,7 +500,7 @@ angular.module('adf')
 
 
             // bind edit function
-            $scope.edit = function() {
+            $scope.edit = function(deleteIsNotConfigure) {
                 var editScope = $scope.$new();
                 editScope.definition = angular.copy(definition);
 
@@ -520,6 +520,11 @@ angular.module('adf')
 
                 editScope.closeDialog = function() {
                     instance.close();
+                    if (deleteIsNotConfigure) {
+                        $rootScope.$broadcast('adfWidgetRemovedFromGridAndSave', editScope.definition);
+                    }
+
+
                     editScope.$destroy();
                 };
 
@@ -703,7 +708,7 @@ angular.module('adf')
 
                 var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function(event, widget) {
                     if (dashboard.idEquals(definition.wid, widget.wid)) {
-                        $scope.edit();
+                        $scope.edit(true);
                     }
                 });
 

@@ -260,9 +260,6 @@ angular.module('adf')
                 };
                 var widgetFilter = null;
                 var name = $scope.name;
-                var _getWorkspaceId = function(widget) {
-                    return 'hola';
-                }
 
                 var _getReloadWidgets = function(widget) {
                     var reloadWidgets = {
@@ -270,7 +267,6 @@ angular.module('adf')
                         reload: []
                     };
                     if (widget) {
-
                         var definition = angular.copy(widget.definition);
                         var ftype = definition.Ftype;
                         var id = definition.wid;
@@ -406,7 +402,6 @@ angular.module('adf')
                 var adfWidgetRemovedAndSave = $scope.$on('adfWidgetRemovedFromGridAndSave', function(event, widget) {
                     var index = null;
                     $scope.toggleEditMode();
-
                     angular.forEach($scope.adfModel.grid, function(widgetTmp, idx) {
                         if (widgetTmp.definition.wid === widget.wid) {
                             index = idx;
@@ -1998,7 +1993,7 @@ angular.module('adf')
 
 
             // bind edit function
-            $scope.edit = function() {
+            $scope.edit = function(deleteIsNotConfigure) {
                 var editScope = $scope.$new();
                 editScope.definition = angular.copy(definition);
 
@@ -2018,6 +2013,11 @@ angular.module('adf')
 
                 editScope.closeDialog = function() {
                     instance.close();
+                    if (deleteIsNotConfigure) {
+                        $rootScope.$broadcast('adfWidgetRemovedFromGridAndSave', editScope.definition);
+                    }
+
+
                     editScope.$destroy();
                 };
 
@@ -2201,7 +2201,7 @@ angular.module('adf')
 
                 var adfWidgetEnterEditMode = $scope.$on('adfWidgetEnterEditMode', function(event, widget) {
                     if (dashboard.idEquals(definition.wid, widget.wid)) {
-                        $scope.edit();
+                        $scope.edit(true);
                     }
                 });
 
@@ -2287,8 +2287,7 @@ angular.module('adf')
                 };
 
 
-                $scope.moveWidgetToDashboard = function(wId, conf) {
-                    // console.log($scope.adfModel.grid);
+                $scope.moveWidgetToDashboard = function(wId) {
                     $scope.$emit('ouxWidget-move', {
                         'objectSelector': '.widget_' + wId
                     }, wId);
