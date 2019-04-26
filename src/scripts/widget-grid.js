@@ -518,9 +518,9 @@ angular.module('adf')
 
                 var instance = $uibModal.open(opts);
 
-                editScope.closeDialog = function() {
+                editScope.closeDialog = function(value) {
                     instance.close();
-                    if (deleteIsNotConfigure) {
+                    if (deleteIsNotConfigure && value === 'close') {
                         $rootScope.$broadcast('adfWidgetRemovedFromGridAndSave', editScope.definition);
                     }
 
