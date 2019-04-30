@@ -1993,7 +1993,7 @@ angular.module('adf')
 
 
             // bind edit function
-            $scope.edit = function(deleteIsNotConfigure) {
+            $scope.edit = function(deleteIfNotConfigured) {
                 var editScope = $scope.$new();
                 editScope.definition = angular.copy(definition);
 
@@ -2013,10 +2013,10 @@ angular.module('adf')
 
                 editScope.closeDialog = function(value) {
                     instance.close();
-                    if (deleteIsNotConfigure && value === 'close') {
-                        $rootScope.$broadcast('adfWidgetRemovedFromGridAndSave', editScope.definition);
+                    if (deleteIfNotConfigured && value === 'close') {
+                        //$rootScope.$broadcast('adfWidgetRemovedFromGridAndSave', editScope.definition);
+                        $rootScope.$broadcast('adfWidgetRemovedFromGrid', editScope.definition);
                     }
-
 
                     editScope.$destroy();
                 };
@@ -2318,7 +2318,7 @@ angular.module('adf')
                     var extra_filter;
                     var final_filter = {};
                     var order = $scope.config.sort ? $scope.config.sort : undefined;
-                    if ($scope.config.windowFilter) {
+                    if ($scope.config.windowFilter && $scope.config.onWindowTimeChanged) {
                         var window_filter = $scope.config.onWindowTimeChanged($scope.config.windowFilter);
                         if (window_filter && window_filter.and) {
                             extra_filter = {

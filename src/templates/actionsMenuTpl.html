@@ -1,0 +1,22 @@
+<ul class="dropdown-menu" uib-dropdown-menu role="menu">
+    <li>
+        <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}}" ng-click="saveWidgetScreen(definition.wid)">
+            <span class="glyphicon glyphicon-picture"></span> {{ 'ADF.WIDGET.TOOLTIP.PICTURE' | translate}} </a>
+    </li>
+    <li ng-if="widget.qr">
+        <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.QR' | translate }}" ng-click="generateQR()">
+            <span class="fa fa-qrcode" style="font-size: 1.1em;"></span> {{ 'ADF.WIDGET.TOOLTIP.QR' | translate }} </a>
+    </li>
+    <li ng-if="widget.csv" permission permission-only=" 'download' ">
+        <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }}" ng-click="downloadCsv()">
+            <span class="glyphicon glyphicon-file"></span> {{ 'ADF.WIDGET.TOOLTIP.CSV' | translate }} </a>
+    </li>
+    <li permission permission-only=" 'executeOperation' " ng-if="widget.executeOperation && isExecuteOperationEnabled()">
+        <a class="pointer" title="{{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }}" ng-click="executeOperation()">
+            <span class="glyphicon glyphicon-flash"></span> {{ 'ADF.WIDGET.TOOLTIP.OPERATION' | translate }} </a>
+    </li>
+    <li ng-if="widgetActionsHandler && widgetActionsHandler.actions && widgetActionsHandler.actions.length > 0" ng-repeat="customAction in widgetActionsHandler.actions" permission permission-only="customAction.permissions">
+        <a class="pointer" title="{{customAction.title}}" ng-click="customAction.action(choice.value)">
+            <span class="pointer {{customAction.icon}}"></span> {{customAction.title}} </a>
+    </li>
+</ul>
