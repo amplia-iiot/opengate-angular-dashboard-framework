@@ -293,16 +293,6 @@ angular.module('adf')
                 $scope.filterApplied = false;
             };
 
-            // var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
-            //     $scope.config.windowFilter = timeObj ? timeObj : (config.windowFilter ? {} : timeObj);
-            //     var widget = {
-            //         definition: definition,
-            //         element: $element
-            //     };
-            //     $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
-            //     $scope.reload();
-            // });
-
             $scope.enter = function(event) {
                 var keycode = (event.keyCode ? event.keyCode : event.which);
                 if (keycode === 13) {
@@ -825,8 +815,9 @@ angular.module('adf')
                     var extra_filter;
                     var final_filter = {};
                     var order = $scope.config.sort ? $scope.config.sort : undefined;
-                    if ($scope.config.windowFilter && $scope.config.onWindowTimeChanged) {
-                        var window_filter = $scope.config.onWindowTimeChanged($scope.config.windowFilter);
+                    if ($scope.config.getWindowTime && $scope.config.onWindowTimeChanged) {
+                        var winTime = $scope.config.getWindowTime();
+                        var window_filter = $scope.config.onWindowTimeChanged(winTime);
                         if (window_filter && window_filter.and) {
                             extra_filter = {
                                 and: window_filter.and

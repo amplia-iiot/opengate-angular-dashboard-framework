@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.7.1');
+    .value('adfVersion', '8.8.0');
 /*
  * The MIT License
  *
@@ -1786,16 +1786,6 @@ angular.module('adf')
                 $scope.filterApplied = false;
             };
 
-            // var windowTimeChanged = $scope.$on('onWindowTimeChanged', function(event, timeObj) {
-            //     $scope.config.windowFilter = timeObj ? timeObj : (config.windowFilter ? {} : timeObj);
-            //     var widget = {
-            //         definition: definition,
-            //         element: $element
-            //     };
-            //     $rootScope.$broadcast('adfWindowTimeChangedFromWidget', widget, $scope.config.windowFilter);
-            //     $scope.reload();
-            // });
-
             $scope.enter = function(event) {
                 var keycode = (event.keyCode ? event.keyCode : event.which);
                 if (keycode === 13) {
@@ -2318,8 +2308,9 @@ angular.module('adf')
                     var extra_filter;
                     var final_filter = {};
                     var order = $scope.config.sort ? $scope.config.sort : undefined;
-                    if ($scope.config.windowFilter && $scope.config.onWindowTimeChanged) {
-                        var window_filter = $scope.config.onWindowTimeChanged($scope.config.windowFilter);
+                    if ($scope.config.getWindowTime && $scope.config.onWindowTimeChanged) {
+                        var winTime = $scope.config.getWindowTime();
+                        var window_filter = $scope.config.onWindowTimeChanged(winTime);
                         if (window_filter && window_filter.and) {
                             extra_filter = {
                                 and: window_filter.and
