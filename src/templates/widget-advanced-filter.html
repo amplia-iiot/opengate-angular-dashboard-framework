@@ -1,0 +1,86 @@
+<style>
+    .selected-entities-control .ui-select-container>div:first-child {
+        max-height: 400px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+    
+    .condition div {
+        display: inline-block;
+    }
+    
+    .select-custom-querybuilder {
+        display: inline-block;
+        height: 34px;
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        color: #555;
+        background-color: #fff;
+        background-image: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+</style>
+<form name="widgetSelectionForm" novalidate role="form" ng-submit="saveChangesDialog()">
+    <div class="modal-header">
+        <div class="col-xs-12 col-md-12">
+            <h3 class="modal-title text-left"> {{'ADF.WIDGET.TITLE.ADVANCED_FILTER' | translate}}</h3>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="col-xs-12" ng-if="type !== 'entities' && type !== 'tickets'">
+            {{type}} {{fieldsSearch}}
+            <div class="form-group">
+                <custom-ui-select-fields-search label="'FORM.LABEL.SEARCHING_FIELDS'" on-select-item="elementSelected($item)" on-remove="elementDeleted($item)" builder="autocomplete_options" placeholder="FORM.PLACEHOLDER.SEARCHING_FIELDS" element="fieldsSearch.selected"
+                    ng-required="false" multiple="true">
+                </custom-ui-select-fields-search>
+            </div>
+        </div>
+        <div class="col-xs-12" ng-if="type === 'entities' || type === 'tickets'">
+            <div class="form-group">
+                <custom-ui-select-datastream ng-if="type === 'entities' || type === 'tickets'" on-remove="onDeleteDatastream($item)" on-select-item="onSelectDatastream($item)" datastream="datastreamsSearch.selected" multiple="true">
+                </custom-ui-select-datastream>
+            </div>
+        </div>
+        <div class="col-xs-12 text-left">
+            <button type="button" class="btn btn-danger btn-sm" ng-click="clearFieldsSearch()" ng-disabled="currentSelection.selected.length < 1" translate>ADF.WIDGET.BUTTON.CLEAR</button>
+        </div>
+        <query-builder class="query-builder" fields="fields" operators="operators" comparators="comparators" group="queryBuilderfilter.group" settings="settings" as-string="queryAsString"></query-builder>
+
+    </div>
+    <div class="modal-footer">
+        <div permission permission-only=" 'viewFilter' " class="col-xs-12 col-md-2 text-left">
+            <div uib-dropdown ng-if="selectionConfig && selectionConfig.filterTypes && currentSelection.selected.length > 0">
+                <button id="applyFilterBy" type="button" class="btn btn-primary" uib-dropdown-toggle>
+                    <i class="glyphicon glyphicon-filter pointer"></i> {{'ADF.WIDGET.BUTTON.FILTER_BY' | translate}}
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="applyFilterBy">
+                    <li role="menuitem" ng-repeat="filterType in selectionConfig.filterTypes">
+                        <a href="" ng-click="applyFilter(filterType)" title="{{'ADF.WIDGET.BUTTON.SELECTED' | translate:{filterType: filterType} }}">{{'ADF.WIDGET.BUTTON.SELECTED' | translate:{filterType: filterType} }}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div permission permission-only=" 'executeOperation' " class="col-xs-12 col-md-3 text-left">
+            <div uib-dropdown ng-if="selectionConfig && selectionConfig.operationTypes  && currentSelection.selected.length > 0">
+                <button id="executeOperation" type="button" class="btn btn-primary" uib-dropdown-toggle>
+                    <i class="glyphicon glyphicon-flash pointer"></i> {{'ADF.WIDGET.BUTTON.EXECUTE_OPERATION' | translate}}
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="executeOperation">
+                    <li role="menuitem" ng-repeat="operationType in selectionConfig.operationTypes">
+                        <a href="" ng-click="executeOperation(operationType)" title="{{operationType|translate}}">{{operationType|translate}}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-xs-12 col-md-7 text-right">
+            <button type="button" class="btn btn-primary" ng-click="clearQuery()" translate>ADF.WIDGET.BUTTON.CLEAR</button>
+            <button type="button" class="btn btn-primary" ng-click="evaluateQuery()" ng-disabled="queryBuilderfilter.group.rules.length === 0" translate>ADF.WIDGET.BUTTON.EVALUATE</button>
+            <button type="button" class="btn btn-primary" ng-disabled="!enableApply" ng-click="applyQueryBuilderFilter()" translate>ADF.WIDGET.BUTTON.APPLY</button>
+            <button type="button" class="btn btn-default" ng-click="closeDialog()" translate>ADF.COMMON.CLOSE</button>
+        </div>
+    </div>
+</form>
