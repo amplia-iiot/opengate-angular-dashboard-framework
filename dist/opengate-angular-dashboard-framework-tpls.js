@@ -27,6 +27,7 @@
 
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
+    .value('adfTemplateFilterPath', '../src/filter-templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
     .value('adfVersion', '8.8.0');
 /*
@@ -1571,7 +1572,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api) {
+    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", "adfTemplateFilterPath", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, adfTemplateFilterPath) {
         var _setFilterType = function(selectFilter, $scope) {
             var config = $scope.config || {};
             var filter = config.filter = config.filter ? config.filter : {};
@@ -1785,7 +1786,22 @@ angular.module('adf')
                 };
                 advancedFilterScope.fieldsSearch = { selected: [] };
                 advancedFilterScope.datastreamsSearch = { selected: [] };
+                advancedFilterScope.schema = {
+                    type: "object",
+                    properties: {
+                        name: { type: "string", minLength: 2, title: "Name", description: "Name or alias" },
+                        title: {
+                            type: "string",
+                            enum: ['dr', 'jr', 'sir', 'mrs', 'mr', 'NaN', 'dj']
+                        }
+                    }
+                };
 
+                advancedFilterScope.form = [
+                    "*"
+                ];
+
+                advancedFilterScope.model = {};
                 advancedFilterScope.enableApply = false;
                 advancedFilterScope.type = $scope.definition.Ftype
                 if ($scope.search.queryFields) {
@@ -1841,7 +1857,7 @@ angular.module('adf')
                 );
 
                 $templateCache.put('existTemplate', '<select class="select-custom-querybuilder" ng-model="rule.data" ng-options="x for x in rule.field.existsOptions"></select> ');
-                $templateCache.put('inputTemplate', '{{rule.field.schema}} <select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select> <input type="text" ng-required="true" ng-model="rule.data">  <form sf-form="rule.field.form" sf-schema="rule.field.schema" sf-model="rule.data" ></form> ');
+                $templateCache.put('inputTemplate', '{{rule.field.schema}}<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select><input type="text" ng-required="true" ng-model="rule.data">  <div sf-schema="rule.field.schema" sf-form="rule.field.form" sf-model="rule.data"></div>');
 
                 if ($scope.definition.Ftype === 'entities' || $scope.definition.Ftype === 'tickets') {
                     advancedFilterScope.comparators = [
@@ -1897,7 +1913,11 @@ angular.module('adf')
                 advancedFilterScope.onSelectDatastream = function($item) {
                     var schemaName = ($item.schema && $item.schema.$ref) ? $item.schema.$ref.split('/').splice(-1)[0] : undefined;
                     var schema = schemaName ? advancedFilterScope.jsonSchemas[schemaName] : ($item.schema ? $item.schema : undefined)
-
+                    var objectSchema = {
+                        type: "object",
+                        properties: {}
+                    };
+                    objectSchema.properties[$item.identifier] = schema
                     advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
                         id: Math.floor((Math.random() * 10000) + 1),
                         name: $item.identifier,
@@ -1905,9 +1925,9 @@ angular.module('adf')
                         disabledComparators: [
                             8
                         ],
-                        schema: schema,
-                        schemaName: schemaName,
-                        form: ['*']
+                        schema: objectSchema,
+                        form: ['*'],
+                        schemaName: schemaName
                     }));
                 };
 
@@ -1962,10 +1982,6 @@ angular.module('adf')
                     advancedFilterScope.json = JSON.stringify(advancedFilterScope.queryBuilderfilter.group, null, 2);
                     advancedFilterScope.oql = queryService.asReadable(advancedFilterScope.queryBuilderfilter.group);
                     advancedFilterScope.queryAsString = queryService.asString(advancedFilterScope.queryBuilderfilter.group);
-                    /*  if (advancedFilterScope.queryAsReadable.indexOf(' in ') > 0) {
-
-                      }*/
-
                     Filter.parseQuery(advancedFilterScope.oql || '')
                         .then(function(data) {
                             advancedFilterScope.enableApply = true;
@@ -1998,8 +2014,6 @@ angular.module('adf')
                     }
 
                 }
-
-
 
 
                 $scope.$on('clearFilter', function(index) {
