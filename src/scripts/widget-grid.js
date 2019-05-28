@@ -239,20 +239,6 @@ angular.module('adf')
                 };
                 advancedFilterScope.fieldsSearch = { selected: [] };
                 advancedFilterScope.datastreamsSearch = { selected: [] };
-                advancedFilterScope.schema = {
-                    type: "object",
-                    properties: {
-                        name: { type: "string", minLength: 2, title: "Name", description: "Name or alias" },
-                        title: {
-                            type: "string",
-                            enum: ['dr', 'jr', 'sir', 'mrs', 'mr', 'NaN', 'dj']
-                        }
-                    }
-                };
-
-                advancedFilterScope.form = [
-                    "*"
-                ];
 
                 advancedFilterScope.model = {};
                 advancedFilterScope.enableApply = false;
@@ -284,12 +270,25 @@ angular.module('adf')
                         '.scoring.qrating.min_desired.label',
                         '.scoring.qrating.min_required.value',
                         '.scoring.qrating.min_required.label',
-                    ]
+                    ];
+                    field.schemaForm = {
+                        type: "object",
+                        properties: {
+                            data: field.schema
+                        }
+                    };
+                    field.form = [{
+                        key: 'data',
+                        notitle: true
+                    }]
+
                     return field;
                 }
                 advancedFilterScope.removeextraElements = function(field) {
                     delete field.existsOptions;
                     delete field.dsOptions;
+                    delete field.form;
+                    delete field.schemaForm;
                     return field;
                 }
 
@@ -297,7 +296,7 @@ angular.module('adf')
                 advancedFilterScope.fields = $scope.search.queryFields ? $scope.search.queryFields.map(function(field) { return advancedFilterScope.addextraElements(field) }) : [];
 
                 $templateCache.put('inTemplate',
-                    '<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 300px;" title="Choose a color">' +
+                    '<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 200px;" title="Choose a color">' +
                     '<ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>' +
                     ' <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>' +
                     ' </ui-select>'
@@ -310,7 +309,9 @@ angular.module('adf')
                 );
 
                 $templateCache.put('existTemplate', '<select class="select-custom-querybuilder" ng-model="rule.data" ng-options="x for x in rule.field.existsOptions"></select> ');
-                $templateCache.put('inputTemplate', '{{rule.field.schema}}<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>  <div sf-schema="rule.field.schema" sf-form="rule.field.form" sf-model="rule.data"></div>');
+                $templateCache.put('inputTemplate', '<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>' +
+                    '<input ng-if="rule.field.type===\'object\' ||( rule.field.suffix && rule.field.suffix!==\'._current.value\')" type="text" ng-required="true" ng-model="rule.data"> ' +
+                    ' <div ng-if="rule.field.type!==\'object\' &&( !rule.field.suffix || rule.field.suffix===\'._current.value\')" sf-schema="rule.field.schemaForm" sf-form="rule.field.form" sf-model="rule.field.model"></div>');
 
                 if ($scope.definition.Ftype === 'entities' || $scope.definition.Ftype === 'tickets') {
                     advancedFilterScope.comparators = [
@@ -365,12 +366,14 @@ angular.module('adf')
 
                 advancedFilterScope.onSelectDatastream = function($item) {
                     var schemaName = ($item.schema && $item.schema.$ref) ? $item.schema.$ref.split('/').splice(-1)[0] : undefined;
-                    var schema = schemaName ? advancedFilterScope.jsonSchemas[schemaName] : ($item.schema ? $item.schema : undefined)
+                    var schema = schemaName ? advancedFilterScope.jsonSchemas[schemaName] : ($item.schema ? $item.schema : undefined);
+                    delete schema.javaEnumNames;
                     var objectSchema = {
                         type: "object",
-                        properties: {}
+                        properties: {
+                            data: schema
+                        }
                     };
-                    objectSchema.properties[$item.identifier] = schema
                     advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
                         id: Math.floor((Math.random() * 10000) + 1),
                         name: $item.identifier,
@@ -378,9 +381,15 @@ angular.module('adf')
                         disabledComparators: [
                             8
                         ],
-                        schema: objectSchema,
-                        form: ['*'],
-                        schemaName: schemaName
+                        type: schema.type,
+                        schemaForm: objectSchema,
+                        schema: schema,
+                        form: [{
+                            key: 'data',
+                            notitle: true
+                        }],
+                        schemaName: schemaName,
+                        model: {}
                     }));
                 };
 
