@@ -1798,6 +1798,14 @@ angular.module('adf')
                     });
                 }
                 advancedFilterScope.addextraElements = function(field) {
+                    if (field.name === 'provision.device.location') {
+                        field.existsOptions = ['true', 'false']
+
+                    } else {
+                        field.disabledComparators = [
+                            8
+                        ];
+                    }
                     field.existsOptions = ['true', 'false'];
                     field.dsOptions = ['', '._current.value',
                         '._current.source',
@@ -1886,7 +1894,6 @@ angular.module('adf')
                         console.error(err);
                     });
                 } else {
-
                     advancedFilterScope.comparators = [
                         { id: 1, name: 'eq', value: '=' },
                         { id: 2, name: 'neq', value: '!=' },
@@ -1895,8 +1902,7 @@ angular.module('adf')
                         { id: 5, name: 'gte', value: '>=' },
                         { id: 6, name: 'lt', value: '<' },
                         { id: 7, name: 'lte', value: '<=' },
-                        { id: 8, name: 'exists', value: '?', dataTemplate: 'existTemplate', defaultData: [] },
-                        { id: 9, name: 'in', value: '->', dataTemplate: 'inTemplate', defaultData: [], dataType: 'array' },
+                        { id: 8, name: 'in', value: '->', dataTemplate: 'inTemplate', defaultData: [], dataType: 'array' },
 
                     ];
                 }
@@ -1904,10 +1910,8 @@ angular.module('adf')
                 advancedFilterScope.elementSelected = function($item) {
                     advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
                         id: Math.floor((Math.random() * 10000) + 1),
-                        name: $item,
-                        disabledComparators: [
-                            8
-                        ]
+                        name: $item
+
                     }));
                 };
 
@@ -1924,10 +1928,6 @@ angular.module('adf')
                     advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
                         id: Math.floor((Math.random() * 10000) + 1),
                         name: $item.identifier,
-                        existsOptions: ['true', 'false'],
-                        disabledComparators: [
-                            8
-                        ],
                         type: schema.type,
                         schemaForm: objectSchema,
                         schema: schema,
@@ -2026,7 +2026,7 @@ angular.module('adf')
 
 
                 $scope.$on('clearFilter', function(index) {
-                    advancedFilterScope.enableApply = false;
+                    advancedFilterScope.enableApply = true;
 
                 });
                 advancedFilterScope.clearQuery = function() {
@@ -2036,8 +2036,10 @@ angular.module('adf')
                     $scope.filterJson = {};
                     advancedFilterScope.queryBuilderfilter = {
                         group: { operator: advancedFilterScope.operators[0], rules: [] }
-
                     };
+                    advancedFilterScope.clearFieldsSearch();
+                    advancedFilterScope.enableApply = true;
+
                 }
                 var instance = $uibModal.open(opts);
                 // Cierra sin realizar ninguna acción
