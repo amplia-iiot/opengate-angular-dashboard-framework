@@ -84,10 +84,12 @@ angular.module('adf')
                         from: newScope.config.windowFilter.from,
                         to: newScope.config.windowFilter.to
                     };
-                } else if (type === 'today') return {
-                    from: window.moment().startOf('day')
-                };
-                var from = window.moment().subtract(1, type);
+                } else if (type === 'today') {
+                    return {
+                        from: window.moment().startOf('day')
+                    };
+                }
+                var from = window.moment().startOf('day').subtract(1, type);
                 return {
                     from: from._d
                 };

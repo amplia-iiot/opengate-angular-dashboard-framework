@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.8.0');
+    .value('adfVersion', '8.8.1');
 /*
  * The MIT License
  *
@@ -1326,10 +1326,12 @@ angular.module('adf')
                         from: newScope.config.windowFilter.from,
                         to: newScope.config.windowFilter.to
                     };
-                } else if (type === 'today') return {
-                    from: window.moment().startOf('day')
-                };
-                var from = window.moment().subtract(1, type);
+                } else if (type === 'today') {
+                    return {
+                        from: window.moment().startOf('day')
+                    };
+                }
+                var from = window.moment().startOf('day').subtract(1, type);
                 return {
                     from: from._d
                 };
