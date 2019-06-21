@@ -27,8 +27,9 @@
 
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
+    .value('adfTemplateFilterPath', '../src/filter-templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.8.1');
+    .value('adfVersion', '8.8.2');
 /*
  * The MIT License
  *
@@ -1518,9 +1519,62 @@ angular.module('adf')
  */
 
 
+/**
+ * The widget service provide helper functions to render widgets and their content.
+ */
+angular.module('adf')
+    .factory('widgetFilter', function() {
+        
+
+        var launchSearchingAdv = function($scope) {
+            //modificas
+            //$scope.filter.typeFilter = 0;
+
+
+            var advancedFilterScope = $scope.$new();
+            var advancedFilterTemplate = adfTemplatePath + 'widget-advanced-filter.html';
+            var opts = {
+                scope: advancedFilterScope,
+                templateUrl: advancedFilterTemplate,
+                backdrop: 'static',
+                size: 'lg',
+                animation: true
+            };
+        }
+
+
+        return {
+            launchSearchingAdv: launchSearchingAdv
+        };
+    });
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2015, Sebastian Sdorra
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+
 
 angular.module('adf')
-    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "toastr", "$translate", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, toastr, $translate) {
+    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", "adfTemplateFilterPath", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, adfTemplateFilterPath) {
         var _setFilterType = function(selectFilter, $scope) {
             var config = $scope.config || {};
             var filter = config.filter = config.filter ? config.filter : {};
@@ -1535,7 +1589,9 @@ angular.module('adf')
                     $scope.filter.typeFilter = id ? 2 : 0;
                     $scope.search = {
                         oql: filter.oql,
-                        json: filter.value
+                        json: filter.value,
+                        queryAsString: filter.queryAsString || '',
+                        queryFields: filter.queryFields || undefined
                     };
                     break;
                 case 'basic':
@@ -1718,9 +1774,288 @@ angular.module('adf')
                 $scope.reload();
             };
 
-
             $scope.launchSearchingAdv = function() {
-                if (!$scope.filterApplied) {
+                $scope.filter.typeFilter = 0;
+
+                var advancedFilterScope = $scope.$new();
+                var advancedFilterTemplate = adfTemplatePath + 'widget-advanced-filter.html';
+                var opts = {
+                    scope: advancedFilterScope,
+                    templateUrl: advancedFilterTemplate,
+                    backdrop: 'static',
+                    size: 'lg',
+                    animation: true
+                };
+                advancedFilterScope.fieldsSearch = { selected: [] };
+                advancedFilterScope.datastreamsSearch = { selected: [] };
+
+                // advancedFilterScope.model = {};
+                advancedFilterScope.enableApply = false;
+                advancedFilterScope.type = $scope.definition.Ftype
+                if ($scope.search.queryFields) {
+                    $scope.search.queryFields.forEach(function(item) {
+                        advancedFilterScope.fieldsSearch.selected.push(item.name);
+                        advancedFilterScope.datastreamsSearch.selected.push({ identifier: item.name });
+
+                    });
+                }
+                advancedFilterScope.addextraElements = function(field) {
+                    if (field.name === 'provision.device.location') {
+                        field.existsOptions = ['true', 'false']
+                        field.disabledComparators = []
+                    } else {
+                        field.disabledComparators = [
+                            8
+                        ];
+                    }
+                    field.existsOptions = ['true', 'false'];
+                    field.dsOptions = ['', '._current.value',
+                        '._current.source',
+                        '._current.at',
+                        '._current.date',
+                        '._current.provType',
+                        '.scoring.performance',
+                        '.scoring.qrating.version',
+                        '.scoring.qrating.max_score',
+                        '.scoring.qrating.ideal.value',
+                        '.scoring.qrating.ideal.label',
+                        '.scoring.qrating.max_desired.value',
+                        '.scoring.qrating.max_desired.label',
+                        '.scoring.qrating.max_allowed.value',
+                        '.scoring.qrating.max_allowed.label',
+                        '.scoring.qrating.min_desired.value',
+                        '.scoring.qrating.min_desired.label',
+                        '.scoring.qrating.min_required.value',
+                        '.scoring.qrating.min_required.label',
+                    ];
+                    field.schemaForm = {
+                        type: "object",
+                        properties: {
+                            data: field.schema
+                        }
+                    };
+                    field.form = [{
+                        key: 'data',
+                        notitle: true
+                    }];
+                    return field;
+                }
+                advancedFilterScope.removeextraElements = function(field) {
+                    delete field.existsOptions;
+                    delete field.dsOptions;
+                    delete field.form;
+                    delete field.schemaForm;
+                    return field;
+                }
+
+
+                advancedFilterScope.fields = $scope.search.queryFields ? $scope.search.queryFields.map(function(field) { return advancedFilterScope.addextraElements(field) }) : [];
+
+                $templateCache.put('inTemplate',
+                    '<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 200px;" title="Choose a color">' +
+                    '<ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>' +
+                    ' <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>' +
+                    ' </ui-select>'
+                );
+                $templateCache.put('inTemplateEntities',
+                    '<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>  <ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 300px;" title="Choose a color">' +
+                    '<ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>' +
+                    ' <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>' +
+                    ' </ui-select>'
+                );
+
+                $templateCache.put('existTemplate', '<select class="select-custom-querybuilder" ng-model="rule.data" ng-options="x for x in rule.field.existsOptions"></select> ');
+
+
+                $templateCache.put('inputTemplate',
+                    '<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>' +
+                    ' <div ng-if="rule.field.type===\'object\'">' +
+                    ' <input type="text" ng-required="true" ng-model="rule.field.data">' +
+                    ' </div>' +
+                    '<div ng-if="rule.field.type!==\'object\'">' +
+                    '<div ng-if="!rule.field.suffix || rule.field.suffix===\'._current.value\'" sf-schema="rule.field.schemaForm" sf-form="rule.field.form" sf-model="rule.field.model">' +
+                    ' </div>' +
+                    '<input ng-if="rule.field.suffix && rule.field.suffix!==\'._current.value\'" type="text" ng-required="true" ng-model="rule.field.data">' +
+                    ' </div>' + '</div>');
+
+
+                if ($scope.definition.Ftype === 'entities' || $scope.definition.Ftype === 'tickets') {
+                    advancedFilterScope.comparators = [
+                        { id: 1, name: 'eq', value: '=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 2, name: 'neq', value: '!=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 3, name: 'like', value: '~', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 4, name: 'gt', value: '>', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 5, name: 'gte', value: '>=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 6, name: 'lt', value: '<', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 7, name: 'lte', value: '<=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 8, name: 'exists', value: '?', dataTemplate: 'existTemplate', defaultData: [] },
+                        { id: 9, name: 'in', value: '[]', dataTemplate: 'inTemplateEntities', defaultData: [], dataType: 'array' },
+                    ];
+                    $api().basicTypesSearchBuilder().execute().then(function(response) {
+                        if (response.statusCode === 200) {
+                            advancedFilterScope.jsonSchemas = response.data.definitions;
+                        } else {
+                            advancedFilterScope.jsonSchemas = {};
+                        }
+                    }).catch(function(err) {
+                        advancedFilterScope.jsonSchemas = {};
+                        console.error(err);
+                    });
+                } else {
+                    advancedFilterScope.comparators = [
+                        { id: 1, name: 'eq', value: '=' },
+                        { id: 2, name: 'neq', value: '!=' },
+                        { id: 3, name: 'like', value: '~' },
+                        { id: 4, name: 'gt', value: '>' },
+                        { id: 5, name: 'gte', value: '>=' },
+                        { id: 6, name: 'lt', value: '<' },
+                        { id: 7, name: 'lte', value: '<=' },
+                        { id: 8, name: 'in', value: '[]', dataTemplate: 'inTemplate', defaultData: [], dataType: 'array' },
+                    ];
+                }
+
+                advancedFilterScope.elementSelected = function($item) {
+                    advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
+                        id: Math.floor((Math.random() * 10000) + 1),
+                        name: $item
+                    }));
+                };
+
+                advancedFilterScope.onSelectDatastream = function($item) {
+                    var schemaName = ($item.schema && $item.schema.$ref) ? $item.schema.$ref.split('/').splice(-1)[0] : undefined;
+                    var schema = schemaName ? advancedFilterScope.jsonSchemas[schemaName] : ($item.schema ? $item.schema : undefined);
+                    delete schema.javaEnumNames;
+                    var objectSchema = {
+                        type: "object",
+                        properties: {
+                            data: schema
+                        }
+                    };
+                    advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
+                        id: Math.floor((Math.random() * 10000) + 1),
+                        name: $item.identifier,
+                        type: schema.type,
+                        schemaForm: objectSchema,
+                        schema: schema,
+                        form: [{
+                            key: 'data',
+                            notitle: true
+                        }],
+                        schemaName: schemaName,
+                        model: {}
+                    }));
+                };
+
+                advancedFilterScope.onDeleteDatastream = function($item) {
+                    advancedFilterScope.fields = advancedFilterScope.fields.filter(function(item) {
+                        return item.name !== $item.identifier
+                    });
+                };
+
+                advancedFilterScope.elementDeleted = function($item) {
+                    advancedFilterScope.fields = advancedFilterScope.fields.filter(function(item) {
+                        return item.name !== $item
+                    });
+                };
+
+                advancedFilterScope.clearFieldsSearch = function() {
+                    advancedFilterScope.advancedFilter_error = null
+                    advancedFilterScope.fields = [];
+                    advancedFilterScope.fieldsSearch = { selected: [] };
+                    advancedFilterScope.datastreamsSearch = { selected: [] };
+
+                };
+
+                advancedFilterScope.restoreSelection = function() {
+                    selectionScope.currentSelection = {
+                        selected: selectionScope.selectedItems
+                    };
+                };
+
+                advancedFilterScope.operators = [
+                    { name: 'and', value: '&&' },
+                    { name: 'or', value: '||' }
+
+                ];
+                advancedFilterScope.queryBuilderfilter = {
+                    group: { operator: advancedFilterScope.operators[0], rules: [] }
+
+                };
+                advancedFilterScope.settings = {
+                    nesting: true,
+                    addIconClass: ' glyphicon glyphicon-plus',
+                    removeIconClass: 'glyphicon glyphicon-trash',
+                    addButtonClass: 'btn btn-sm btn-primary',
+                    removeButtonClass: 'btn btn-sm btn-danger'
+                };
+                advancedFilterScope.queryAsString = $scope.search.queryAsString ? $scope.search.queryAsString : '';
+                //advancedFilterScope.json = {};
+
+                $scope.filterJson = {};
+                advancedFilterScope.advancedFilter_error = null;
+                advancedFilterScope.evaluateQuery = function() {
+                    //advancedFilterScope.json = JSON.stringify(advancedFilterScope.queryBuilderfilter.group, null, 2);
+                    advancedFilterScope.oql = queryService.asReadableFilter(advancedFilterScope.queryBuilderfilter.group);
+                    advancedFilterScope.queryAsString = queryService.asStringFilter(advancedFilterScope.queryBuilderfilter.group);
+                    Filter.parseQuery(advancedFilterScope.oql || '')
+                        .then(function(data) {
+                            advancedFilterScope.enableApply = true;
+                            $scope.filterJson = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                            $scope.unknownWords = '';
+                            advancedFilterScope.advancedFilter_error = null;
+                        })
+                        .catch(function(err) {
+                            advancedFilterScope.advancedFilter_error = err;
+                            // Tratar el error
+                        });
+                }
+
+                advancedFilterScope.applyQueryBuilderFilter = function() {
+                    var fields = angular.copy(advancedFilterScope.fields);
+                    $scope.config.filter = {
+                        type: 'advanced',
+                        oql: advancedFilterScope.oql ? advancedFilterScope.oql : '',
+                        queryAsString: advancedFilterScope.queryAsString,
+                        value: $scope.filterJson || '',
+                        headersFilter: $scope.config.filter.headersFilter || undefined,
+                        queryFields: fields.length > 0 ? fields.map(function(field) {
+                            return advancedFilterScope.removeextraElements(field);
+                        }) : fields
+                    };
+                    var executeSearch = true;
+                    if (executeSearch) {
+                        $scope.launchSearching();
+                        $scope.filterApplied = true;
+                    }
+
+                }
+
+
+                $scope.$on('clearFilter', function(index) {
+                    advancedFilterScope.enableApply = true;
+
+                });
+                advancedFilterScope.clearQuery = function() {
+                    delete advancedFilterScope.oql;
+                    delete advancedFilterScope.queryAsString;
+                    delete advancedFilterScope.json;
+
+                    $scope.filterJson = undefined;
+                    advancedFilterScope.queryBuilderfilter = {
+                        group: { operator: advancedFilterScope.operators[0], rules: [] }
+                    };
+                    advancedFilterScope.clearFieldsSearch();
+                    advancedFilterScope.enableApply = true;
+
+                }
+                var instance = $uibModal.open(opts);
+                // Cierra sin realizar ninguna acción
+                advancedFilterScope.closeDialog = function() {
+                    instance.close();
+                    advancedFilterScope.$destroy();
+                };
+
+                /*if (!$scope.filterApplied) {
                     var executeSearch = true;
                     $scope.search.quick = '';
                     if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
@@ -1747,7 +2082,7 @@ angular.module('adf')
                         $scope.launchSearching();
                         $scope.filterApplied = true;
                     }
-                }
+                }*/
             };
 
             $scope.launchSearchingQuick = function() {
@@ -1767,7 +2102,6 @@ angular.module('adf')
             };
 
             $scope.launchSearchingShared = function() {
-                // if (!$scope.filterApplied) {
                 var shared = $scope.search.id;
                 if (shared) {
                     shared.filter.id = shared.wid;
@@ -1777,7 +2111,6 @@ angular.module('adf')
                 }
                 $scope.launchSearching();
                 $scope.filterApplied = true;
-                // }
             };
 
             $scope.filterSharedSelect = function($item, $model) {
@@ -2006,7 +2339,6 @@ angular.module('adf')
                 editScope.closeDialog = function(value) {
                     instance.close();
                     if (deleteIfNotConfigured && value === 'close') {
-                        //$rootScope.$broadcast('adfWidgetRemovedFromGridAndSave', editScope.definition);
                         $rootScope.$broadcast('adfWidgetRemovedFromGrid', editScope.definition);
                     }
 
@@ -2509,11 +2841,12 @@ $templateCache.put("../src/templates/dashboard-grid.html","<div gridstack class=
 $templateCache.put("../src/templates/dashboard-title.html","<div class=row style=padding:0px;> <div class=\"col-xs-12 col-md-5\" ng-if=!hideButtons> <span ng-if=model.icon id=idDashboardIcon class=\"fa fa-2x\" ng-class=model.icon></span> <span id=idDashboardTitle class=\"fa-2x text-primary\">{{model.title | translate}}</span> <span ng-if=model.description id=idDashboardDescription>{{model.description | translate}}</span> </div> <div class=\"col-xs-12 col-md-7 text-right\" ng-if=!hideButtons> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.ADD\' | translate }}\" ng-click=addWidgetDialog() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-plus\" aria-hidden=true></i> {{\'ADF.DASHBOARD.TITLE.ADD\' | translate}} </a> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.CONFIGURATION\' | translate }}\" ng-click=editDashboardDialog() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-cog\"></i> {{\'ADF.DASHBOARD.TITLE.CONFIGURATION\' | translate}} </a> <a href ng-if=editMode title=\"{{ \'ADF.DASHBOARD.TITLE.UNDO\' | translate }}\" ng-click=cancelEditMode() class=\"btn btn-warning btn-sm pointer no-transition\"> <i class=\"fa fa-close\"></i> {{\'ADF.DASHBOARD.TITLE.UNDO\' | translate}} </a> <a href ng-if=\"options.editable && !editMode && !model.temporal\" title=\"{{\'ADF.DASHBOARD.TITLE.EDIT.MODE\' | translate }}\" ng-click=toggleEditMode() class=\"btn btn-sm pointer no-transition\"> <i class=\"fa fa-pencil-square-o\"></i> {{\'ADF.DASHBOARD.TITLE.EDIT.MODE\' | translate}} </a> <a href ng-if=\"options.editable && editMode\" title=\"{{\'ADF.DASHBOARD.TITLE.SAVE\' | translate)}}\" ng-click=toggleEditMode() class=\"btn btn-success btn-sm pointer no-transition\"> <i class=\"fa fa-save\"></i> {{\'ADF.DASHBOARD.TITLE.SAVE\' | translate}} </a> </div> </div>");
 $templateCache.put("../src/templates/dashboard.html","<div class=dashboard-container x-ng-class=\"{\'edit\' : editMode}\"> <div ng-include src=model.titleTemplateUrl></div> <div class=dashboard x-ng-class=\"{\'edit\' : editMode}\" style=\"padding: 0px;margin: 0px;\"> <adf-dashboard-grid ng-if=model.grid adf-model=model options=options edit-mode=editMode> </adf-dashboard-grid></div> </div>");
 $templateCache.put("../src/templates/widget-add.html","<div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h4 class=modal-title translate>ADF.WIDGET.TITLE.ADD_HEADER</h4> </div> <div class=modal-body>  <div ng-if=createCategories> <uib-accordion ng-init=\"categorized = createCategories(widgets)\"> <div uib-accordion-group heading=\"{{category.name | translate}}\" ng-repeat=\"category in categorized | adfOrderByObjectKey: \'name\'\"> <dl class=dl-horizontal> <dt ng-repeat-start=\"widget in category.widgets | adfOrderByObjectKey: \'key\'\"> <a href ng-click=addWidget(widget.key) ng-class={{widget.key}}> {{widget.title | translate}} </a> </dt> <dd ng-repeat-end ng-if=widget.description> {{widget.description | translate}} </dd> </dl> </div> </uib-accordion> </div>  <div ng-if=!createCategories> <div class=row> <div class=\"col-md-4 col-xs-12 form-group no-margin\"> <select ng-model=widgetFilterCfg.widgetFilter.categoryTags name=widgetsCategoryFilter class=form-control> <option value translate>ADF.WIDGET.LABEL.ALL_WIDGETS</option> <option ng-repeat=\"category in availableCategories | orderBy\" value={{category}}>{{ category | translate }}</option> </select> </div> <div class=\"col-md-4 col-xs-12 form-group no-margin\"> <select ng-model=widgetFilterCfg.widgetSorting name=widgetsSorting class=form-control> <option value=priority ng-selected=\"widgetFilterCfg.widgetSorting===\'priority\' || !widgetFilterCfg.widgetSorting\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.PRIORITY\' | translate) }\"></option> <option value=name ng-selected=\"widgetFilterCfg.widgetSorting===\'name\'\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.NAME\' | translate) }\"></option> <option value=category ng-selected=\"widgetFilterCfg.widgetSorting===\'category\'\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.CATEGORY\' | translate) }\"></option> <option value=description ng-selected=\"widgetFilterCfg.widgetSorting===\'description\'\" translate=ADF.WIDGET.TITLE.SORTED_BY translate-values=\"{ item : (\'ADF.WIDGET.LABEL.DESCRIPTION\' | translate) }\"></option> </select> </div> <div class=\"col-md-4 col-xs-12 form-group no-margin\"> <select ng-model=widgetFilterCfg.widgetSortingDirection name=widgetSortingDirection class=form-control> <option value translate>BUTTON.TITLE.ASCENDING</option> <option value=1 translate>BUTTON.TITLE.DESCENDING</option> </select> </div> </div> <div class=row> <div class=\"col-xs-12 form-group no-margin\"> <input type=text class=form-control name=widgetsTitleFilter autofocus ng-model=widgetFilterCfg.widgetFilter.title placeholder=\"{{ \'ADF.WIDGET.PLACEHOLDER.TYPE_WIDGET_FILTER\'| translate }}\"> </div> </div> <div ng-repeat=\"widget in widgets | adfOrderByObjectKey: \'key\' | filter:widgetFilterCfg.widgetFilter:strict | orderBy:widgetFilterCfg.widgetSorting:widgetFilterCfg.widgetSortingDirection track by $index\" ng-class=\"{ \'widgetPanelBig\' : $index ===0 , \'widgetPanelNormal\' : $index > 0 }\"> <div class=\"pointer panel widgetInfoParent {{widget.key}}\" ng-click=addWidget(widget.key) title=\"{{widget.description | translate}}\"> <div class=\"widgetInfoImage pointer\"> <div ng-if=widget.svg class=widget-icon ng-include=widget.svg></div> <img ng-if=\"widget.images && !widget.svg\" ng-init=\"widget._currImg = widget.images[0]\" src=\"{{ widget._currImg }}\" ng-click=addWidget(widget.key) title=\"Click to change (if available)\"> <i ng-if=\"!widget.images && !widget.svg\" class=\"widgetInfoIcon fa\" ng-class=\"widget.icon ? widget.icon: \'fa-plus-circle\'\" ng-style=\"widget.color?{\'color\':widget.color}:\'\'\" aria-hidden=true></i> </div> <div class=widgetInfoContainer id=widgetKey_{{widget.key}} ng-class=\"{ \'bg-contrast\' : $index ===0, \'bg-primary\': $index !== 0}\">  <span class=widgetInfoTitle>{{widget.title }}</span><br> <span>({{widget.category}})</span> <span class=widgetInfoDescription>{{widget.description}}</span> </div> </div> </div> </div> </div> <div class=modal-footer style=clear:both;> <button type=button class=\"btn btn-primary\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> </div>");
+$templateCache.put("../src/templates/widget-advanced-filter.html","<style>\n    .selected-entities-control .ui-select-container>div:first-child {\n        max-height: 400px;\n        overflow-y: scroll;\n        overflow-x: hidden;\n    }\n    \n    .condition div {\n        display: unset;\n    }\n    \n    .select-custom-querybuilder {\n        display: inline-block;\n        height: 34px;\n        padding: 6px 12px;\n        font-size: 14px;\n        line-height: 1.42857143;\n        color: #555;\n        background-color: #fff;\n        background-image: none;\n        border: 1px solid #ccc;\n        border-radius: 4px;\n    }\n</style> <form name=widgetSelectionForm novalidate role=form ng-submit=saveChangesDialog()> <div class=modal-header> <div class=\"col-xs-12 col-md-12\"> <h3 class=\"modal-title text-left\"> {{\'ADF.WIDGET.TITLE.ADVANCED_FILTER\' | translate}}</h3> </div> </div> <div class=modal-body> <div class=col-xs-12 ng-if=\"type !== \'entities\' && type !== \'tickets\'\"> <div class=form-group> <custom-ui-select-fields-search label=\"\'FORM.LABEL.SEARCHING_FIELDS\'\" on-select-item=elementSelected($item) on-remove=elementDeleted($item) builder=autocomplete_options placeholder=FORM.PLACEHOLDER.SEARCHING_FIELDS element=fieldsSearch.selected ng-required=false multiple=true> </custom-ui-select-fields-search> </div> </div> <div class=col-xs-12 ng-if=\"type === \'entities\' || type === \'tickets\'\"> <div class=form-group> <custom-ui-select-datastream ng-if=\"type === \'entities\' || type === \'tickets\'\" on-remove=onDeleteDatastream($item) on-select-item=onSelectDatastream($item) datastream=datastreamsSearch.selected multiple=true> </custom-ui-select-datastream> </div> </div> <div class=\"col-xs-12 text-left\"> <button type=button class=\"btn btn-danger btn-sm\" ng-click=clearFieldsSearch() ng-disabled=\"currentSelection.selected.length < 1\" translate>ADF.WIDGET.BUTTON.CLEAR</button> </div> <query-builder class=query-builder fields=fields operators=operators comparators=comparators group=queryBuilderfilter.group settings=settings as-string=queryAsString></query-builder> </div> <div class=modal-footer> <div permission permission-only=\"\'viewFilter\'\" class=\"col-xs-12 col-md-2 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.filterTypes && currentSelection.selected.length > 0\"> <button id=applyFilterBy type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-filter pointer\"></i> {{\'ADF.WIDGET.BUTTON.FILTER_BY\' | translate}} <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=applyFilterBy> <li role=menuitem ng-repeat=\"filterType in selectionConfig.filterTypes\"> <a href ng-click=applyFilter(filterType) title=\"{{\'ADF.WIDGET.BUTTON.SELECTED\' | translate:{filterType: filterType} }}\">{{\'ADF.WIDGET.BUTTON.SELECTED\' | translate:{filterType: filterType} }}</a> </li> </ul> </div> </div> <div permission permission-only=\"\'executeOperation\'\" class=\"col-xs-12 col-md-3 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.operationTypes && currentSelection.selected.length > 0\"> <button id=executeOperation type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-flash pointer\"></i> {{\'ADF.WIDGET.BUTTON.EXECUTE_OPERATION\' | translate}} <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=executeOperation> <li role=menuitem ng-repeat=\"operationType in selectionConfig.operationTypes\"> <a href ng-click=executeOperation(operationType) title={{operationType|translate}}>{{operationType|translate}}</a> </li> </ul> </div> </div> <div class=\"col-xs-12 col-md-7 text-right\"> <button type=button class=\"btn btn-primary\" ng-click=clearQuery() translate>ADF.WIDGET.BUTTON.CLEAR</button> <button type=button class=\"btn btn-primary\" ng-click=evaluateQuery() ng-disabled=\"queryBuilderfilter.group.rules.length === 0\" translate>ADF.WIDGET.BUTTON.EVALUATE</button> <button type=button class=\"btn btn-primary\" ng-disabled=!enableApply ng-click=applyQueryBuilderFilter() translate>ADF.WIDGET.BUTTON.APPLY</button> <button type=button class=\"btn btn-default\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> </div> </div> </form>");
 $templateCache.put("../src/templates/widget-delete.html","<div class=modal-header> <h4 class=modal-title> <span translate>ADF.COMMON.DELETE</span> {{widget.title | translate}}</h4> </div> <div class=modal-body> <form role=form> <div class=form-group> <label for=widgetTitle translate>ADF.WIDGET.LABEL.DELETE_CONFIRM_MESSAGE</label> </div> </form> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> <button type=button class=\"btn btn-primary\" ng-click=deleteDialog() translate>ADF.COMMON.DELETE</button> </div> ");
 $templateCache.put("../src/templates/widget-edit.html","<form name=widgetEditForm novalidate role=form ng-submit=saveDialog()> <div class=modal-header> <button type=button class=close ng-click=closeDialog() aria-hidden=true>&times;</button> <h3 class=modal-title>{{widget.title | translate}}</h3> </div> <div class=modal-body> <div class=row> <div class=col-xs-12> <div class=\"alert alert-danger\" role=alert ng-show=validationError> <strong translate>ADF.ERROR.APPLY_ERROR</strong> {{validationError | translate}} </div> </div> </div> <div class=row ng-if=widget.show_reload_config> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-init=\"definition.title=(definition.title | translate)\" ng-model=definition.title placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.TITLE\' | translate}}\"> </div> </div> <div class=\"col-xs-12 col-md-6\"> <div class=form-group> <label for=widgetReloadPeriod translate>ADF.WIDGET.TOOLTIP.REFRESH</label> <select class=form-control id=widgetReloadPeriod aria-label=\"ngSelected demo\" ng-model=definition.config.reloadPeriod required ng-init=\"definition.config.reloadPeriod ? definition.config.reloadPeriod : (definition.config.reloadPeriod = \'0\')\"> <option value=0 translate>ADF.WIDGET.OPTIONS.MANUAL</option> <option value=20 translate>ADF.WIDGET.OPTIONS.20_SECONDS</option> <option value=40 translate>ADF.WIDGET.OPTIONS.40_SECONDS</option> <option value=60 translate>ADF.WIDGET.OPTIONS.EVERY_MINUTE</option> <option value=300 translate>ADF.WIDGET.OPTIONS.5_MINUTES</option> <option value=600 translate>ADF.WIDGET.OPTIONS.10_MINUTES</option> <option value=900 translate>ADF.WIDGET.OPTIONS.15_MINUTES</option> <option value=1800 translate>ADF.WIDGET.OPTIONS.30_MINUTES</option> </select> </div> </div> </div> <div class=row ng-if=!widget.show_reload_config> <div class=\"col-xs-12 col-md-12\"> <div class=form-group> <label for=widgetTitle translate>ADF.COMMON.TITLE</label> <input type=text class=\"form-control text-primary\" id=widgetTitle ng-init=\"definition.title=(definition.title | translate)\" ng-model=definition.title placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.TITLE\' | translate}}\"> </div> </div> </div> <div ng-if=widget.edit class=row> <div class=col-xs-12> <adf-widget-content model=definition content=widget.edit> </adf-widget-content></div> </div> <div class=row> <div class=col-xs-12> <div class=form-group> <label for=widgetAbout translate>ADF.COMMON.ABOUT</label> <textarea class=\"form-control text-primary\" id=widgetAbout ng-model=definition.config.about placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ENTER.DESCRIPTION\'|translate}}\"></textarea> </div> </div> </div> </div> <div class=modal-footer> <button type=button class=\"btn btn-default\" ng-click=\"closeDialog(\'close\')\" translate>ADF.WIDGET.BUTTON.CANCEL</button> <button type=submit class=\"btn btn-primary ux-txt-success\" ng-disabled=widgetEditForm.$invalid value=\"{{\'ADF.WIDGET.BUTTON.APPLY\' | translate }}\" translate>ADF.WIDGET.BUTTON.APPLY</button> </div> </form>");
 $templateCache.put("../src/templates/widget-fullscreen-selection.html","<div class=modal-header> <div class=\"pull-right widget-icons\"> <a href title=\"{{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }}\" ng-click=closeDialog() class=\"btn btn-xs btn-danger oux-button-margin\"> <i class=\"glyphicon glyphicon-remove\"></i> {{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }} </a> </div> <h4 class=\"modal-title pull-left\" translate>&nbsp;{{ definition.title | translate}}</h4> </div> <div class=\"modal-body widget\"> <adf-widget-grid class=widget-fullscreen definition=definition edit-mode=false widget-state=widgetState></adf-widget-grid> </div> <div class=modal-footer></div>");
 $templateCache.put("../src/templates/widget-fullscreen.html","<div class=modal-header> <div class=\"pull-right widget-icons\"> <a href title=\"{{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }}\" ng-click=closeDialog() class=\"btn btn-xs btn-danger oux-button-margin\"> <i class=\"glyphicon glyphicon-remove\"></i> {{ \'ADF.WIDGET.TOOLTIP.CLOSE\' |translate }} </a> <a permission permission-only=\"\'manageWorkspace\'\" href title=\"{{ \'ADF.WIDGET.TOOLTIP.INSERT\' |translate }}\" ng-if=persistDashboard ng-click=persistDashboard() class=\"btn btn-xs btn-primary oux-button-margin\"> <i class=\"ogicon ogicon-minimize\"></i> {{ \'ADF.WIDGET.TOOLTIP.INSERT\' |translate }} </a> </div> <h4 class=\"modal-title pull-left\" translate>&nbsp;{{ definition.title | translate}}</h4> </div> <div class=\"modal-body widget\">  <adf-widget-grid class=widget-fullscreen definition=definition edit-mode=false widget-state=widgetState></adf-widget-grid> </div> <div class=modal-footer ng-if=widget.show_modal_footer> <button type=button class=\"btn btn-primary\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> </div>");
 $templateCache.put("../src/templates/widget-grid-title.html","<div class=panel-title style=margin:0px;> <div class=\"pull-right container-actions bg-primary\" data-intro=\"Widget actions\" data-position=bottom> <span ng-if=config.about class=hide-on-fullscreen> <a uib-popover=\"{{ config.about }}\" popover-trigger=\"\'mouseenter\'\" popover-placement=top ng-click=openAboutScreen()> <i class=\"glyphicon glyphicon-info-sign\"></i> </a> <script type=text/ng-template id=widgetAboutModal.html> <div class=\"modal-header\"> <h4 class=\"modal-title\" translate>ADF.COMMON.ABOUT</h4> </div> <div class=\"modal-body\">{{ about.info }}</div> <div class=\"modal-footer\"> <button class=\"btn btn-primary\" type=\"button\" ng-click=\"ok()\" translate>ADF.WIDGET.BUTTON.OK</button> </div> </script> </span> <a ng-if=\"!editMode && widget.print\" title=\"{{ \'ADF.WIDGET.TOOLTIP.PRINT\' | translate }}\" ng-click=print() class=hide-on-fullscreen> <i class=\"glyphicon glyphicon-print\"></i> </a> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.REFRESH\' | translate }}\" ng-if=widget.reload ng-click=reload()> <i class=\"glyphicon glyphicon-refresh\"></i> </a>  <a permission permission-only=\"\'viewFilter\'\" title=\"{{ \'ADF.WIDGET.TOOLTIP.FILTER\' | translate }}\" ng-if=\"!widget.hideFilter && config.widgetSelectors && !editMode\" ng-click=\"filter.showFilter = !filter.showFilter\"> <i class=\"glyphicon glyphicon-filter\" ng-class=\"{\'active\': search.json || search.oql|| search.quick}\"></i> </a>  <a permission permission-only=\"\'viewFilter\'\" title=\"{{ \'ADF.WIDGET.TOOLTIP.SORT\' | translate }}\" ng-if=\"!widget.hideFilter && config.sort && !editMode\" ng-click=\"filter.showFilter = !filter.showFilter\"> <i class=\"glyphicon glyphicon-sort\" ng-class=\"{\'active\': (config.sort.value && config.sort.value !== \'\')}\"></i> </a>  <a title=\"{{ \'ADF.WIDGET.TOOLTIP.EDIT\' | translate }}\" class=\"pointer hide-on-fullscreen\" ng-click=edit() ng-if=editMode> <i class=\"glyphicon glyphicon-cog\"></i> </a> <a title=\"{{ \'ADF.WIDGET.TOOLTIP.FULLSCREEN\' | translate }}\" class=\"pointer hide-on-fullscreen\" ng-click=openFullScreen() ng-show=\"options.maximizable && !widget.notMaximizable\"> <i class=\"glyphicon glyphicon-fullscreen\"></i> </a>  <a title=\"{{ \'ADF.WIDGET.TOOLTIP.REMOVE\' | translate}}\" class=\"pointer hide-on-fullscreen\" ng-click=remove() ng-if=editMode> <i class=\"glyphicon glyphicon-trash\"></i> </a> <div ng-if=!editMode class=\"pointer hide-on-fullscreen\" ng-show=!widget.notshowOtherOptions style=\"display: inline;\" uib-dropdown uib-dropdown-toggle> <i class=\"fa fa-ellipsis-h\" style=font-size:1.2em;></i> <ul uib-dropdown-menu class=dropdown-menu-right> <li role=menuitem> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.PICTURE\' | translate}}\" ng-click=saveWidgetScreen(definition.wid)> <span class=\"glyphicon glyphicon-picture\"></span> {{ \'ADF.WIDGET.TOOLTIP.PICTURE\' | translate}} </a> </li> <li role=menuitem> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.MOVE\' | translate}}\" ng-click=moveWidgetToDashboard(definition)> <span class=\"fa-2x ogicon ogicon-mov_clone text-primary\"></span> {{ \'ADF.WIDGET.TOOLTIP.MOVE\' | translate}} </a> </li> <li role=menuitem> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.COPY\' | translate}}\" ng-click=copyWidgetToDashboard(definition)> <span class=\"fa-2x ogicon ogicon-mov_clone text-primary\"></span> {{ \'ADF.WIDGET.TOOLTIP.COPY\' | translate}} </a> </li> <li role=menuitem ng-if=widget.qr> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.QR\' | translate }}\" ng-click=generateQR()> <span class=\"fa fa-qrcode\" style=\"font-size: 1.1em;\"></span> {{ \'ADF.WIDGET.TOOLTIP.QR\' | translate }} </a> </li> <li ng-if=widget.csv permission permission-only=\"\'download\'\" role=menuitem> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.CSV\' | translate }}\" ng-click=downloadCsv()> <span class=\"glyphicon glyphicon-file\"></span> {{ \'ADF.WIDGET.TOOLTIP.CSV\' | translate }} </a> </li> <li role=menuitem permission permission-only=\"\'executeOperation\'\" ng-if=\"widget.executeOperation && isExecuteOperationEnabled()\"> <a class=pointer title=\"{{ \'ADF.WIDGET.TOOLTIP.OPERATION\' | translate }}\" ng-click=executeOperation()> <span class=\"glyphicon glyphicon-flash\"></span> {{ \'ADF.WIDGET.TOOLTIP.OPERATION\' | translate }} </a> </li> <li role=menuitem ng-if=\"widgetActionsHandler && widgetActionsHandler.actions && widgetActionsHandler.actions.length > 0\" ng-repeat=\"customAction in widgetActionsHandler.actions\" permission permission-only=customAction.permissions> <a class=pointer title={{customAction.title}} ng-click=customAction.action(choice.value)> <span class=\"pointer {{customAction.icon}}\"></span> {{customAction.title}} </a> </li> </ul> </div> </div> <span class=pull-left ng-class=\"{ \'nav-buttons-enabled\' : navOptionsHandler.prevPage && navOptionsHandler.nextPage && navOptionsHandler.hasPrevPage && navOptionsHandler.hasNextPage && ( !navOptionsHandler.isPaginationEnable || navOptionsHandler.isPaginationEnable() ) && ( !navOptionsHandler.isNoContent || !navOptionsHandler.isNoContent() ) }\">  <h4 ng-if=\"!widget.frameless && definition.title\" translate class=text-primary>{{definition.title | translate}}</h4> </span> <div class=pull-right ng-if=\"navOptionsHandler.prevPage && navOptionsHandler.nextPage && navOptionsHandler.hasPrevPage && navOptionsHandler.hasNextPage && ( !navOptionsHandler.isPaginationEnable || navOptionsHandler.isPaginationEnable() ) && ( !navOptionsHandler.isNoContent || !navOptionsHandler.isNoContent() )\" style=margin-top:1px> <button class=\"btn btn-primary btn-sm pointer\" ng-click=navOptionsHandler.prevPage() ng-disabled=\"!navOptionsHandler.hasPrevPage() || (navOptionsHandler && navOptionsHandler.loadingData)\"> <i class=\"glyphicon glyphicon-chevron-left browser-link\"></i>{{ \'BUTTON.TITLE.PREVIOUS\' | translate }} </button> <button class=\"btn btn-primary btn-sm pointer\" ng-click=navOptionsHandler.nextPage() ng-disabled=\"!navOptionsHandler.hasNextPage() || (navOptionsHandler && navOptionsHandler.loadingData)\"> {{ \'BUTTON.TITLE.NEXT\' | translate }} <i class=\"glyphicon glyphicon-chevron-right browser-link\"></i> </button> </div> <div permission permission-only=\"[\'viewFilter\',\'executeOperation\']\" class=\"pull-right hide-on-fullscreen\" ng-if=\"selectedItemsLength > 0\" style=margin-top:1px> <a title=\"{{ \'ADF.WIDGET.TOOLTIP.SELECTION\' | translate }}\" ng-click=manageSelectedItems() class=\"btn btn-primary btn-sm pointer\"> <i class=\"glyphicon glyphicon-check\"></i> <small class=ogux-budget>{{ selectedItemsLength }}</small> </a> </div> </div> ");
-$templateCache.put("../src/templates/widget-grid.html","<div adf-id={{definition.wid}} adf-widget-type={{definition.type}} ng-class=\"{\'widget-move-mode\': editMode}\" class=\"panel panel-default widget widget_{{definition.wid}}\"> <a name={{definition.wid}} id={{definition.wid}}></a> <div class=\"panel-heading clearfix\" ng-if=\"!widget.frameless || editMode\"> <div ng-include src=definition.titleTemplateUrl></div> </div> <div ng-class=\"{ \'panel-body\':!widget.frameless || editMode, \'widget-blur-loading\': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }\"> <div ng-if=\"!widgetState.isCollapsed && config.widgetSelectors && !editMode && filter.showFilter\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div ng-if=\"filter.typeFilter === 0\" class=\"col-xs-12 col-md-8\"> <div class=filter mass-autocomplete> <input class=form-control style=padding-right:15px; name=filterValue ng-keydown=enter($event) ng-model=search.oql placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED\' | translate }}\" mass-autocomplete-item=autocomplete_options() ng-change=debugQuery()> <label ng-click=launchSearchingAdv() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=glyphicon ng-class=\"{ \'glyphicon-search\' : !filterApplied, \'glyphicon-ok\': filterApplied}\"></label> </div> <div ng-if=\"!editMode && filter_error\" class=col-xs-12> <alert type=danger class=\"text-center text-danger\"> <span>{{filter_error}}</span> </alert> </div> <div ng-if=\"filter.showFinalFilter && search.json\" class=col-xs-12> <pre>{{ search.json }}</pre> </div> </div> <div ng-if=\"filter.typeFilter === 1\" class=\"col-xs-12 col-md-8\"> <div class=filter> <input class=form-control style=padding-right:15px; name=filterValue ng-keydown=enter($event) ng-blur=launchSearchingQuick() ng-model=search.quick placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC\' | translate}}\"> <label ng-click=launchSearchingQuick() style=\"position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;\" class=glyphicon ng-class=\"{ \'glyphicon-search\' : !filterApplied, \'glyphicon-ok\': filterApplied}\"></label> </div> </div> <div ng-if=\"filter.typeFilter === 2\" class=\"col-xs-12 col-md-8\"> <div class=filter> <ui-select id=sharedFilter ng-model=search.id theme=bootstrap title=\"{{ \'FORM.TITLE.SHARED_FILTER\' | translate }}\" on-select=\"filterSharedSelect($item, $model)\" on-remove=\"filterSharedRemove($item, $model)\"> <ui-select-match placeholder=\"{{ \'FORM.PLACEHOLDER.SHARED_FILTER\' | translate }}\" allow-clear=true>{{$select.selected.title | translate }} </ui-select-match> <ui-select-choices repeat=\"sharedFilter in sharedFilters | filter: $select.search\"> <div> <span ng-bind-html=\"sharedFilter.title | highlight: $select.search | translate\"> </span></div> <small> <div ng-if=\"sharedFilter.filter.type === \'advanced\'\">{{ \'FORM.LABEL.ADVANCED\' | translate }} <span ng-bind-html=\"\'\'+sharedFilter.filter.oql | highlight: $select.search\"></span> </div> <div ng-if=\"sharedFilter.filter.type === \'basic\'\">{{ \'FORM.LABEL.BASIC\' | translate }} <span ng-bind-html=\"\'\'+sharedFilter.filter.value | highlight: $select.search\"></span> </div> </small> </ui-select-choices> </ui-select> </div> </div> <div class=\"col-xs-12 col-md-4\" uib-dropdown> <button class=\"btn btn-sm\" uib-dropdown-toggle title=\"{{\'ADF.WIDGET.TITLE.TOGGLE_AVANCED_BASIC_FILTER\' | translate }}\"> <i class=\"advanced-filter glyphicon\" ng-class=\"{\'glyphicon-font\' : filter.typeFilter === 0, \'glyphicon-bold\' : filter.typeFilter ===1, \'glyphicon-share\' : filter.typeFilter ===2,}\"></i> <span class=caret></span> </button> <ul class=\"dropdown-menu panel\" style=\"border: 1px groove;\" uib-dropdown-menu aria-labelledby=simple-dropdown> <li ng-click=\"filter.typeFilter = 0\"> <a href> <i class=\"advanced-filter glyphicon glyphicon-font txt-primary\"></i> {{\'ADF.WIDGET.TITLE.FILTER.ADVANCED\' | translate}}</a> </li> <li ng-click=\"filter.typeFilter = 1\"> <a href> <i class=\"basic-filter glyphicon glyphicon-bold txt-primary\"></i> {{\'ADF.WIDGET.TITLE.FILTER.BASIC\' | translate}}</a> </li> <li ng-click=\"filter.typeFilter = 2\"> <a href> <i class=\"basic-filter glyphicon glyphicon-share txt-primary\"></i> {{\'ADF.WIDGET.TITLE.FILTER.SHARED\' | translate}}</a> </li> </ul> </div> </div> <div ng-if=\"customSelectors && config.sort && filter.showFilter && !editMode\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div class=\"sort col-xs-12 col-md-8\"> <ui-select ng-model=config.sort.value theme=bootstrap title=\"{{\'ADF.WIDGET.TITLE.CHOOSE_ORDER\' | translate}}\" allow-clear=true append-to-body=true ng-change=launchSearching() ng-click=getCustomSelectors()> <ui-select-match placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.SHORTED_BY\' | translate}}\" allow-clear=true>{{ \'ADF.WIDGET.TITLE.SORTED_BY\' | translate:{item: $select.selected} }}</ui-select-match> <ui-select-choices repeat=\"selector in customSelectors | filter: $select.search track by $index\"> <small> <span ng-bind-html=\"selector | highlight: $select.search\"></span> </small> </ui-select-choices> </ui-select> </div> <div class=\"sortDirection col-xs-4 col-md-4\"> <button class=\"btn btn-sm pointer\" ng-click=changeDirection() ng-disabled=\"config.sort.value === \'\'\" title=\"{{\'ADF.WIDGET.TITLE.TOGGLE_SORTING_DIRECTION\' | translate}}\"> <i class=glyphicon style=font-size:1.3em; ng-class=\"config.sort.direction===\'ASCENDING\' ? \'glyphicon-sort-by-attributes\': \'glyphicon-sort-by-attributes-alt\'\"></i> </button> </div> </div> <adf-widget-content ng-if=definition model=definition content=widget extra=options.extraData nav-options-handler=navOptionsHandler filter-handler=filterHandler widget-actions-handler=widgetActionsHandler> </adf-widget-content></div> <div class=loaderContainer ng-if=\"navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData\"> <img class=loaderImage src={{widget.images[0]}}> </div> <div class=row ng-if=\"config.showSaveButton && sendEntities\"> <div class=col-xs-12> <button type=button class=\"btn btn-xs btn-primary pull-right oux-button-margin\" ng-click=sendEntities() translate>ADF.COMMON.SAVE</button> </div> </div> <div class=\"panel-footer row no-padding no-margin\"> <div class=\"col-xs-7 text-left\"> <span ng-if=\"navOptionsHandler && navOptionsHandler.statusMessage && !navOptionsHandler.loadingData && !navOptionsHandler.firstLoad\">{{navOptionsHandler.statusMessage | translate}}</span> </div> <div class=\"col-xs-5 spinner-container\" ng-if=\"navOptionsHandler && navOptionsHandler.loadingData && !navOptionsHandler.firstLoad\"> <div class=\"spinner pull-right\"></div> </div> <div class=\"col-xs-5 text-right no-padding no-margin\" ng-if=\"navOptionsHandler && navOptionsHandler.lastMessageTime && !navOptionsHandler.loadingData && !navOptionsHandler.firstLoad\"> <small class=label am-time-ago=navOptionsHandler.lastMessageTime></small> </div> </div> </div>");
+$templateCache.put("../src/templates/widget-grid.html","<div adf-id={{definition.wid}} adf-widget-type={{definition.type}} ng-class=\"{\'widget-move-mode\': editMode}\" class=\"panel panel-default widget widget_{{definition.wid}}\"> <a name={{definition.wid}} id={{definition.wid}}></a> <div class=\"panel-heading clearfix\" ng-if=\"!widget.frameless || editMode\"> <div ng-include src=definition.titleTemplateUrl></div> </div> <div ng-class=\"{ \'panel-body\':!widget.frameless || editMode, \'widget-blur-loading\': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }\"> <div ng-if=\"!widgetState.isCollapsed && config.widgetSelectors && !editMode && filter.showFilter\" class=\"row form-group filterconf\"> <div ng-if=\"filter.typeFilter === 0\" class=\"col-xs-12 col-md-8\"> <div class=filter mass-autocomplete> <input class=form-control name=filterValue readonly disabled ng-keydown=enter($event) ng-model=search.oql placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED\' | translate }}\" mass-autocomplete-item=autocomplete_options() ng-change=debugQuery()> <i ng-if=\"search.oql && !search.queryFields\" class=\"glyphicon glyphicon-warning-sign ng-scope\" uib-popover=\"This filter is deprecated, please make click over the edit button to configure the new one!\" popover-append-to-body=true popover-trigger=\"\'outsideClick\'\" popover-placement=bottom-left popover-class=\"popover-markdown large\"></i> <label ng-click=launchSearchingAdv() class=\"glyphicon glyphicon-edit\"></label> </div> <div ng-if=\"!editMode && filter_error\" class=col-xs-12> <alert type=danger class=\"text-center text-danger\"> <span>{{filter_error}}</span> </alert> </div> <div ng-if=\"filter.showFinalFilter && search.json\" class=col-xs-12> <pre>{{ search.json }}</pre> </div> </div> <div ng-if=\"filter.typeFilter === 1\" class=\"col-xs-12 col-md-8\"> <div class=filter> <input class=form-control name=filterValue ng-keydown=enter($event) ng-blur=launchSearchingQuick() ng-model=search.quick placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC\' | translate}}\"> <label ng-click=launchSearchingQuick() class=glyphicon ng-class=\"{ \'glyphicon-search\' : !filterApplied, \'glyphicon-ok\': filterApplied}\"></label> </div> </div> <div ng-if=\"filter.typeFilter === 2\" class=\"col-xs-12 col-md-8\"> <div class=filter> <ui-select id=sharedFilter ng-model=search.id theme=bootstrap title=\"{{ \'FORM.TITLE.SHARED_FILTER\' | translate }}\" on-select=\"filterSharedSelect($item, $model)\" on-remove=\"filterSharedRemove($item, $model)\"> <ui-select-match placeholder=\"{{ \'FORM.PLACEHOLDER.SHARED_FILTER\' | translate }}\" allow-clear=true>{{$select.selected.title | translate }} </ui-select-match> <ui-select-choices repeat=\"sharedFilter in sharedFilters | filter: $select.search\"> <div> <span ng-bind-html=\"sharedFilter.title | highlight: $select.search | translate\"> </span></div> <small> <div ng-if=\"sharedFilter.filter.type === \'advanced\'\">{{ \'FORM.LABEL.ADVANCED\' | translate }} <span ng-bind-html=\"\'\'+sharedFilter.filter.oql | highlight: $select.search\"></span> </div> <div ng-if=\"sharedFilter.filter.type === \'basic\'\">{{ \'FORM.LABEL.BASIC\' | translate }} <span ng-bind-html=\"\'\'+sharedFilter.filter.value | highlight: $select.search\"></span> </div> </small> </ui-select-choices> </ui-select> </div> </div> <div class=\"col-xs-12 col-md-4\" uib-dropdown> <button class=\"btn btn-sm\" uib-dropdown-toggle title=\"{{\'ADF.WIDGET.TITLE.TOGGLE_AVANCED_BASIC_FILTER\' | translate }}\">  <i class=\"advanced-filter glyphicon\" ng-class=\"{\'glyphicon-font\' : filter.typeFilter === 0, \'glyphicon-bold\' : filter.typeFilter ===1, \'glyphicon-share\' : filter.typeFilter ===2,}\"></i> <span class=caret></span> </button> <ul class=\"dropdown-menu panel\" style=\"border: 1px groove;\" uib-dropdown-menu aria-labelledby=simple-dropdown>  <li> <a href ng-click=launchSearchingAdv()> <i class=\"advanced-filter glyphicon glyphicon-font txt-primary\"></i> {{\'ADF.WIDGET.TITLE.FILTER.CUSTOM_ADVANCED\' | translate}}</a> </li> <li ng-click=\"filter.typeFilter = 1\"> <a href> <i class=\"basic-filter glyphicon glyphicon-bold txt-primary\"></i> {{\'ADF.WIDGET.TITLE.FILTER.BASIC\' | translate}}</a> </li> <li ng-click=\"filter.typeFilter = 2\"> <a href> <i class=\"basic-filter glyphicon glyphicon-share txt-primary\"></i> {{\'ADF.WIDGET.TITLE.FILTER.SHARED\' | translate}}</a> </li> </ul> </div> </div> <div ng-if=\"customSelectors && config.sort && filter.showFilter && !editMode\" class=\"row form-group\" style=\"margin-top: 5px !important;\"> <div class=\"sort col-xs-12 col-md-8\"> <ui-select ng-model=config.sort.value theme=bootstrap title=\"{{\'ADF.WIDGET.TITLE.CHOOSE_ORDER\' | translate}}\" allow-clear=true append-to-body=true ng-change=launchSearching() ng-click=getCustomSelectors()> <ui-select-match placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.SHORTED_BY\' | translate}}\" allow-clear=true>{{ \'ADF.WIDGET.TITLE.SORTED_BY\' | translate:{item: $select.selected} }}</ui-select-match> <ui-select-choices repeat=\"selector in customSelectors | filter: $select.search track by $index\"> <small> <span ng-bind-html=\"selector | highlight: $select.search\"></span> </small> </ui-select-choices> </ui-select> </div> <div class=\"sortDirection col-xs-4 col-md-4\"> <button class=\"btn btn-sm pointer\" ng-click=changeDirection() ng-disabled=\"config.sort.value === \'\'\" title=\"{{\'ADF.WIDGET.TITLE.TOGGLE_SORTING_DIRECTION\' | translate}}\"> <i class=glyphicon style=font-size:1.3em; ng-class=\"config.sort.direction===\'ASCENDING\' ? \'glyphicon-sort-by-attributes\': \'glyphicon-sort-by-attributes-alt\'\"></i> </button> </div> </div> <adf-widget-content ng-if=definition model=definition content=widget extra=options.extraData nav-options-handler=navOptionsHandler filter-handler=filterHandler widget-actions-handler=widgetActionsHandler> </adf-widget-content></div> <div class=loaderContainer ng-if=\"navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData\"> <img class=loaderImage src={{widget.images[0]}}> </div> <div class=row ng-if=\"config.showSaveButton && sendEntities\"> <div class=col-xs-12> <button type=button class=\"btn btn-xs btn-primary pull-right oux-button-margin\" ng-click=sendEntities() translate>ADF.COMMON.SAVE</button> </div> </div> <div class=\"panel-footer row no-padding no-margin\"> <div class=\"col-xs-7 text-left\"> <span ng-if=\"navOptionsHandler && navOptionsHandler.statusMessage && !navOptionsHandler.loadingData && !navOptionsHandler.firstLoad\">{{navOptionsHandler.statusMessage | translate}}</span> </div> <div class=\"col-xs-5 spinner-container\" ng-if=\"navOptionsHandler && navOptionsHandler.loadingData && !navOptionsHandler.firstLoad\"> <div class=\"spinner pull-right\"></div> </div> <div class=\"col-xs-5 text-right no-padding no-margin\" ng-if=\"navOptionsHandler && navOptionsHandler.lastMessageTime && !navOptionsHandler.loadingData && !navOptionsHandler.firstLoad\"> <small class=label am-time-ago=navOptionsHandler.lastMessageTime></small> </div> </div> </div>");
 $templateCache.put("../src/templates/widget-selection.html","<style>\n    .selected-entities-control .ui-select-container>div:first-child {\n        max-height: 300px;\n        overflow-y: scroll;\n        overflow-x: hidden;\n    }\n\n</style> <form name=widgetSelectionForm novalidate role=form ng-submit=saveChangesDialog()> <div class=modal-header> <div class=\"col-xs-12 col-md-12\"> <h3 class=\"modal-title text-left\"> <i class=\"fa fa-check-square-o\" aria-hidden=true></i> {{\'ADF.WIDGET.TITLE.SELECTED_ITEMS\' | translate}}</h3> </div> </div> <div class=modal-body> <div class=col-xs-12> <div class=\"form-group selected-entities-control\"> <label for=currentSelection translate>ADF.WIDGET.LABEL.CURRENT_SELECTION</label> <ui-select multiple tagging ng-model=currentSelection.selected theme=bootstrap sortable=false title=\"{{\'ADF.WIDGET.TITLE.SELECTED_ITEMS\' | translate}}\"> <ui-select-match placeholder=\"{{\'ADF.WIDGET.PLACEHOLDER.NO_SELECTED\' | translate}}\"> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\" ng-repeat=\"(k,v) in $item.value.visible track by $index\" ng-if=\"v !== undefined\"> <strong>{{k | translate}}:</strong> {{v}} <br> </span> </div> <div class=text-left style=\"margin-right: 15px;font-size: 0.9em;max-width:350px;\" ng-if=!$item.value.visible> <span style=\"white-space: initial;word-break: break-word;\">{{$item.key}}</span> </div> </ui-select-match> <ui-select-choices repeat=\"itemSel in currentSelection.selected | filter:$select.search\"> {{itemSel.key}} </ui-select-choices> </ui-select> </div> </div> <div class=\"col-xs-12 text-left\"> <button type=button class=\"btn btn-success btn-sm\" ng-click=restoreSelection() ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" translate>ADF.WIDGET.BUTTON.RESTORE</button> <button type=button class=\"btn btn-danger btn-sm\" ng-click=clearSelection() ng-disabled=\"currentSelection.selected.length < 1\" translate>ADF.WIDGET.BUTTON.CLEAR</button> </div> </div> <div class=modal-footer> <div permission permission-only=\"\'viewFilter\'\" class=\"col-xs-12 col-md-2 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.filterTypes && currentSelection.selected.length > 0\"> <button id=applyFilterBy type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-filter pointer\"></i> {{\'ADF.WIDGET.BUTTON.FILTER_BY\' | translate}} <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=applyFilterBy> <li role=menuitem ng-repeat=\"filterType in selectionConfig.filterTypes\"> <a href ng-click=applyFilter(filterType) title=\"{{\'ADF.WIDGET.BUTTON.SELECTED\' | translate:{filterType: filterType} }}\">{{\'ADF.WIDGET.BUTTON.SELECTED\' | translate:{filterType: filterType} }}</a> </li> </ul> </div> </div> <div permission permission-only=\"\'executeOperation\'\" class=\"col-xs-12 col-md-3 text-left\"> <div uib-dropdown ng-if=\"selectionConfig && selectionConfig.operationTypes && currentSelection.selected.length > 0\"> <button id=executeOperation type=button class=\"btn btn-primary\" uib-dropdown-toggle> <i class=\"glyphicon glyphicon-flash pointer\"></i> {{\'ADF.WIDGET.BUTTON.EXECUTE_OPERATION\' | translate}} <span class=caret></span> </button> <ul class=dropdown-menu uib-dropdown-menu role=menu aria-labelledby=executeOperation> <li role=menuitem ng-repeat=\"operationType in selectionConfig.operationTypes\"> <a href ng-click=executeOperation(operationType) title={{operationType|translate}}>{{operationType|translate}}</a> </li> </ul> </div> </div> <div class=\"col-xs-12 col-md-7 text-right\"> <button type=submit class=\"btn btn-primary\" ng-disabled=\"currentSelection.selected.length === selectedItemsLength\" translate value=\"{{\'ADF.WIDGET.BUTTON.APPLY\' | translate }}\">ADF.WIDGET.BUTTON.APPLY</button> <button type=button class=\"btn btn-default\" ng-click=closeDialog() translate>ADF.COMMON.CLOSE</button> </div> </div> </form> ");}]);
 })(window);

@@ -4,11 +4,16 @@
         <div ng-include src="definition.titleTemplateUrl"></div>
     </div>
     <div ng-class="{ 'panel-body':!widget.frameless || editMode, 'widget-blur-loading': (navOptionsHandler && navOptionsHandler.firstLoad && navOptionsHandler.loadingData) }">
-        <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filter.showFilter" class="row form-group" style="margin-top: 5px !important;">
+        <div ng-if="!widgetState.isCollapsed && config.widgetSelectors && !editMode && filter.showFilter" class="row form-group filterconf">
             <div ng-if="filter.typeFilter === 0" class="col-xs-12 col-md-8">
                 <div class="filter" mass-autocomplete>
-                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-model="search.oql" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}" mass-autocomplete-item="autocomplete_options()" ng-change="debugQuery()">
-                    <label ng-click='launchSearchingAdv()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    <input class="form-control" name="filterValue" readonly="true" disabled="true" ng-keydown="enter($event)" ng-model="search.oql" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.ADVANCED' | translate }}" mass-autocomplete-item="autocomplete_options()"
+                        ng-change="debugQuery()">
+                    <i ng-if="search.oql && !search.queryFields" class="glyphicon glyphicon-warning-sign ng-scope" uib-popover="This filter is deprecated, please make click over the edit button to configure the new one!" popover-append-to-body="true" popover-trigger="'outsideClick'"
+                        popover-placement="bottom-left" popover-class="popover-markdown large"></i>
+                    <label ng-click='launchSearchingAdv()' class="glyphicon glyphicon-edit"></label>
+
+
                 </div>
                 <div ng-if="!editMode && filter_error" class="col-xs-12">
                     <alert type="danger" class="text-center text-danger">
@@ -20,8 +25,8 @@
             </div>
             <div ng-if="filter.typeFilter === 1" class="col-xs-12 col-md-8">
                 <div class="filter">
-                    <input class="form-control" style="padding-right:15px;" name="filterValue" ng-keydown="enter($event)" ng-blur="launchSearchingQuick()" ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
-                    <label ng-click='launchSearchingQuick()' style="position: absolute;font-size: 1.5em;cursor:pointer;right: 15px;" class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
+                    <input class="form-control" name="filterValue" ng-keydown="enter($event)" ng-blur="launchSearchingQuick()" ng-model="search.quick" placeholder="{{'ADF.WIDGET.PLACEHOLDER.ENTER.FILTER.BASIC' | translate}}">
+                    <label ng-click='launchSearchingQuick()' class="glyphicon" ng-class="{ 'glyphicon-search' : !filterApplied, 'glyphicon-ok': filterApplied}"></label>
                 </div>
             </div>
             <div ng-if="filter.typeFilter === 2" class="col-xs-12 col-md-8">
@@ -46,13 +51,18 @@
             </div>
             <div class="col-xs-12 col-md-4" uib-dropdown>
                 <button class="btn btn-sm" uib-dropdown-toggle class="pointer" title="{{'ADF.WIDGET.TITLE.TOGGLE_AVANCED_BASIC_FILTER' | translate }}">
+                   <!-- <i class="advanced-filter glyphicon" ng-click="launchSearchingAdv()" ng-if="filter.typeFilter === 0" ng-class="{'glyphicon-edit' : filter.typeFilter === 0, }"></i>-->
                     <i class="advanced-filter glyphicon" ng-class="{'glyphicon-font' : filter.typeFilter === 0, 'glyphicon-bold' : filter.typeFilter ===1, 'glyphicon-share' : filter.typeFilter ===2,}"></i>
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu panel" style="border: 1px groove;" uib-dropdown-menu aria-labelledby="simple-dropdown">
-                    <li ng-click="filter.typeFilter = 0">
+                    <!-- <li ng-click="filter.typeFilter = 0">
                         <a href="">
                             <i class="advanced-filter glyphicon glyphicon-font txt-primary"></i> {{'ADF.WIDGET.TITLE.FILTER.ADVANCED' | translate}}</a>
+                    </li>-->
+                    <li>
+                        <a href="" ng-click="launchSearchingAdv()">
+                            <i class="advanced-filter glyphicon glyphicon-font txt-primary"></i> {{'ADF.WIDGET.TITLE.FILTER.CUSTOM_ADVANCED' | translate}}</a>
                     </li>
                     <li ng-click="filter.typeFilter = 1">
                         <a href="">

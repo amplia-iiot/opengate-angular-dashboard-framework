@@ -22,10 +22,32 @@
  * SOFTWARE.
  */
 
-'use strict';
 
-angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
-    .value('adfTemplatePath', '../src/templates/')
-    .value('adfTemplateFilterPath', '../src/filter-templates/')
-    .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '<<adfVersion>>');
+/**
+ * The widget service provide helper functions to render widgets and their content.
+ */
+angular.module('adf')
+    .factory('widgetFilter', function() {
+        'use strict';
+
+        var launchSearchingAdv = function($scope) {
+            //modificas
+            //$scope.filter.typeFilter = 0;
+
+
+            var advancedFilterScope = $scope.$new();
+            var advancedFilterTemplate = adfTemplatePath + 'widget-advanced-filter.html';
+            var opts = {
+                scope: advancedFilterScope,
+                templateUrl: advancedFilterTemplate,
+                backdrop: 'static',
+                size: 'lg',
+                animation: true
+            };
+        }
+
+
+        return {
+            launchSearchingAdv: launchSearchingAdv
+        };
+    });

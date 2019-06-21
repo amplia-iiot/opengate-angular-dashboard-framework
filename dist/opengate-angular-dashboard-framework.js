@@ -27,8 +27,9 @@
 
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
+    .value('adfTemplateFilterPath', '../src/filter-templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.8.1');
+    .value('adfVersion', '8.8.2');
 /*
  * The MIT License
  *
@@ -1518,9 +1519,62 @@ angular.module('adf')
  */
 
 
+/**
+ * The widget service provide helper functions to render widgets and their content.
+ */
+angular.module('adf')
+    .factory('widgetFilter', function() {
+        
+
+        var launchSearchingAdv = function($scope) {
+            //modificas
+            //$scope.filter.typeFilter = 0;
+
+
+            var advancedFilterScope = $scope.$new();
+            var advancedFilterTemplate = adfTemplatePath + 'widget-advanced-filter.html';
+            var opts = {
+                scope: advancedFilterScope,
+                templateUrl: advancedFilterTemplate,
+                backdrop: 'static',
+                size: 'lg',
+                animation: true
+            };
+        }
+
+
+        return {
+            launchSearchingAdv: launchSearchingAdv
+        };
+    });
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2015, Sebastian Sdorra
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+
 
 angular.module('adf')
-    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "toastr", "$translate", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, toastr, $translate) {
+    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", "adfTemplateFilterPath", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, adfTemplateFilterPath) {
         var _setFilterType = function(selectFilter, $scope) {
             var config = $scope.config || {};
             var filter = config.filter = config.filter ? config.filter : {};
@@ -1535,7 +1589,9 @@ angular.module('adf')
                     $scope.filter.typeFilter = id ? 2 : 0;
                     $scope.search = {
                         oql: filter.oql,
-                        json: filter.value
+                        json: filter.value,
+                        queryAsString: filter.queryAsString || '',
+                        queryFields: filter.queryFields || undefined
                     };
                     break;
                 case 'basic':
@@ -1718,9 +1774,288 @@ angular.module('adf')
                 $scope.reload();
             };
 
-
             $scope.launchSearchingAdv = function() {
-                if (!$scope.filterApplied) {
+                $scope.filter.typeFilter = 0;
+
+                var advancedFilterScope = $scope.$new();
+                var advancedFilterTemplate = adfTemplatePath + 'widget-advanced-filter.html';
+                var opts = {
+                    scope: advancedFilterScope,
+                    templateUrl: advancedFilterTemplate,
+                    backdrop: 'static',
+                    size: 'lg',
+                    animation: true
+                };
+                advancedFilterScope.fieldsSearch = { selected: [] };
+                advancedFilterScope.datastreamsSearch = { selected: [] };
+
+                // advancedFilterScope.model = {};
+                advancedFilterScope.enableApply = false;
+                advancedFilterScope.type = $scope.definition.Ftype
+                if ($scope.search.queryFields) {
+                    $scope.search.queryFields.forEach(function(item) {
+                        advancedFilterScope.fieldsSearch.selected.push(item.name);
+                        advancedFilterScope.datastreamsSearch.selected.push({ identifier: item.name });
+
+                    });
+                }
+                advancedFilterScope.addextraElements = function(field) {
+                    if (field.name === 'provision.device.location') {
+                        field.existsOptions = ['true', 'false']
+                        field.disabledComparators = []
+                    } else {
+                        field.disabledComparators = [
+                            8
+                        ];
+                    }
+                    field.existsOptions = ['true', 'false'];
+                    field.dsOptions = ['', '._current.value',
+                        '._current.source',
+                        '._current.at',
+                        '._current.date',
+                        '._current.provType',
+                        '.scoring.performance',
+                        '.scoring.qrating.version',
+                        '.scoring.qrating.max_score',
+                        '.scoring.qrating.ideal.value',
+                        '.scoring.qrating.ideal.label',
+                        '.scoring.qrating.max_desired.value',
+                        '.scoring.qrating.max_desired.label',
+                        '.scoring.qrating.max_allowed.value',
+                        '.scoring.qrating.max_allowed.label',
+                        '.scoring.qrating.min_desired.value',
+                        '.scoring.qrating.min_desired.label',
+                        '.scoring.qrating.min_required.value',
+                        '.scoring.qrating.min_required.label',
+                    ];
+                    field.schemaForm = {
+                        type: "object",
+                        properties: {
+                            data: field.schema
+                        }
+                    };
+                    field.form = [{
+                        key: 'data',
+                        notitle: true
+                    }];
+                    return field;
+                }
+                advancedFilterScope.removeextraElements = function(field) {
+                    delete field.existsOptions;
+                    delete field.dsOptions;
+                    delete field.form;
+                    delete field.schemaForm;
+                    return field;
+                }
+
+
+                advancedFilterScope.fields = $scope.search.queryFields ? $scope.search.queryFields.map(function(field) { return advancedFilterScope.addextraElements(field) }) : [];
+
+                $templateCache.put('inTemplate',
+                    '<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 200px;" title="Choose a color">' +
+                    '<ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>' +
+                    ' <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>' +
+                    ' </ui-select>'
+                );
+                $templateCache.put('inTemplateEntities',
+                    '<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>  <ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 300px;" title="Choose a color">' +
+                    '<ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>' +
+                    ' <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>' +
+                    ' </ui-select>'
+                );
+
+                $templateCache.put('existTemplate', '<select class="select-custom-querybuilder" ng-model="rule.data" ng-options="x for x in rule.field.existsOptions"></select> ');
+
+
+                $templateCache.put('inputTemplate',
+                    '<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>' +
+                    ' <div ng-if="rule.field.type===\'object\'">' +
+                    ' <input type="text" ng-required="true" ng-model="rule.field.data">' +
+                    ' </div>' +
+                    '<div ng-if="rule.field.type!==\'object\'">' +
+                    '<div ng-if="!rule.field.suffix || rule.field.suffix===\'._current.value\'" sf-schema="rule.field.schemaForm" sf-form="rule.field.form" sf-model="rule.field.model">' +
+                    ' </div>' +
+                    '<input ng-if="rule.field.suffix && rule.field.suffix!==\'._current.value\'" type="text" ng-required="true" ng-model="rule.field.data">' +
+                    ' </div>' + '</div>');
+
+
+                if ($scope.definition.Ftype === 'entities' || $scope.definition.Ftype === 'tickets') {
+                    advancedFilterScope.comparators = [
+                        { id: 1, name: 'eq', value: '=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 2, name: 'neq', value: '!=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 3, name: 'like', value: '~', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 4, name: 'gt', value: '>', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 5, name: 'gte', value: '>=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 6, name: 'lt', value: '<', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 7, name: 'lte', value: '<=', dataTemplate: 'inputTemplate', defaultData: [] },
+                        { id: 8, name: 'exists', value: '?', dataTemplate: 'existTemplate', defaultData: [] },
+                        { id: 9, name: 'in', value: '[]', dataTemplate: 'inTemplateEntities', defaultData: [], dataType: 'array' },
+                    ];
+                    $api().basicTypesSearchBuilder().execute().then(function(response) {
+                        if (response.statusCode === 200) {
+                            advancedFilterScope.jsonSchemas = response.data.definitions;
+                        } else {
+                            advancedFilterScope.jsonSchemas = {};
+                        }
+                    }).catch(function(err) {
+                        advancedFilterScope.jsonSchemas = {};
+                        console.error(err);
+                    });
+                } else {
+                    advancedFilterScope.comparators = [
+                        { id: 1, name: 'eq', value: '=' },
+                        { id: 2, name: 'neq', value: '!=' },
+                        { id: 3, name: 'like', value: '~' },
+                        { id: 4, name: 'gt', value: '>' },
+                        { id: 5, name: 'gte', value: '>=' },
+                        { id: 6, name: 'lt', value: '<' },
+                        { id: 7, name: 'lte', value: '<=' },
+                        { id: 8, name: 'in', value: '[]', dataTemplate: 'inTemplate', defaultData: [], dataType: 'array' },
+                    ];
+                }
+
+                advancedFilterScope.elementSelected = function($item) {
+                    advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
+                        id: Math.floor((Math.random() * 10000) + 1),
+                        name: $item
+                    }));
+                };
+
+                advancedFilterScope.onSelectDatastream = function($item) {
+                    var schemaName = ($item.schema && $item.schema.$ref) ? $item.schema.$ref.split('/').splice(-1)[0] : undefined;
+                    var schema = schemaName ? advancedFilterScope.jsonSchemas[schemaName] : ($item.schema ? $item.schema : undefined);
+                    delete schema.javaEnumNames;
+                    var objectSchema = {
+                        type: "object",
+                        properties: {
+                            data: schema
+                        }
+                    };
+                    advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
+                        id: Math.floor((Math.random() * 10000) + 1),
+                        name: $item.identifier,
+                        type: schema.type,
+                        schemaForm: objectSchema,
+                        schema: schema,
+                        form: [{
+                            key: 'data',
+                            notitle: true
+                        }],
+                        schemaName: schemaName,
+                        model: {}
+                    }));
+                };
+
+                advancedFilterScope.onDeleteDatastream = function($item) {
+                    advancedFilterScope.fields = advancedFilterScope.fields.filter(function(item) {
+                        return item.name !== $item.identifier
+                    });
+                };
+
+                advancedFilterScope.elementDeleted = function($item) {
+                    advancedFilterScope.fields = advancedFilterScope.fields.filter(function(item) {
+                        return item.name !== $item
+                    });
+                };
+
+                advancedFilterScope.clearFieldsSearch = function() {
+                    advancedFilterScope.advancedFilter_error = null
+                    advancedFilterScope.fields = [];
+                    advancedFilterScope.fieldsSearch = { selected: [] };
+                    advancedFilterScope.datastreamsSearch = { selected: [] };
+
+                };
+
+                advancedFilterScope.restoreSelection = function() {
+                    selectionScope.currentSelection = {
+                        selected: selectionScope.selectedItems
+                    };
+                };
+
+                advancedFilterScope.operators = [
+                    { name: 'and', value: '&&' },
+                    { name: 'or', value: '||' }
+
+                ];
+                advancedFilterScope.queryBuilderfilter = {
+                    group: { operator: advancedFilterScope.operators[0], rules: [] }
+
+                };
+                advancedFilterScope.settings = {
+                    nesting: true,
+                    addIconClass: ' glyphicon glyphicon-plus',
+                    removeIconClass: 'glyphicon glyphicon-trash',
+                    addButtonClass: 'btn btn-sm btn-primary',
+                    removeButtonClass: 'btn btn-sm btn-danger'
+                };
+                advancedFilterScope.queryAsString = $scope.search.queryAsString ? $scope.search.queryAsString : '';
+                //advancedFilterScope.json = {};
+
+                $scope.filterJson = {};
+                advancedFilterScope.advancedFilter_error = null;
+                advancedFilterScope.evaluateQuery = function() {
+                    //advancedFilterScope.json = JSON.stringify(advancedFilterScope.queryBuilderfilter.group, null, 2);
+                    advancedFilterScope.oql = queryService.asReadableFilter(advancedFilterScope.queryBuilderfilter.group);
+                    advancedFilterScope.queryAsString = queryService.asStringFilter(advancedFilterScope.queryBuilderfilter.group);
+                    Filter.parseQuery(advancedFilterScope.oql || '')
+                        .then(function(data) {
+                            advancedFilterScope.enableApply = true;
+                            $scope.filterJson = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                            $scope.unknownWords = '';
+                            advancedFilterScope.advancedFilter_error = null;
+                        })
+                        .catch(function(err) {
+                            advancedFilterScope.advancedFilter_error = err;
+                            // Tratar el error
+                        });
+                }
+
+                advancedFilterScope.applyQueryBuilderFilter = function() {
+                    var fields = angular.copy(advancedFilterScope.fields);
+                    $scope.config.filter = {
+                        type: 'advanced',
+                        oql: advancedFilterScope.oql ? advancedFilterScope.oql : '',
+                        queryAsString: advancedFilterScope.queryAsString,
+                        value: $scope.filterJson || '',
+                        headersFilter: $scope.config.filter.headersFilter || undefined,
+                        queryFields: fields.length > 0 ? fields.map(function(field) {
+                            return advancedFilterScope.removeextraElements(field);
+                        }) : fields
+                    };
+                    var executeSearch = true;
+                    if (executeSearch) {
+                        $scope.launchSearching();
+                        $scope.filterApplied = true;
+                    }
+
+                }
+
+
+                $scope.$on('clearFilter', function(index) {
+                    advancedFilterScope.enableApply = true;
+
+                });
+                advancedFilterScope.clearQuery = function() {
+                    delete advancedFilterScope.oql;
+                    delete advancedFilterScope.queryAsString;
+                    delete advancedFilterScope.json;
+
+                    $scope.filterJson = undefined;
+                    advancedFilterScope.queryBuilderfilter = {
+                        group: { operator: advancedFilterScope.operators[0], rules: [] }
+                    };
+                    advancedFilterScope.clearFieldsSearch();
+                    advancedFilterScope.enableApply = true;
+
+                }
+                var instance = $uibModal.open(opts);
+                // Cierra sin realizar ninguna acción
+                advancedFilterScope.closeDialog = function() {
+                    instance.close();
+                    advancedFilterScope.$destroy();
+                };
+
+                /*if (!$scope.filterApplied) {
                     var executeSearch = true;
                     $scope.search.quick = '';
                     if ($scope.search.json === '' || $scope.search.json === '{}' || (!angular.isString($scope.search.json) && Object.keys($scope.search.json).length === 0)) {
@@ -1747,7 +2082,7 @@ angular.module('adf')
                         $scope.launchSearching();
                         $scope.filterApplied = true;
                     }
-                }
+                }*/
             };
 
             $scope.launchSearchingQuick = function() {
@@ -1767,7 +2102,6 @@ angular.module('adf')
             };
 
             $scope.launchSearchingShared = function() {
-                // if (!$scope.filterApplied) {
                 var shared = $scope.search.id;
                 if (shared) {
                     shared.filter.id = shared.wid;
@@ -1777,7 +2111,6 @@ angular.module('adf')
                 }
                 $scope.launchSearching();
                 $scope.filterApplied = true;
-                // }
             };
 
             $scope.filterSharedSelect = function($item, $model) {
@@ -2006,7 +2339,6 @@ angular.module('adf')
                 editScope.closeDialog = function(value) {
                     instance.close();
                     if (deleteIfNotConfigured && value === 'close') {
-                        //$rootScope.$broadcast('adfWidgetRemovedFromGridAndSave', editScope.definition);
                         $rootScope.$broadcast('adfWidgetRemovedFromGrid', editScope.definition);
                     }
 
