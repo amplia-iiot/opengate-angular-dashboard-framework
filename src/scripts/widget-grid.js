@@ -414,7 +414,7 @@ angular.module('adf')
                 advancedFilterScope.queryAsString = $scope.search.queryAsString ? $scope.search.queryAsString : '';
                 //advancedFilterScope.json = {};
 
-                $scope.filterJson = {};
+                advancedFilterScope.filterJson = {};
                 advancedFilterScope.advancedFilter_error = null;
 
                 advancedFilterScope.evaluateQuery = function() {
@@ -449,7 +449,7 @@ angular.module('adf')
                         type: 'advanced',
                         oql: advancedFilterScope.oql ? advancedFilterScope.oql : '',
                         queryAsString: advancedFilterScope.queryAsString,
-                        value: $scope.filterJson || '',
+                        value: advancedFilterScope.filterJson || '',
                         headersFilter: $scope.config.filter.headersFilter || undefined,
                         queryFields: fields.length > 0 ? fields.map(function(field) {
                             return advancedFilterScope.removeextraElements(field);
@@ -475,7 +475,7 @@ angular.module('adf')
                     delete advancedFilterScope.queryAsString;
                     delete advancedFilterScope.json;
 
-                    $scope.filterJson = undefined;
+                    advancedFilterScope.filterJson = undefined;
                     advancedFilterScope.queryBuilderfilter = {
                         group: { operator: advancedFilterScope.operators[0], rules: [] }
                     };
