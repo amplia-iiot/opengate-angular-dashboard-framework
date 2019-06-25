@@ -1574,7 +1574,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", "adfTemplateFilterPath", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, adfTemplateFilterPath) {
+    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", "toastr", "$translate", "adfTemplateFilterPath", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, toastr, $translate, adfTemplateFilterPath) {
         var _setFilterType = function(selectFilter, $scope) {
             var config = $scope.config || {};
             var filter = config.filter = config.filter ? config.filter : {};
@@ -1993,21 +1993,31 @@ angular.module('adf')
 
                 $scope.filterJson = {};
                 advancedFilterScope.advancedFilter_error = null;
+
                 advancedFilterScope.evaluateQuery = function() {
-                    //advancedFilterScope.json = JSON.stringify(advancedFilterScope.queryBuilderfilter.group, null, 2);
-                    advancedFilterScope.oql = queryService.asReadableFilter(advancedFilterScope.queryBuilderfilter.group);
-                    advancedFilterScope.queryAsString = queryService.asStringFilter(advancedFilterScope.queryBuilderfilter.group);
-                    Filter.parseQuery(advancedFilterScope.oql || '')
-                        .then(function(data) {
-                            advancedFilterScope.enableApply = true;
-                            $scope.filterJson = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
-                            $scope.unknownWords = '';
-                            advancedFilterScope.advancedFilter_error = null;
-                        })
-                        .catch(function(err) {
-                            advancedFilterScope.advancedFilter_error = err;
-                            // Tratar el error
-                        });
+                    try {
+                        advancedFilterScope.oql = queryService.asReadableFilter(advancedFilterScope.queryBuilderfilter.group);
+                        advancedFilterScope.queryAsString = queryService.asStringFilter(advancedFilterScope.queryBuilderfilter.group);
+                        Filter.parseQuery(advancedFilterScope.oql || '')
+                            .then(function(data) {
+                                advancedFilterScope.enableApply = true;
+                                advancedFilterScope.filterJson = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
+                                advancedFilterScope.unknownWords = '';
+                                advancedFilterScope.advancedFilter_error = null;
+                            })
+                            .catch(function(err) {
+                                advancedFilterScope.advancedFilter_error = err;
+                                advancedFilterScope.enableApply = false;
+                                toastr.error($translate.instant('TOASTR.FILTER_IS_MALFORMED'));
+
+
+                            });
+                    } catch (err) {
+                        advancedFilterScope.advancedFilter_error = err;
+                        advancedFilterScope.enableApply = false;
+                        toastr.error($translate.instant('TOASTR.FILTER_IS_MALFORMED'));
+
+                    }
                 }
 
                 advancedFilterScope.applyQueryBuilderFilter = function() {
@@ -2029,11 +2039,16 @@ angular.module('adf')
                     }
 
                 }
+                advancedFilterScope.$watch('queryBuilderfilter', function(newValue) {
+                    advancedFilterScope.enableApply = false;
+
+                }, true);
+
+
 
 
                 $scope.$on('clearFilter', function(index) {
                     advancedFilterScope.enableApply = true;
-
                 });
                 advancedFilterScope.clearQuery = function() {
                     delete advancedFilterScope.oql;
