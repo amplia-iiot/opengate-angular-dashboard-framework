@@ -1,0 +1,5 @@
+<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>
+<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 300px;" title="Choose a element">
+    <ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>
+    <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>
+</ui-select>

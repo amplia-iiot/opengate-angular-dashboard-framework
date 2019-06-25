@@ -38,6 +38,10 @@ var templateOptions = {
     root: '../src/templates',
     module: 'adf'
 };
+var templateOptionsfilter = {
+    root: '../src/templates/filter',
+    module: 'adf'
+};
 
 var annotateOptions = {
     enable: [
@@ -118,9 +122,11 @@ gulp.task('js', function() {
 });
 
 gulp.task('js-with-tpls', function() {
-    var sources = gulp.src(['src/scripts/*.js', 'src/templates/*.html'])
+    var sources = gulp.src(['src/scripts/*.js', 'src/templates/*.html', 'src/templates/filter/*.html'])
         .pipe($.if('*.html', $.minifyHtml(minifyHtmlOptions)))
         .pipe($.if('*.html', $.angularTemplatecache(name + '.tpl.js', templateOptions)))
+        //  .pipe($.if('*.html', $.angularTemplatecache(name + '.tpl.js', templateOptionsfilter)))
+
     return processScripts(sources, name + '-tpls');
 });
 
@@ -168,7 +174,7 @@ gulp.task('dashboard-templates', function() {
         root: '../src/templates',
         module: 'adf'
     };
-    return gulp.src('src/templates/*.html')
+    return gulp.src(['src/templates/*.html', 'src/templates/filter/*.html'])
         .pipe($.minifyHtml(minifyHtmlOptions))
         .pipe($.angularTemplatecache('adf.js', opts))
         .pipe(gulp.dest('.tmp'));
@@ -214,6 +220,8 @@ gulp.task('watch', gulp.parallel('watch-styles', function() {
         'src/scripts/*.js',
         'src/styles/*.css',
         'src/templates/*.html',
+        'src/templates/filter/*.html',
+
         'sample/*.html',
         'sample/scripts/*.js',
         'sample/partials/*.html',

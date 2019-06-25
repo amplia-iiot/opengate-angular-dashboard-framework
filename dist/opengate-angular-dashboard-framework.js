@@ -27,7 +27,6 @@
 
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
-    .value('adfTemplateFilterPath', '../src/filter-templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
     .value('adfVersion', '8.8.2');
 /*
@@ -1574,7 +1573,7 @@ angular.module('adf')
 
 
 angular.module('adf')
-    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", "toastr", "$translate", "adfTemplateFilterPath", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, toastr, $translate, adfTemplateFilterPath) {
+    .directive('adfWidgetGrid', ["$injector", "$q", "$log", "$uibModal", "$rootScope", "$interval", "dashboard", "adfTemplatePath", "Filter", "queryService", "$templateCache", "$api", "toastr", "$translate", function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, toastr, $translate) {
         var _setFilterType = function(selectFilter, $scope) {
             var config = $scope.config || {};
             var filter = config.filter = config.filter ? config.filter : {};
@@ -1851,45 +1850,17 @@ angular.module('adf')
 
                 advancedFilterScope.fields = $scope.search.queryFields ? $scope.search.queryFields.map(function(field) { return advancedFilterScope.addextraElements(field) }) : [];
 
-                $templateCache.put('inTemplate',
-                    '<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 200px;" title="Choose a color">' +
-                    '<ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>' +
-                    ' <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>' +
-                    ' </ui-select>'
-                );
-                $templateCache.put('inTemplateEntities',
-                    '<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>  <ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 300px;" title="Choose a color">' +
-                    '<ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>' +
-                    ' <ui-select-choices repeat="color in rule.field.data | filter:$select.search"> {{color}} </ui-select-choices>' +
-                    ' </ui-select>'
-                );
-
-                $templateCache.put('existTemplate', '<select class="select-custom-querybuilder" ng-model="rule.data" ng-options="x for x in rule.field.existsOptions"></select> ');
-
-
-                $templateCache.put('inputTemplate',
-                    '<select class="select-custom-querybuilder" ng-model="rule.field.suffix" ng-options="x for x in rule.field.dsOptions"></select>' +
-                    ' <div ng-if="rule.field.type===\'object\'">' +
-                    ' <input type="text" ng-required="true" ng-model="rule.field.data">' +
-                    ' </div>' +
-                    '<div ng-if="rule.field.type!==\'object\'">' +
-                    '<div ng-if="!rule.field.suffix || rule.field.suffix===\'._current.value\'" sf-schema="rule.field.schemaForm" sf-form="rule.field.form" sf-model="rule.field.model">' +
-                    ' </div>' +
-                    '<input ng-if="rule.field.suffix && rule.field.suffix!==\'._current.value\'" type="text" ng-required="true" ng-model="rule.field.data">' +
-                    ' </div>' + '</div>');
-
-
                 if ($scope.definition.Ftype === 'entities' || $scope.definition.Ftype === 'tickets') {
                     advancedFilterScope.comparators = [
-                        { id: 1, name: 'eq', value: '=', dataTemplate: 'inputTemplate', defaultData: [] },
-                        { id: 2, name: 'neq', value: '!=', dataTemplate: 'inputTemplate', defaultData: [] },
-                        { id: 3, name: 'like', value: '~', dataTemplate: 'inputTemplate', defaultData: [] },
-                        { id: 4, name: 'gt', value: '>', dataTemplate: 'inputTemplate', defaultData: [] },
-                        { id: 5, name: 'gte', value: '>=', dataTemplate: 'inputTemplate', defaultData: [] },
-                        { id: 6, name: 'lt', value: '<', dataTemplate: 'inputTemplate', defaultData: [] },
-                        { id: 7, name: 'lte', value: '<=', dataTemplate: 'inputTemplate', defaultData: [] },
-                        { id: 8, name: 'exists', value: '?', dataTemplate: 'existTemplate', defaultData: [] },
-                        { id: 9, name: 'in', value: '[]', dataTemplate: 'inTemplateEntities', defaultData: [], dataType: 'array' },
+                        { id: 1, name: 'eq', value: '=', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
+                        { id: 2, name: 'neq', value: '!=', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
+                        { id: 3, name: 'like', value: '~', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
+                        { id: 4, name: 'gt', value: '>', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
+                        { id: 5, name: 'gte', value: '>=', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
+                        { id: 6, name: 'lt', value: '<', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
+                        { id: 7, name: 'lte', value: '<=', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
+                        { id: 8, name: 'exists', value: '?', dataTemplate: '../src/templates/filter/exist-template.html', defaultData: [] },
+                        { id: 9, name: 'in', value: '[]', dataTemplate: '../src/templates/filter/in-template-entities.html', defaultData: [], dataType: 'array' },
                     ];
                     $api().basicTypesSearchBuilder().execute().then(function(response) {
                         if (response.statusCode === 200) {
@@ -1910,7 +1881,7 @@ angular.module('adf')
                         { id: 5, name: 'gte', value: '>=' },
                         { id: 6, name: 'lt', value: '<' },
                         { id: 7, name: 'lte', value: '<=' },
-                        { id: 8, name: 'in', value: '[]', dataTemplate: 'inTemplate', defaultData: [], dataType: 'array' },
+                        { id: 8, name: 'in', value: '[]', dataTemplate: '../src/templates/filter/in-template.html', defaultData: [], dataType: 'array' },
                     ];
                 }
 
@@ -2043,9 +2014,6 @@ angular.module('adf')
                     advancedFilterScope.enableApply = false;
 
                 }, true);
-
-
-
 
                 $scope.$on('clearFilter', function(index) {
                     advancedFilterScope.enableApply = true;
