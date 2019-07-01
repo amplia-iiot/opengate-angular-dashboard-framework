@@ -76,10 +76,10 @@
             </div>
         </div>
         <div class="col-xs-12 col-md-7 text-right">
-            <button type="button" class="btn btn-primary" ng-click="clearQuery()" translate>ADF.WIDGET.BUTTON.CLEAR</button>
-            <button type="button" class="btn btn-primary" ng-click="evaluateQuery()" ng-disabled="queryBuilderfilter.group.rules.length === 0" translate>ADF.WIDGET.BUTTON.EVALUATE</button>
+            <button type="button" class="btn btn-primary" ng-disabled="evaluating" ng-click="clearQuery()" translate>ADF.WIDGET.BUTTON.CLEAR</button>
+            <button type="button" class="btn btn-primary" ng-click="evaluateQuery()" ng-disabled="evaluating && queryBuilderfilter.group.rules.length === 0" translate>ADF.WIDGET.BUTTON.EVALUATE</button>
             <button type="button" class="btn btn-primary" ng-disabled="!enableApply" ng-click="applyQueryBuilderFilter()" translate>ADF.WIDGET.BUTTON.APPLY</button>
-            <button type="button" class="btn btn-default" ng-click="closeDialog()" translate>ADF.COMMON.CLOSE</button>
+            <button type="button" class="btn btn-default" ng-disabled="evaluating" ng-click="closeDialog()" translate>ADF.COMMON.CLOSE</button>
         </div>
     </div>
 </form>

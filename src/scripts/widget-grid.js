@@ -25,7 +25,7 @@
 'use strict';
 
 angular.module('adf')
-    .directive('adfWidgetGrid', function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $templateCache, $api, toastr, $translate) {
+    .directive('adfWidgetGrid', function($injector, $q, $log, $uibModal, $rootScope, $interval, dashboard, adfTemplatePath, Filter, queryService, $timeout, $api, toastr, $translate) {
         var _setFilterType = function(selectFilter, $scope) {
             var config = $scope.config || {};
             var filter = config.filter = config.filter ? config.filter : {};
@@ -242,6 +242,8 @@ angular.module('adf')
 
                 // advancedFilterScope.model = {};
                 advancedFilterScope.enableApply = false;
+                advancedFilterScope.evaluating = false;
+
                 advancedFilterScope.type = $scope.definition.Ftype
                 if ($scope.search.queryFields) {
                     $scope.search.queryFields.forEach(function(item) {
@@ -419,21 +421,28 @@ angular.module('adf')
 
                 advancedFilterScope.evaluateQuery = function() {
                     try {
+                            advancedFilterScope.evaluating = true;       
                         advancedFilterScope.oql = queryService.asReadableFilter(advancedFilterScope.queryBuilderfilter.group);
                         advancedFilterScope.queryAsString = queryService.asStringFilter(advancedFilterScope.queryBuilderfilter.group);
                         Filter.parseQuery(advancedFilterScope.oql || '')
                             .then(function(data) {
-                                advancedFilterScope.enableApply = true;
+                                //advancedFilterScope.enableApply = true;
+                                //advancedFilterScope.evaluating = false;
+                                $timeout(function() {
+                                    advancedFilterScope.enableApply = true;
+                                    advancedFilterScope.evaluating = false;       
+                               });
                                 advancedFilterScope.filterJson = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
                                 advancedFilterScope.unknownWords = '';
                                 advancedFilterScope.advancedFilter_error = null;
+
                             })
                             .catch(function(err) {
                                 advancedFilterScope.advancedFilter_error = err;
                                 advancedFilterScope.enableApply = false;
+                                advancedFilterScope.evaluating = false;
+                                console.log(err);
                                 toastr.error($translate.instant('TOASTR.FILTER_IS_MALFORMED'));
-
-
                             });
                     } catch (err) {
                         advancedFilterScope.advancedFilter_error = err;
