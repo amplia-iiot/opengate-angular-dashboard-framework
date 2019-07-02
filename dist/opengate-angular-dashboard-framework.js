@@ -1861,8 +1861,8 @@ angular.module('adf')
                         { id: 5, name: 'gte', value: '>=', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
                         { id: 6, name: 'lt', value: '<', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
                         { id: 7, name: 'lte', value: '<=', dataTemplate: '../src/templates/input-template.html', defaultData: [] },
-                        { id: 8, name: 'exists', value: '?', dataTemplate: '../src/templates/filter/exist-template.html', defaultData: [] },
-                        { id: 9, name: 'in', value: '[]', dataTemplate: '../src/templates/filter/in-template-entities.html', defaultData: [], dataType: 'array' },
+                        { id: 8, name: 'exists', value: '?', dataTemplate: '../src/templates/exist-template.html', defaultData: [] },
+                        { id: 9, name: 'in', value: '[]', dataTemplate: '../src/templates/in-template-entities.html', defaultData: [], dataType: 'array' },
                     ];
                     $api().basicTypesSearchBuilder().execute().then(function(response) {
                         if (response.statusCode === 200) {
@@ -1962,20 +1962,17 @@ angular.module('adf')
                     removeButtonClass: 'btn btn-sm btn-danger'
                 };
                 advancedFilterScope.queryAsString = $scope.search.queryAsString ? $scope.search.queryAsString : '';
-                //advancedFilterScope.json = {};
 
                 advancedFilterScope.filterJson = {};
                 advancedFilterScope.advancedFilter_error = null;
 
                 advancedFilterScope.evaluateQuery = function() {
                     try {
-                            advancedFilterScope.evaluating = true;       
+                        advancedFilterScope.evaluating = true;       
                         advancedFilterScope.oql = queryService.asReadableFilter(advancedFilterScope.queryBuilderfilter.group);
                         advancedFilterScope.queryAsString = queryService.asStringFilter(advancedFilterScope.queryBuilderfilter.group);
                         Filter.parseQuery(advancedFilterScope.oql || '')
                             .then(function(data) {
-                                //advancedFilterScope.enableApply = true;
-                                //advancedFilterScope.evaluating = false;
                                 $timeout(function() {
                                     advancedFilterScope.enableApply = true;
                                     advancedFilterScope.evaluating = false;       
@@ -1986,10 +1983,12 @@ angular.module('adf')
 
                             })
                             .catch(function(err) {
-                                advancedFilterScope.advancedFilter_error = err;
-                                advancedFilterScope.enableApply = false;
-                                advancedFilterScope.evaluating = false;
                                 console.log(err);
+                                advancedFilterScope.advancedFilter_error = err;
+                                $timeout(function() {
+                                    advancedFilterScope.enableApply = false;
+                                    advancedFilterScope.evaluating = false;    
+                               });
                                 toastr.error($translate.instant('TOASTR.FILTER_IS_MALFORMED'));
                             });
                     } catch (err) {
@@ -2037,7 +2036,9 @@ angular.module('adf')
                         group: { operator: advancedFilterScope.operators[0], rules: [] }
                     };
                     advancedFilterScope.clearFieldsSearch();
-                    advancedFilterScope.enableApply = true;
+                    $timeout(function() {
+                        advancedFilterScope.enableApply = true;
+                   });
 
                 }
                 var instance = $uibModal.open(opts);
