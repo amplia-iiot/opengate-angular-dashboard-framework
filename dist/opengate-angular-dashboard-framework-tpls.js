@@ -1837,7 +1837,8 @@ angular.module('adf')
                     };
                     field.form = [{
                         key: 'data',
-                        notitle: true
+                        notitle: true,
+                        fieldHtmlClass:field.schemaName
                     }];
                     return field;
                 }
@@ -1903,20 +1904,22 @@ angular.module('adf')
                         properties: {
                             data: schema
                         }
-                    };
-                    advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
-                        id: Math.floor((Math.random() * 10000) + 1),
-                        name: $item.identifier,
-                        type: schema.type,
-                        schemaForm: objectSchema,
-                        schema: schema,
-                        form: [{
-                            key: 'data',
-                            notitle: true
-                        }],
-                        schemaName: schemaName,
-                        model: {}
-                    }));
+                    };   
+                    $timeout(function() {                 
+                        advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
+                            id: Math.floor((Math.random() * 10000) + 1),
+                            name: $item.identifier,
+                            type: schema.type,
+                            schemaForm: objectSchema,
+                            schema: schema,
+                            form: [{
+                                key: 'data',
+                                notitle: true
+                            }],
+                            schemaName: schemaName,
+                            model: {}
+                        }));
+                    },100);
                 };
 
                 advancedFilterScope.onDeleteDatastream = function($item) {
@@ -2845,5 +2848,5 @@ $templateCache.put("../src/templates/widget-selection.html","<style>\n    .selec
 $templateCache.put("../src/templates/exist-template.html","<select class=select-custom-querybuilder ng-model=rule.data ng-options=\"x for x in rule.field.existsOptions\"></select>");
 $templateCache.put("../src/templates/in-template-entities.html","<input list=dataList name=dataList ng-model=rule.field.suffix> <datalist id=dataList><option ng-repeat=\"x in rule.field.dsOptions track by $index\" value={{x}}>{{x}}</option></datalist> <ui-select multiple tagging tagging-label=false ng-model=rule.data style=\"width: 300px;\" title=\"Choose a element\"> <ui-select-match placeholder=\"Write a value and enter...\">{{$item}}</ui-select-match> <ui-select-choices repeat=\"color in rule.field.data | filter:$select.search\"> {{color}} </ui-select-choices> </ui-select>");
 $templateCache.put("../src/templates/in-template.html","<ui-select multiple tagging tagging-label=false ng-model=rule.data style=\"width: 200px;\" title=\"Choose a element\"> <ui-select-match placeholder=\"Write a value and enter...\">{{$item}}</ui-select-match> <ui-select-choices repeat=\"color in rule.field.data | filter:$select.search\"> {{color}} </ui-select-choices> </ui-select>");
-$templateCache.put("../src/templates/input-template.html","<input list=dataList name=dataList ng-model=rule.field.suffix> <datalist id=dataList><option ng-repeat=\"x in rule.field.dsOptions track by $index\" value={{x}}>{{x}}</option></datalist> <div ng-if=\"rule.field.type===\'object\'\"> <input type=text ng-required=true ng-model=rule.field.data> </div> <div ng-if=\"rule.field.type!==\'object\'\"> <div ng-if=\"!rule.field.suffix || rule.field.suffix===\'._current.value\'\" sf-schema=rule.field.schemaForm sf-form=rule.field.form sf-model=rule.field.model> </div> <input ng-if=\"rule.field.suffix && rule.field.suffix!==\'._current.value\'\" type=text ng-required=true ng-model=rule.field.data> </div> ");}]);
+$templateCache.put("../src/templates/input-template.html","<input list=dataList name=dataList ng-model=rule.field.suffix> <datalist id=dataList><option ng-repeat=\"x in rule.field.dsOptions track by $index\" value={{x}}>{{x}}</option></datalist> <div ng-if=\"rule.field.type===\'object\'\"> <input type=text ng-required=true ng-model=rule.field.data> </div> <div ng-if=\"rule.field.type!==\'object\'\"> <div ng-if=\"!rule.field.suffix || rule.field.suffix===\'._current.value\'\" sf-schema=rule.field.schemaForm class={{rule.field.schemaName}} sf-form=rule.field.form sf-model=rule.field.model> </div> <input ng-if=\"rule.field.suffix && rule.field.suffix!==\'._current.value\'\" type=text ng-required=true ng-model=rule.field.data> </div> ");}]);
 })(window);

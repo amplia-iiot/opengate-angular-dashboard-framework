@@ -4,8 +4,8 @@
     <input type="text" ng-required="true" ng-model="rule.field.data">
 </div>
 <div ng-if="rule.field.type!=='object'">
-    <div ng-if="!rule.field.suffix || rule.field.suffix==='._current.value'" sf-schema="rule.field.schemaForm" sf-form="rule.field.form" sf-model="rule.field.model">
+    <div ng-if="!rule.field.suffix || rule.field.suffix==='._current.value'" sf-schema="rule.field.schemaForm" class="{{rule.field.schemaName}}" sf-form="rule.field.form" sf-model="rule.field.model">
     </div>
-    <input ng-if="rule.field.suffix && rule.field.suffix!=='._current.value'" type="text" ng-required="true" ng-model="rule.field.data">
+    <input ng-if="rule.field.suffix && rule.field.suffix!=='._current.value'" type="text" ng-required="true"  ng-model="rule.field.data">
 </div>
 </div>

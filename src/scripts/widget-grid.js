@@ -289,7 +289,8 @@ angular.module('adf')
                     };
                     field.form = [{
                         key: 'data',
-                        notitle: true
+                        notitle: true,
+                        fieldHtmlClass:field.schemaName
                     }];
                     return field;
                 }
@@ -355,20 +356,22 @@ angular.module('adf')
                         properties: {
                             data: schema
                         }
-                    };
-                    advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
-                        id: Math.floor((Math.random() * 10000) + 1),
-                        name: $item.identifier,
-                        type: schema.type,
-                        schemaForm: objectSchema,
-                        schema: schema,
-                        form: [{
-                            key: 'data',
-                            notitle: true
-                        }],
-                        schemaName: schemaName,
-                        model: {}
-                    }));
+                    };   
+                    $timeout(function() {                 
+                        advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
+                            id: Math.floor((Math.random() * 10000) + 1),
+                            name: $item.identifier,
+                            type: schema.type,
+                            schemaForm: objectSchema,
+                            schema: schema,
+                            form: [{
+                                key: 'data',
+                                notitle: true
+                            }],
+                            schemaName: schemaName,
+                            model: {}
+                        }));
+                    },100);
                 };
 
                 advancedFilterScope.onDeleteDatastream = function($item) {
