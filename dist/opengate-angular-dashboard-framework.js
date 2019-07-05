@@ -1809,7 +1809,8 @@ angular.module('adf')
                             8
                         ];
                     }
-                    field.existsOptions = ['true', 'false'];
+                   field.existsOptions = ['true', 'false'];
+                   if ($scope.definition.Ftype === 'entities' || $scope.definition.Ftype === 'tickets'){
                     field.dsOptions = ['', '._current.value',
                         '._current.source',
                         '._current.at',
@@ -1829,6 +1830,7 @@ angular.module('adf')
                         '.scoring.qrating.min_required.value',
                         '.scoring.qrating.min_required.label',
                     ];
+                }
                     field.schemaForm = {
                         type: "object",
                         properties: {
@@ -1847,6 +1849,7 @@ angular.module('adf')
                     delete field.dsOptions;
                     delete field.form;
                     delete field.schemaForm;
+                    delete field.model;
                     return field;
                 }
 
@@ -1916,8 +1919,7 @@ angular.module('adf')
                                 key: 'data',
                                 notitle: true
                             }],
-                            schemaName: schemaName,
-                            model: {}
+                            schemaName: schemaName
                         }));
                     },100);
                 };
