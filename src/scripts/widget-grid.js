@@ -470,6 +470,10 @@ angular.module('adf')
                     if (executeSearch) {
                         $scope.launchSearching();
                         $scope.filterApplied = true;
+                        advancedFilterScope.closeDialog();
+                    }
+                    else {
+                        advancedFilterScope.closeDialog();
                     }
 
                 }

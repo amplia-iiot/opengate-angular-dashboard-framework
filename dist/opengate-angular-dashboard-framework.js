@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.9.0');
+    .value('adfVersion', '8.9.1');
 /*
  * The MIT License
  *
@@ -2018,6 +2018,10 @@ angular.module('adf')
                     if (executeSearch) {
                         $scope.launchSearching();
                         $scope.filterApplied = true;
+                        advancedFilterScope.closeDialog();
+                    }
+                    else {
+                        advancedFilterScope.closeDialog();
                     }
 
                 }
