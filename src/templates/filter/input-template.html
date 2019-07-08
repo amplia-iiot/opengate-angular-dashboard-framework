@@ -1,15 +1,10 @@
-{{rule.model}}
-<br>
-{{rule.data}}
-<br>
+
 <div ng-if="rule.field.type==='object'">
     <input type="text" ng-required="true" ng-model="rule.data">
 </div>
-
-
 <div ng-if="rule.field.type!=='object'">
-    <div ng-if="!rule.field.suffix || rule.field.suffix==='._current.value'" sf-schema="rule.field.schemaForm" class="{{rule.field.schemaName}}" sf-form="rule.field.form" sf-model="rule.model" ng-model="rule.model">
+    <div ng-if="rule.suffix === undefined || rule.suffix==='._current.value'" sf-schema="rule.field.schemaForm" class="{{rule.field.schemaName}}" sf-form="rule.field.form" sf-model="rule.model" ng-model="rule.model">
     </div>
-    <input ng-if="rule.field.suffix && rule.field.suffix!=='._current.value'" type="text" ng-required="true"  ng-model="rule.data">
+    <input ng-if="rule.suffix !== undefined && rule.suffix !=='._current.value'" type="text" ng-required="true"  ng-model="rule.data">
 </div>
 </div>
