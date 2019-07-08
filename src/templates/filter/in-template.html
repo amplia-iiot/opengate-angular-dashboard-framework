@@ -1,4 +1,4 @@
-<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 200px;" title="Choose an element">
-    <ui-select-match placeholder="Write a value and enter...">{{$item}}</ui-select-match>
+<ui-select multiple tagging tagging-label="false" ng-model="rule.data" style="width: 200px;">
+    <ui-select-match placeholder="{{ 'FORM.PLACEHOLDER.FILTER_IN' | translate }}">{{$item}}</ui-select-match>
     <ui-select-choices repeat="value in rule.field.data | filter:$select.search"> {{value}} </ui-select-choices>
 </ui-select>
