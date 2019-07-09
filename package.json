@@ -1,6 +1,6 @@
 {
     "name": "opengate-angular-dashboard-framework",
-    "version": "8.9.1",
+    "version": "8.9.2",
     "license": "MIT",
     "authors": "Sebastian Sdorra",
     "devDependencies": {
