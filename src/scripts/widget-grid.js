@@ -253,7 +253,7 @@ angular.module('adf')
                     });
                 }
                 advancedFilterScope.addextraElements = function(field) {
-                    if (field.name === 'provision.device.location') {
+                    if (field.name === 'provision.device.location' || field.name === 'provision.device.communicationModules[].subscription.address') {
                         field.existsOptions = ['true', 'false']
                         field.disabledComparators = []
                     } else {
@@ -349,17 +349,40 @@ angular.module('adf')
                         name: $item
                     }));
                 };
+                function findAvailableFields(type, parent) {
+                    var fieldsFound = [];
+            
+                    if (type.properties) {
+                        angular.forEach(type.properties, function(fieldType, field) {
+                            fieldsFound.push((parent ? parent + '.' : '') + field);
+            
+                            if (fieldType.properties) {
+                                fieldsFound = fieldsFound.concat(findAvailableFields(fieldType, (parent ? parent + '.' : '') + field));
+                            } else if (fieldType.items && fieldType.items.properties) {
+                                fieldsFound = fieldsFound.concat(findAvailableFields(fieldType.items, (parent ? parent + '.' : '') + field));
+                            }
+                        });
+                    } else if (type.items && type.items.properties) {
+                        fieldsFound = fieldsFound.concat(findAvailableFields(type.items, parent));
+                    }
+            
+                    return fieldsFound;
+                }
 
                 advancedFilterScope.onSelectDatastream = function($item) {
                     var schemaName = ($item.schema && $item.schema.$ref) ? $item.schema.$ref.split('/').splice(-1)[0] : undefined;
                     var schema = schemaName ? advancedFilterScope.jsonSchemas[schemaName] : ($item.schema ? $item.schema : undefined);
                     delete schema.javaEnumNames;
+                    var availableFields ;
                     var objectSchema = {
                         type: "object",
                         properties: {
                             data: schema
                         }
                     };   
+                    if(schema.type === 'object'){
+                        availableFields = findAvailableFields(schema);
+                    }
                     $timeout(function() {                 
                         advancedFilterScope.fields.push(advancedFilterScope.addextraElements({
                             id: Math.floor((Math.random() * 10000) + 1),
@@ -367,6 +390,7 @@ angular.module('adf')
                             type: schema.type,
                             schemaForm: objectSchema,
                             schema: schema,
+                            availableFields: availableFields,
                             form: [{
                                 key: 'data',
                                 notitle: true
