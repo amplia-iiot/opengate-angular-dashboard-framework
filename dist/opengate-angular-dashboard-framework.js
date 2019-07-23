@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.9.2');
+    .value('adfVersion', '8.10.0');
 /*
  * The MIT License
  *
@@ -1773,6 +1773,18 @@ angular.module('adf')
                 $scope.reload();
             };
 
+            $scope.buildAndLaunchSearchingAdv  = function() {
+                $scope.config.filter = {
+                    type: 'advanced',
+                    oql: $scope.search.oql ? $scope.search.oql : '',
+                    queryAsString: $scope.search.queryAsString,
+                    value: $scope.search.json || '',
+                    queryFields: $scope.search.queryFields
+                };    
+                $scope.launchSearching();
+                $scope.filterApplied = true;
+        }
+
             $scope.launchSearchingAdv = function() {
                 $scope.filter.typeFilter = 0;
 
@@ -2289,17 +2301,19 @@ angular.module('adf')
 
                 // Cierra sy guarda los datos de nueva selección
                 selectionScope.applyFilter = function(type) {
-                    var customOql = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
+                    var customFilter = selectionScope.selectionConfig.filterAction(selectionScope.currentSelection.selected, type);
 
-                    if (!angular.isUndefined(customOql) && customOql !== null) {
+                    if (!angular.isUndefined(customFilter) && customFilter.oql !== null) {
                         $scope.filter.typeFilter = 0;
-                        Filter.parseQuery(customOql).then(function(data) {
-                            $scope.search.oql = customOql;
+                        Filter.parseQuery(customFilter.oql).then(function(data) {
+                            $scope.search.oql = customFilter.oql;
+                            $scope.search.queryAsString = customFilter.qas;
+                            $scope.search.queryFields = customFilter.qf;
                             $scope.search.json = angular.toJson(data.filter, null, 4); // stringify with 4 spaces at each level;
                             $scope.unknownWords = '';
                             $scope.filter_error = null;
 
-                            $scope.launchSearchingAdv();
+                            $scope.buildAndLaunchSearchingAdv();
                         }).catch(function(err) {
                             $scope.filter_error = err;
                         });
