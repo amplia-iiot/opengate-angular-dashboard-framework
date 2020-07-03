@@ -79,20 +79,27 @@ angular.module('adf')
             }
 
             function _getWindowTime(type) {
-                if (type === 'custom') {
-                    return {
-                        from: newScope.config.windowFilter.from,
-                        to: newScope.config.windowFilter.to
-                    };
-                } else if (type === 'today') {
-                    return {
-                        from: window.moment().startOf('day')
-                    };
+                switch (type) {
+                    case 'custom':
+                        return {
+                            from: newScope.config.windowFilter.from,
+                            to: newScope.config.windowFilter.to
+                        };
+                    case 'today':
+                        return {
+                            from: window.moment().startOf('day')
+                        };
+                    case 'days':
+                        var from = window.moment().startOf('minute').subtract(1, 'days');
+                        return {
+                            from: from._d
+                        };        
+                    default:
+                        var from = window.moment().startOf('day').subtract(1, type);
+                        return {
+                            from: from._d
+                        };
                 }
-                var from = window.moment().startOf('day').subtract(1, type);
-                return {
-                    from: from._d
-                };
             }
 
 
