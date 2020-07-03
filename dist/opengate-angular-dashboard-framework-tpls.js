@@ -28,7 +28,7 @@
 angular.module('adf', ['adf.provider', 'ui.bootstrap', 'opengate-angular-js'])
     .value('adfTemplatePath', '../src/templates/')
     .value('columnTemplate', '<adf-dashboard-column column="column" adf-model="adfModel" options="options" edit-mode="editMode" ng-repeat="column in row.columns" />')
-    .value('adfVersion', '8.10.0');
+    .value('adfVersion', '8.10.1');
 /*
  * The MIT License
  *
@@ -1321,20 +1321,27 @@ angular.module('adf')
             }
 
             function _getWindowTime(type) {
-                if (type === 'custom') {
-                    return {
-                        from: newScope.config.windowFilter.from,
-                        to: newScope.config.windowFilter.to
-                    };
-                } else if (type === 'today') {
-                    return {
-                        from: window.moment().startOf('day')
-                    };
+                switch (type) {
+                    case 'custom':
+                        return {
+                            from: newScope.config.windowFilter.from,
+                            to: newScope.config.windowFilter.to
+                        };
+                    case 'today':
+                        return {
+                            from: window.moment().startOf('day')
+                        };
+                    case 'days':
+                        var from = window.moment().startOf('minute').subtract(1, 'days');
+                        return {
+                            from: from._d
+                        };        
+                    default:
+                        var from = window.moment().startOf('day').subtract(1, type);
+                        return {
+                            from: from._d
+                        };
                 }
-                var from = window.moment().startOf('day').subtract(1, type);
-                return {
-                    from: from._d
-                };
             }
 
 
