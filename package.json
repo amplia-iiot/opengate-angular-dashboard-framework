@@ -41,7 +41,7 @@
         "gulp-useref": "^3.1.6",
         "gulp-ver": "^0.1.0",
         "jasmine-core": "^2.4.1",
-        "karma": "^0.13.9",
+        "karma": "^6.3.14",
         "karma-chrome-launcher": "^0.2.0",
         "karma-coverage": "^0.5.2",
         "karma-firefox-launcher": "~0.1",
